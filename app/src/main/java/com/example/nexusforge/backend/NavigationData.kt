@@ -1,15 +1,16 @@
 package com.example.nexusforge.backend
 
 import kotlinx.serialization.Serializable
+@Serializable
 sealed interface Destination {
 
 
     // I. АВТОРИЗАЦИЯ И РЕГИСТРАЦИЯ
 
     @Serializable data object RegPage : Destination
-    @Serializable data object AuthPassPage : Destination
+@Serializable data object EulaPage : Destination
+    /* @Serializable data object AuthPassPage : Destination
     @Serializable data object ResetPassPage : Destination
-    @Serializable data object EulaPage : Destination
     @Serializable data object NameRegPage : Destination
     @Serializable data object RegPassPage : Destination
 
@@ -57,7 +58,7 @@ sealed interface Destination {
     @Serializable data object DeleteAccAlert : Destination
 
     // Алерт выхода из аккаунта
-    @Serializable data object ExitAccAlert : Destination
+    @Serializable data object ExitAccAlert : Destination */
 }
 
 

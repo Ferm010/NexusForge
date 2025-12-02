@@ -3,6 +3,7 @@ package com.example.nexusforge.frontend
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -31,114 +32,111 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.nexusforge.R
 import com.example.nexusforge.ui.theme.NexusForgeTheme
+import com.example.nexusforge.ui.theme.logo
 
 
 @Composable
-fun Content(modifier: Modifier = Modifier){
-
-    val blackAnvil = painterResource(id = R.drawable.anvil_black_logo_png)
-    val whiteAnvil = painterResource(id = R.drawable.anvil_white_logo_png)
+fun RegPageScreen(modifier: Modifier = Modifier, onNavigateToEula: () -> Unit){
+    // Состояния для TextField
     var email by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
+    val isEmailValid = email.isNotBlank() && email.contains("@")
 
-    Column(
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-            .fillMaxSize()
+    // Используем Box для наложения элементов (центральный контент, кнопка внизу справа, автор внизу по центру)
+    Box(
+        modifier = modifier.fillMaxSize()
     ) {
-        Text(
-            text = stringResource(id = R.string.upname),
-            style = MaterialTheme.typography.displayMedium,
-            )
-        Text(
-            text = stringResource(id = R.string.downname),
-            style = MaterialTheme.typography.displayMedium,
-        )
-        if (isSystemInDarkTheme()) {
-            Image(
-                painter = whiteAnvil,
-                contentDescription = null,
-            )
-        } else {
-            Image(
-                painter = blackAnvil,
-                contentDescription = null,
-            )
-        }
-
-        OutlinedTextField(
-            value = email,
-            onValueChange = { newValue: String -> // ← тип указан явно
-                email = newValue
-                isError = !newValue.contains("@") && newValue.isNotEmpty()
-            },
-            label = { Text("Email") },
-            singleLine = true,
-            isError = isError,
-            supportingText = {
-                if (isError) {
-                    Text(
-                        text = "Введите корректный email"
-                    )
-                }
-            }
-        )
-        OutlinedButton(onClick = { /*TODO*/}) {
-            Icon(
-                painter = painterResource(id = R.drawable.google),
-                contentDescription = null,
-                tint = Color.Unspecified,
-                modifier = Modifier.size(24.dp)
+        // 1. Центральный контент (имя приложения, лого, поле ввода, кнопка Google)
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Text(
+                text = stringResource(id = R.string.upname),
+                style = MaterialTheme.typography.displayMedium,
             )
             Text(
-                "Продолжить через Google"
+                text = stringResource(id = R.string.downname),
+                style = MaterialTheme.typography.displayMedium,
+            )
+            logo()
+
+            OutlinedTextField(
+                value = email,
+                onValueChange = { newValue: String ->
+                    email = newValue
+                    isError = !newValue.contains("@") && newValue.isNotEmpty()
+                },
+                label = { Text("Email") },
+                singleLine = true,
+                isError = isError,
+                supportingText = {
+                    if (isError) {
+                        Text(
+                            text = "Введите корректный email"
+                        )
+                    }
+                }
+            )
+            OutlinedButton(
+                onClick = { /*TODO*/ },
+                modifier = Modifier.padding(top = 8.dp) // Небольшой отступ
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.google),
+                    contentDescription = null,
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(24.dp)
+                )
+                Text(
+                    "Продолжить через Google",
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
+        }
+
+        // 2. Кнопка "Продолжить" в правом нижнем углу
+        Row(
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.Bottom,
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(end = 12.dp, bottom = 12.dp) // Добавлен отступ снизу для наглядности
+                .align(Alignment.BottomEnd) // Явное выравнивание внутри Box
+        ) {
+            Button(
+                onClick = onNavigateToEula,
+                enabled = isEmailValid
+            ) {
+                Text("Продолжить")
+            }
+        }
+
+        // 3. Текст "By Ferm" в нижнем центре
+        Column(
+            verticalArrangement = Arrangement.Bottom,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .align(Alignment.BottomCenter) // Явное выравнивание внутри Box
+        ) {
+            Text(
+                text = "By Ferm",
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(bottom = 12.dp) // Отступ снизу, чтобы не перекрывать кнопку
             )
         }
     }
-    ButtonNext(email = email)
 }
 
-@Composable
-fun ButtonNext(email: String, modifier: Modifier = Modifier) {
-    val isEmailValid = email.isNotBlank() && email.contains("@")
-    Row(
-        horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.Bottom,
-        modifier = modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.navigationBars)
-            .padding(end = 12.dp)
-        ) {
-        Button(
-            onClick = { /*TODO*/ },
-            enabled = isEmailValid
-        ) {
-            Text("Продолжить")
-        }
-    }
-}
-@Composable
-fun Author(modifier: Modifier = Modifier) {
-    Column(
-        verticalArrangement = Arrangement.Bottom,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.navigationBars)
-    ) {
-        Text(
-            text = "By Ferm",
-            style = MaterialTheme.typography.labelLarge,
-        )
-    }
-}
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun ContentPreview() {
     NexusForgeTheme {
-        Content()
-        Author()
+
     }
 }
