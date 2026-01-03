@@ -1,5 +1,6 @@
 package com.example.nexusforge.backend
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.SizeTransform
@@ -11,66 +12,39 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
 import com.example.nexusforge.frontend.EulaScreen
 import com.example.nexusforge.frontend.RegPageScreen
 
-@OptIn(ExperimentalAnimationApi::class)
+@OptIn(ExperimentalAnimationApi::class) // если нужны кастомные анимации
 @Composable
-fun MyApp() {
-    // 1. Создание типобезопасного стека
-    val backStack = remember { mutableStateListOf<Destination>(Destination.RegPage) }
+fun MyAppNav3() {
+    // Правильный вызов: без <Destination> и без initialKey=
+    val backStack = rememberNavBackStack(Destination.RegPage) // или rememberNavBackStack(RegPage, OtherScreen) для нескольких
 
-    // 2. Функции навигации
-    val navigateTo: (Destination) -> Unit = { destination ->
-        backStack.add(destination)
-    }
-    val navigateBack: () -> Unit = {
-        if (backStack.size > 1) {
-            backStack.removeLast()
-        }
+    // BackHandler: используем entries.size
+    BackHandler(enabled = backStack.size > 1) {
+        backStack.removeLastOrNull() // безопаснее, чем removeLast()
     }
 
-    // 3. Анимированное отображение
-    AnimatedContent(
-        targetState = backStack.lastOrNull() to backStack.size, // Используем пару (экран, размер стека)
-        label = "navigation",
-        transitionSpec = {
-            // Анимация "вперед", если размер стека увеличился
-            val forward = targetState.second > initialState.second
-
-            val enterTransition = if (forward) {
-                slideInHorizontally { width -> width } + fadeIn()
-            } else {
-                slideInHorizontally { width -> -width } + fadeIn()
+    NavDisplay(
+        backStack = backStack,
+        entryProvider = entryProvider {
+            entry<Destination.RegPage> {
+                RegPageScreen(
+                    onNavigateToEula = { backStack += Destination.EulaPage } // оператор += работает
+                )
             }
 
-            val exitTransition = if (forward) {
-                slideOutHorizontally { width -> -width } + fadeOut()
-            } else {
-                slideOutHorizontally { width -> width } + fadeOut()
+            entry<Destination.EulaPage> {
+                EulaScreen(
+                    onNavigateBack = { backStack.removeLastOrNull() }
+                )
             }
 
-            enterTransition togetherWith exitTransition using SizeTransform(clip = false)
+            // Добавьте остальные entry<...> здесь
         }
-    ) { (screen, _) ->
-        // 4. Отображение (Логика выбора экрана)
-        // Если экран null, ничего не делаем
-        if (screen != null) {
-            when (screen) {
-                is Destination.RegPage -> {
-                    RegPageScreen(
-                        onNavigateToEula = {
-                            navigateTo(Destination.EulaPage)
-                        }
-                    )
-                }
-
-                is Destination.EulaPage -> {
-                    EulaScreen(
-                        onNavigateBack = navigateBack
-                    )
-                }
-            }
-        }
-    }
+    )
 }

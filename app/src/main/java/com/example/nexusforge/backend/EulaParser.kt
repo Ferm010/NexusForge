@@ -18,7 +18,6 @@ fun parseEulaText(rawEulaText: String): List<EulaSection> {
     val sections = mutableListOf<EulaSection>()
     var currentId = 1
 
-    // 1. Подготовка: Разделение по строкам, удаление пробелов, игнорирование пустых строк
     val lines = rawEulaText
         .split("\n", "\r\n")
         .map { it.trim() }
@@ -26,7 +25,6 @@ fun parseEulaText(rawEulaText: String): List<EulaSection> {
 
     val paragraphBuilder = StringBuilder()
 
-    // Вспомогательная функция для сохранения накопленного параграфа
     fun commitCurrentParagraph() {
         if (paragraphBuilder.isNotEmpty()) {
             sections.add(
@@ -43,42 +41,45 @@ fun parseEulaText(rawEulaText: String): List<EulaSection> {
     for (line in lines) {
         val trimmedLine = line.trim()
 
-        // 2. Идентификация Заголовка: Строка начинается с X. YYY (e.g., "1. Общие...")
-        // Исключаем подпункты (1.1., 1.2. и т.д.) из этой проверки
-        if (trimmedLine.matches("^\\d+\\..*".toRegex()) && !trimmedLine.matches("^\\d+\\.\\d+\\..*".toRegex())) {
+        // 1. ПРОВЕРКА НА ГЛАВНЫЙ ЗАГОЛОВОК (Начинается с "Цифра. Пробел")
+        // Пример: "1. Общие положения"
+        val isMainHeading = trimmedLine.matches("^\\d+\\.\\s+.*".toRegex())
 
-            commitCurrentParagraph() // Сохраняем предыдущий параграф
+        // 2. ПРОВЕРКА НА ПОДПУНКТ (Начинается с "Цифра.Цифра..." или "Цифра.Буква")
+        // Пример: "1.1. Область применения" или "2.1.3."
+        val isSubParagraph = trimmedLine.matches("^\\d+\\.\\d+.*".toRegex())
 
-            sections.add(
-                EulaSection(
-                    id = currentId++,
-                    content = trimmedLine,
-                    type = EulaType.HEADING
-                )
-            )
-        }
-        // 3. Идентификация Контактов
-        else if (trimmedLine.startsWith("Контактные данные Владельца:", ignoreCase = true)) {
+        // 3. ПРОВЕРКА НА КОНТАКТЫ
+        val isContact = trimmedLine.startsWith("Контактные данные Владельца:", ignoreCase = true)
 
-            commitCurrentParagraph() // Сохраняем предыдущий параграф
-
-            sections.add(
-                EulaSection(
-                    id = currentId++,
-                    content = trimmedLine,
-                    type = EulaType.CONTACT
-                )
-            )
-        }
-        // 4. Всё остальное — Параграф
-        else {
-            if (paragraphBuilder.isNotEmpty()) {
-                paragraphBuilder.append(" ") // Добавляем пробел для объединения строк
+        when {
+            isMainHeading -> {
+                commitCurrentParagraph()
+                sections.add(EulaSection(currentId++, trimmedLine, EulaType.HEADING))
             }
-            paragraphBuilder.append(trimmedLine)
+
+            isContact -> {
+                commitCurrentParagraph()
+                sections.add(EulaSection(currentId++, trimmedLine, EulaType.CONTACT))
+            }
+
+            isSubParagraph -> {
+                // Если встретили подпункт — сохраняем то, что накопили ранее,
+                // и сразу создаем новую секцию для этого подпункта
+                commitCurrentParagraph()
+                sections.add(EulaSection(currentId++, trimmedLine, EulaType.PARAGRAPH))
+            }
+
+            else -> {
+                // Если это обычный текст без цифр в начале — склеиваем
+                if (paragraphBuilder.isNotEmpty()) {
+                    paragraphBuilder.append(" ")
+                }
+                paragraphBuilder.append(trimmedLine)
+            }
         }
     }
 
-    commitCurrentParagraph() // Сохраняем последний параграф
+    commitCurrentParagraph()
     return sections
 }

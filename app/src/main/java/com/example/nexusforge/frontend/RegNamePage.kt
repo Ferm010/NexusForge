@@ -1,11 +1,10 @@
 package com.example.nexusforge.frontend
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
@@ -30,66 +29,46 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nexusforge.R
-import com.example.nexusforge.ui.theme.NexusForgeTheme
 import com.example.nexusforge.ui.theme.logo
-import com.example.nexusforge.viewmodels.RegViewModel
-
 
 @Composable
-fun RegPageScreen(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier, onNavigateToEula: () -> Unit){
-    // Состояния для TextField
+fun RegNamePage(modifier: Modifier = Modifier){
+    var name by remember { mutableStateOf("") }
+    var isError by remember { mutableStateOf(false) }
+    val isNameValid = name.trim().length >= 3
 
-
-    // Используем Box для наложения элементов (центральный контент, кнопка внизу справа, автор внизу по центру)
     Box(
         modifier = modifier.fillMaxSize()
     ) {
-        // 1. Центральный контент (имя приложения, лого, поле ввода, кнопка Google)
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxSize()
         ) {
-            Text(
-                text = stringResource(id = R.string.upname),
-                style = MaterialTheme.typography.displayMedium,
-            )
-            Text(
-                text = stringResource(id = R.string.downname),
-                style = MaterialTheme.typography.displayMedium,
-            )
             logo()
-
+            Text(
+                text = "Придумайте имя",
+                style = MaterialTheme.typography.headlineLarge,
+            )
+            Spacer(modifier = Modifier.size(16.dp))
             OutlinedTextField(
-                value = vm.email,
-                onValueChange = {vm.onEmailChanged(it)},
-                label = { Text("Email") },
+                value = name,
+                onValueChange = { newValue: String ->
+                    name = newValue
+                    isError = name.isNotEmpty() && !isNameValid
+                },
+                label = { Text("Имя") },
                 singleLine = true,
-                isError = vm.isError,
+                isError = isError,
                 supportingText = {
-                    if (vm.isError) {
+                    if (isError) {
                         Text(
-                            text = "Введите корректный email"
+                            text = "Введите имя от 3 символов"
                         )
                     }
                 }
             )
-            OutlinedButton(
-                onClick = { vm.handleGoogleSignIn() },
-                modifier = Modifier.padding(top = 8.dp) // Небольшой отступ
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.google),
-                    contentDescription = null,
-                    tint = Color.Unspecified,
-                    modifier = Modifier.size(24.dp)
-                )
-                Text(
-                    "Продолжить через Google",
-                    modifier = Modifier.padding(start = 8.dp)
-                )
             }
         }
 
@@ -101,11 +80,11 @@ fun RegPageScreen(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier,
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars)
                 .padding(end = 12.dp, bottom = 12.dp) // Добавлен отступ снизу для наглядности
-                .align(Alignment.BottomEnd) // Явное выравнивание внутри Box
+                 // Явное выравнивание внутри Box
         ) {
             Button(
-                onClick = onNavigateToEula,
-                enabled = vm.isContinueEnabled
+                onClick = { /*TODO*/ },
+                enabled = isNameValid
             ) {
                 Text("Продолжить")
             }
@@ -118,7 +97,7 @@ fun RegPageScreen(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier,
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars)
-                .align(Alignment.BottomCenter) // Явное выравнивание внутри Box
+                // Явное выравнивание внутри Box
         ) {
             Text(
                 text = "By Ferm",
@@ -126,12 +105,10 @@ fun RegPageScreen(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier,
                 modifier = Modifier.padding(bottom = 12.dp) // Отступ снизу, чтобы не перекрывать кнопку
             )
         }
-    }
 }
-
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun ContentPreview() {
-    RegPageScreen() { }
+fun RegNamePreview(){
+    RegNamePage()
 }

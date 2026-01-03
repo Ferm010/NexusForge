@@ -11,7 +11,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.nexusforge.backend.MyApp
+import com.example.nexusforge.backend.MyAppNav3
+import com.example.nexusforge.frontend.RegNamePage
 import com.example.nexusforge.ui.theme.NexusForgeTheme
 
 class MainActivity : ComponentActivity() {
@@ -22,7 +23,8 @@ class MainActivity : ComponentActivity() {
             NexusForgeTheme {
                 Surface(modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background) {
-                    MyApp()
+                    //MyApp()
+                    MyAppNav3()
                 }
             }
         }

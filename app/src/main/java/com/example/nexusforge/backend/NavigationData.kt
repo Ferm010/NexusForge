@@ -1,14 +1,15 @@
 package com.example.nexusforge.backend
 
+import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 @Serializable
-sealed interface Destination {
+sealed interface Destination : NavKey {
 
 
     // I. АВТОРИЗАЦИЯ И РЕГИСТРАЦИЯ
 
     @Serializable data object RegPage : Destination
-@Serializable data object EulaPage : Destination
+    @Serializable data object EulaPage : Destination
     /* @Serializable data object AuthPassPage : Destination
     @Serializable data object ResetPassPage : Destination
     @Serializable data object NameRegPage : Destination
