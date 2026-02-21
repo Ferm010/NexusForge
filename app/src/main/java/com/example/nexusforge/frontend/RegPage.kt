@@ -38,7 +38,13 @@ import com.example.nexusforge.viewmodels.RegViewModel
 
 
 @Composable
-fun RegPageScreen(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier, onNavigateToEula: () -> Unit){
+fun RegPageScreen(
+    vm: RegViewModel = viewModel(),
+    modifier: Modifier = Modifier,
+    onNavigateToEula: () -> Unit,
+    onNavigateToAuthPassword: () -> Unit,
+    onNavigateToMainMenu: () -> Unit
+){
     // Состояния для TextField
 
 
@@ -77,7 +83,14 @@ fun RegPageScreen(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier,
                 }
             )
             OutlinedButton(
-                onClick = { vm.handleGoogleSignIn() },
+                onClick = {
+                    vm.handleGoogleSignIn()
+                    if (vm.checkEmailExists(vm.email)) {
+                        onNavigateToMainMenu()
+                    } else {
+                        onNavigateToEula()
+                    }
+                },
                 modifier = Modifier.padding(top = 8.dp) // Небольшой отступ
             ) {
                 Icon(
@@ -104,7 +117,13 @@ fun RegPageScreen(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier,
                 .align(Alignment.BottomEnd) // Явное выравнивание внутри Box
         ) {
             Button(
-                onClick = onNavigateToEula,
+                onClick = {
+                    if (vm.checkEmailExists(vm.email)) {
+                        onNavigateToAuthPassword()
+                    } else {
+                        onNavigateToEula()
+                    }
+                },
                 enabled = vm.isContinueEnabled
             ) {
                 Text("Продолжить")
@@ -133,5 +152,5 @@ fun RegPageScreen(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier,
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun ContentPreview() {
-    RegPageScreen() { }
+    RegPageScreen(onNavigateToEula = {}, onNavigateToAuthPassword = {}, onNavigateToMainMenu = {})
 }

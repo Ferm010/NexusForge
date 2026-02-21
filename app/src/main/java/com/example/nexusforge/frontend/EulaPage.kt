@@ -19,7 +19,7 @@ import com.example.nexusforge.ui.theme.AppIcons
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun EulaScreenContainer(rawEulaText: String, onNavigateBack: () -> Unit) {
+fun EulaScreenContainer(rawEulaText: String, onNavigateBack: () -> Unit, onAcceptEula: () -> Unit) {
 
     // 1. Выполнение парсинга только один раз (при первой композиции)
     // 'remember' предотвращает повторное выполнение parseEulaText при рекомпозициях.
@@ -92,7 +92,7 @@ fun EulaScreenContainer(rawEulaText: String, onNavigateBack: () -> Unit) {
             item {
                 Spacer(modifier = Modifier.height(32.dp))
                 Button(
-                    onClick = {},
+                    onClick = onAcceptEula,
                     modifier = Modifier
                         .padding(bottom = 16.dp)
                 ) {
@@ -105,7 +105,7 @@ fun EulaScreenContainer(rawEulaText: String, onNavigateBack: () -> Unit) {
 
 // Пример использования (в Main Activity или другом Composable)
 @Composable
-fun EulaScreen(onNavigateBack: () -> Unit) {
+fun EulaScreen(onNavigateBack: () -> Unit, onAcceptEula: () -> Unit) {
     val hugeEULAText = """
         1. Общие положения и акцепт
         1.1. Настоящее Пользовательское соглашение (далее — «Соглашение») является публичной офертой, регулирующей отношения между Владельцем и Пользователем, использующим мобильное приложение «NexusForge» (далее — «Приложение»).
@@ -154,12 +154,13 @@ fun EulaScreen(onNavigateBack: () -> Unit) {
 
     EulaScreenContainer(
         rawEulaText = hugeEULAText,
-        onNavigateBack = onNavigateBack
+        onNavigateBack = onNavigateBack,
+        onAcceptEula = onAcceptEula
     )
 }
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun eulapreview(){
-    EulaScreen {  }
+    EulaScreen(onNavigateBack = {}, onAcceptEula = {})
 }

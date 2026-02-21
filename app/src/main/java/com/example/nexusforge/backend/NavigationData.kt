@@ -10,10 +10,12 @@ sealed interface Destination : NavKey {
 
     @Serializable data object RegPage : Destination
     @Serializable data object EulaPage : Destination
-    /* @Serializable data object AuthPassPage : Destination
-    @Serializable data object ResetPassPage : Destination
-    @Serializable data object NameRegPage : Destination
+    @Serializable data object AuthPassPage : Destination
     @Serializable data object RegPassPage : Destination
+    @Serializable data object NameRegPage : Destination
+    @Serializable data object MainMenu : Destination
+
+    /* @Serializable data object ResetPassPage : Destination
 
 
     // ОСНОВНАЯ НАВИГАЦИЯ (Main Flow)
