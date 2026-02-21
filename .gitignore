@@ -13,3 +13,5 @@
 .externalNativeBuild
 .cxx
 local.properties
+# Add your real google-services.json (download from Firebase Console) and exclude from VCS if desired
+# app/google-services.json

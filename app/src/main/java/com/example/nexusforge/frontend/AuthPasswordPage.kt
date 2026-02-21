@@ -25,11 +25,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nexusforge.ui.theme.logo
+import com.example.nexusforge.viewmodels.RegViewModel
 
 @Composable
-fun AuthPasswordPage(modifier: Modifier = Modifier, onNavigateToMainMenu: () -> Unit = {}) {
+fun AuthPasswordPage(
+    vm: RegViewModel = viewModel(),
+    modifier: Modifier = Modifier,
+    onNavigateToMainMenu: () -> Unit = {}
+) {
     var password by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(
@@ -45,10 +52,19 @@ fun AuthPasswordPage(modifier: Modifier = Modifier, onNavigateToMainMenu: () -> 
             Spacer(modifier = Modifier.size(16.dp))
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = {
+                    password = it
+                    errorMessage = null
+                },
                 label = { Text("Пароль") },
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation()
+                visualTransformation = PasswordVisualTransformation(),
+                isError = errorMessage != null,
+                supportingText = {
+                    if (errorMessage != null) {
+                        Text(errorMessage!!)
+                    }
+                }
             )
         }
 
@@ -62,7 +78,13 @@ fun AuthPasswordPage(modifier: Modifier = Modifier, onNavigateToMainMenu: () -> 
                 .align(Alignment.BottomEnd)
         ) {
             Button(
-                onClick = onNavigateToMainMenu,
+                onClick = {
+                    vm.signInWithEmail(
+                        enteredPassword = password,
+                        onSuccess = onNavigateToMainMenu,
+                        onError = { errorMessage = it }
+                    )
+                },
                 enabled = password.isNotEmpty()
             ) {
                 Text("Войти")

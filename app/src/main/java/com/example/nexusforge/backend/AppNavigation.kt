@@ -81,6 +81,7 @@ fun MyAppNav3() {
 
             entry<Destination.AuthPassPage> {
                 AuthPasswordPage(
+                    vm = vm,
                     onNavigateToMainMenu = {
                         backStack.clear()
                         backStack += Destination.MainMenu

@@ -32,6 +32,7 @@ import com.example.nexusforge.viewmodels.RegViewModel
 fun RegNamePage(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier, onNavigateToMainMenu: () -> Unit = {}){
     var name by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
+    var registerError by remember { mutableStateOf<String?>(null) }
     val isNameValid = name.trim().length >= 3
 
     Box(
@@ -53,18 +54,25 @@ fun RegNamePage(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier, o
                 onValueChange = { newValue: String ->
                     name = newValue
                     isError = name.isNotEmpty() && !isNameValid
+                    registerError = null
                 },
                 label = { Text("Имя") },
                 singleLine = true,
                 isError = isError,
                 supportingText = {
                     if (isError) {
-                        Text(
-                            text = "Введите имя от 3 символов"
-                        )
+                        Text(text = "Введите имя от 3 символов")
                     }
                 }
             )
+            if (registerError != null) {
+                Text(
+                    text = registerError!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
         }
 
         // 2. Кнопка "Продолжить" в правом нижнем углу
@@ -74,13 +82,16 @@ fun RegNamePage(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier, o
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(end = 12.dp, bottom = 12.dp) // Добавлен отступ снизу для наглядности
-                .align(Alignment.BottomEnd) // Явное выравнивание внутри Box
+                .padding(end = 12.dp, bottom = 12.dp)
+                .align(Alignment.BottomEnd)
         ) {
             Button(
                 onClick = {
                     vm.userName = name.trim()
-                    onNavigateToMainMenu()
+                    vm.registerUser(
+                        onSuccess = onNavigateToMainMenu,
+                        onError = { registerError = it }
+                    )
                 },
                 enabled = isNameValid
             ) {
@@ -95,12 +106,12 @@ fun RegNamePage(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier, o
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars)
-                .align(Alignment.BottomCenter) // Явное выравнивание внутри Box
+                .align(Alignment.BottomCenter)
         ) {
             Text(
                 text = "By Ferm",
                 style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.padding(bottom = 12.dp) // Отступ снизу, чтобы не перекрывать кнопку
+                modifier = Modifier.padding(bottom = 12.dp)
             )
         }
     }

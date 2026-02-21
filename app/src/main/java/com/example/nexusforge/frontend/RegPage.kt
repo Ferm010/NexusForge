@@ -22,19 +22,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nexusforge.R
+import com.example.nexusforge.backend.WEB_CLIENT_ID
 import com.example.nexusforge.ui.theme.NexusForgeTheme
 import com.example.nexusforge.ui.theme.logo
 import com.example.nexusforge.viewmodels.RegViewModel
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -45,10 +54,10 @@ fun RegPageScreen(
     onNavigateToAuthPassword: () -> Unit,
     onNavigateToMainMenu: () -> Unit
 ){
-    // Состояния для TextField
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var googleSignInError by remember { mutableStateOf<String?>(null) }
 
-
-    // Используем Box для наложения элементов (центральный контент, кнопка внизу справа, автор внизу по центру)
     Box(
         modifier = modifier.fillMaxSize()
     ) {
@@ -70,28 +79,45 @@ fun RegPageScreen(
 
             OutlinedTextField(
                 value = vm.email,
-                onValueChange = {vm.onEmailChanged(it)},
+                onValueChange = { vm.onEmailChanged(it) },
                 label = { Text("Email") },
                 singleLine = true,
                 isError = vm.isError,
                 supportingText = {
                     if (vm.isError) {
-                        Text(
-                            text = "Введите корректный email"
-                        )
+                        Text(text = "Введите корректный email")
                     }
                 }
             )
             OutlinedButton(
                 onClick = {
-                    vm.handleGoogleSignIn()
-                    if (vm.checkEmailExists(vm.email)) {
-                        onNavigateToMainMenu()
-                    } else {
-                        onNavigateToEula()
+                    coroutineScope.launch {
+                        try {
+                            val credentialManager = CredentialManager.create(context)
+                            val googleIdOption = GetGoogleIdOption.Builder()
+                                .setFilterByAuthorizedAccounts(false)
+                                .setServerClientId(WEB_CLIENT_ID)
+                                .build()
+                            val request = GetCredentialRequest.Builder()
+                                .addCredentialOption(googleIdOption)
+                                .build()
+                            val result = credentialManager.getCredential(context, request)
+                            val googleIdTokenCredential =
+                                GoogleIdTokenCredential.createFrom(result.credential.data)
+                            vm.signInWithGoogle(
+                                idToken = googleIdTokenCredential.idToken,
+                                onSuccess = { isNewUser ->
+                                    googleSignInError = null
+                                    if (isNewUser) onNavigateToEula() else onNavigateToMainMenu()
+                                },
+                                onError = { googleSignInError = it }
+                            )
+                        } catch (e: GetCredentialException) {
+                            // Пользователь отменил выбор аккаунта или нет доступных аккаунтов
+                        }
                     }
                 },
-                modifier = Modifier.padding(top = 8.dp) // Небольшой отступ
+                modifier = Modifier.padding(top = 8.dp)
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.google),
@@ -104,6 +130,14 @@ fun RegPageScreen(
                     modifier = Modifier.padding(start = 8.dp)
                 )
             }
+            if (googleSignInError != null) {
+                Text(
+                    text = googleSignInError!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
         }
 
         // 2. Кнопка "Продолжить" в правом нижнем углу
@@ -113,16 +147,15 @@ fun RegPageScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(end = 12.dp, bottom = 12.dp) // Добавлен отступ снизу для наглядности
-                .align(Alignment.BottomEnd) // Явное выравнивание внутри Box
+                .padding(end = 12.dp, bottom = 12.dp)
+                .align(Alignment.BottomEnd)
         ) {
             Button(
                 onClick = {
-                    if (vm.checkEmailExists(vm.email)) {
-                        onNavigateToAuthPassword()
-                    } else {
-                        onNavigateToEula()
-                    }
+                    vm.checkEmailAndNavigate(
+                        onExists = onNavigateToAuthPassword,
+                        onNotExists = onNavigateToEula
+                    )
                 },
                 enabled = vm.isContinueEnabled
             ) {
@@ -137,12 +170,12 @@ fun RegPageScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars)
-                .align(Alignment.BottomCenter) // Явное выравнивание внутри Box
+                .align(Alignment.BottomCenter)
         ) {
             Text(
                 text = "By Ferm",
                 style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.padding(bottom = 12.dp) // Отступ снизу, чтобы не перекрывать кнопку
+                modifier = Modifier.padding(bottom = 12.dp)
             )
         }
     }
