@@ -23,13 +23,20 @@ import com.example.nexusforge.frontend.PasswordPage
 import com.example.nexusforge.frontend.RegNamePage
 import com.example.nexusforge.frontend.RegPageScreen
 import com.example.nexusforge.viewmodels.RegViewModel
+import com.google.firebase.auth.FirebaseAuth
 
 @OptIn(ExperimentalAnimationApi::class) // если нужны кастомные анимации
 @Composable
 fun MyAppNav3() {
     val vm: RegViewModel = viewModel()
-    // Правильный вызов: без <Destination> и без initialKey=
-    val backStack = rememberNavBackStack(Destination.RegPage) // или rememberNavBackStack(RegPage, OtherScreen) для нескольких
+
+    // Если пользователь уже авторизован — открываем главное меню, иначе — регистрацию
+    val startDestination: Destination = remember {
+        if (FirebaseAuth.getInstance().currentUser != null) Destination.MainMenu
+        else Destination.RegPage
+    }
+
+    val backStack = rememberNavBackStack(startDestination)
 
     // BackHandler: используем entries.size
     BackHandler(enabled = backStack.size > 1) {

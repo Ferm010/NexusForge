@@ -26,6 +26,13 @@ class RegViewModel : ViewModel() {
     var userName by mutableStateOf("")
     var isGoogleFlow by mutableStateOf(false)
 
+    init {
+        // Если пользователь уже авторизован, восстанавливаем его имя
+        auth.currentUser?.let { user ->
+            userName = user.displayName ?: ""
+        }
+    }
+
     // Вычисляемое свойство: кнопка активна только если email валиден
     val isContinueEnabled: Boolean
         get() = email.matches(emailPattern)
