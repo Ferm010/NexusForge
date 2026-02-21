@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nexusforge.backend.toRussianMessage
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.userProfileChangeRequest
@@ -45,18 +46,27 @@ class RegViewModel : ViewModel() {
 
     /**
      * Проверяет существование аккаунта через Firebase и вызывает нужный callback.
+     * - onExists     — аккаунт с email/password
+     * - onGoogleOnly — аккаунт зарегистрирован только через Google
+     * - onNotExists  — аккаунта нет, регистрация нового пользователя
+     *
      * Примечание: требует отключения защиты от перебора email в Firebase Console
      * (Authentication → Settings → User account protection → Email enumeration protection → OFF).
      */
-    fun checkEmailAndNavigate(onExists: () -> Unit, onNotExists: () -> Unit) {
+    fun checkEmailAndNavigate(
+        onExists: () -> Unit,
+        onGoogleOnly: () -> Unit,
+        onNotExists: () -> Unit
+    ) {
         viewModelScope.launch {
             try {
                 @Suppress("DEPRECATION")
                 val methods = auth.fetchSignInMethodsForEmail(email).await()
-                if (methods.signInMethods?.isNotEmpty() == true) {
-                    onExists()
-                } else {
-                    onNotExists()
+                val list = methods.signInMethods ?: emptyList()
+                when {
+                    list.contains("google.com") && !list.contains(EmailAuthProvider.EMAIL_PASSWORD_SIGN_IN_METHOD) -> onGoogleOnly()
+                    list.isNotEmpty() -> onExists()
+                    else -> onNotExists()
                 }
             } catch (e: Exception) {
                 // При ошибке направляем как нового пользователя

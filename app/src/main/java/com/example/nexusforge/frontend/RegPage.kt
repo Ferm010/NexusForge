@@ -57,6 +57,7 @@ fun RegPageScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var googleSignInError by remember { mutableStateOf<String?>(null) }
+    var emailError by remember { mutableStateOf<String?>(null) }
 
     Box(
         modifier = modifier.fillMaxSize()
@@ -79,13 +80,17 @@ fun RegPageScreen(
 
             OutlinedTextField(
                 value = vm.email,
-                onValueChange = { vm.onEmailChanged(it) },
+                onValueChange = {
+                    vm.onEmailChanged(it)
+                    emailError = null
+                },
                 label = { Text("Email") },
                 singleLine = true,
-                isError = vm.isError,
+                isError = vm.isError || emailError != null,
                 supportingText = {
-                    if (vm.isError) {
-                        Text(text = "Введите корректный email")
+                    when {
+                        emailError != null -> Text(text = emailError)
+                        vm.isError -> Text(text = "Введите корректный email")
                     }
                 }
             )
@@ -154,6 +159,10 @@ fun RegPageScreen(
                 onClick = {
                     vm.checkEmailAndNavigate(
                         onExists = onNavigateToAuthPassword,
+                        onGoogleOnly = {
+                            emailError = "Этот email зарегистрирован через Google. " +
+                                "Войдите через кнопку «Продолжить через Google»."
+                        },
                         onNotExists = onNavigateToEula
                     )
                 },
