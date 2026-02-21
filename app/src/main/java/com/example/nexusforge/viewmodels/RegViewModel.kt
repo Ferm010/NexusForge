@@ -99,6 +99,17 @@ class RegViewModel : ViewModel() {
     }
 
     /**
+     * Выход из аккаунта: разрывает сессию Firebase и сбрасывает локальное состояние.
+     */
+    fun signOut() {
+        auth.signOut()
+        email = ""
+        password = ""
+        userName = ""
+        isGoogleFlow = false
+    }
+
+    /**
      * Вход/регистрация через Google. isNewUser = true означает новый аккаунт.
      */
     fun signInWithGoogle(

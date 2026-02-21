@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,7 +16,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nexusforge.viewmodels.RegViewModel
 
 @Composable
-fun MainMenuPage(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier) {
+fun MainMenuPage(
+    vm: RegViewModel = viewModel(),
+    modifier: Modifier = Modifier,
+    onSignOut: () -> Unit = {}
+) {
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -31,6 +36,12 @@ fun MainMenuPage(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier) 
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.padding(top = 16.dp)
             )
+        }
+        Button(
+            onClick = onSignOut,
+            modifier = Modifier.padding(top = 24.dp)
+        ) {
+            Text("Выйти из аккаунта")
         }
     }
 }

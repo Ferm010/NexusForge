@@ -97,7 +97,14 @@ fun MyAppNav3() {
             }
 
             entry<Destination.MainMenu> {
-                MainMenuPage(vm = vm)
+                MainMenuPage(
+                    vm = vm,
+                    onSignOut = {
+                        vm.signOut()
+                        backStack.clear()
+                        backStack += Destination.RegPage
+                    }
+                )
             }
         }
     )
