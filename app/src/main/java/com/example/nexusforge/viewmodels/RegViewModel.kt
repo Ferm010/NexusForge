@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.nexusforge.backend.toRussianMessage
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.userProfileChangeRequest
@@ -77,7 +78,7 @@ class RegViewModel : ViewModel() {
                 auth.signInWithEmailAndPassword(email, enteredPassword).await()
                 onSuccess()
             } catch (e: Exception) {
-                onError(e.message ?: "Неверный пароль")
+                onError(e.toRussianMessage())
             }
         }
     }
@@ -93,7 +94,7 @@ class RegViewModel : ViewModel() {
                 result.user?.updateProfile(profileUpdates)?.await()
                 onSuccess()
             } catch (e: Exception) {
-                onError(e.message ?: "Ошибка регистрации")
+                onError(e.toRussianMessage())
             }
         }
     }
@@ -128,7 +129,7 @@ class RegViewModel : ViewModel() {
                 }
                 onSuccess(isNewUser)
             } catch (e: Exception) {
-                onError(e.message ?: "Ошибка входа через Google")
+                onError(e.toRussianMessage())
             }
         }
     }
