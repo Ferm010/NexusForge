@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -30,6 +31,7 @@ import com.example.nexusforge.viewmodels.RegViewModel
 
 @Composable
 fun RegNamePage(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier, onNavigateToMainMenu: () -> Unit = {}){
+    val context = LocalContext.current
     var name by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
     var registerError by remember { mutableStateOf<String?>(null) }
@@ -89,6 +91,7 @@ fun RegNamePage(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier, o
                 onClick = {
                     vm.userName = name.trim()
                     vm.registerUser(
+                        context = context,
                         onSuccess = onNavigateToMainMenu,
                         onError = { registerError = it }
                     )

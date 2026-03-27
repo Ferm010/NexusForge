@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -35,6 +36,7 @@ fun AuthPasswordPage(
     modifier: Modifier = Modifier,
     onNavigateToMainMenu: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -80,6 +82,7 @@ fun AuthPasswordPage(
             Button(
                 onClick = {
                     vm.signInWithEmail(
+                        context = context,
                         enteredPassword = password,
                         onSuccess = onNavigateToMainMenu,
                         onError = { errorMessage = it }

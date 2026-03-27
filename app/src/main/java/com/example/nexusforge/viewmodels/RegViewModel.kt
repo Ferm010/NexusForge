@@ -1,123 +1,179 @@
 package com.example.nexusforge.viewmodels
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.nexusforge.backend.toRusError
-import com.google.firebase.auth.EmailAuthProvider
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.auth.userProfileChangeRequest
+import com.example.nexusforge.backend.NetworkUtils
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 
 class RegViewModel : ViewModel() {
-    private val auth = FirebaseAuth.getInstance()
-
-    private val emailPattern = Regex(
-        "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[a-z]{2,}$"
-    )
+    
+    private val emailValidator = EmailValidator()
+    private val authRepository = AuthRepository()
+    
+    // UI State
     var email by mutableStateOf("")
-        private set
-    var isError by mutableStateOf(false)
         private set
     var password by mutableStateOf("")
     var userName by mutableStateOf("")
     var isGoogleFlow by mutableStateOf(false)
-
+    
+    var isValidatingEmail by mutableStateOf(false)
+        private set
+    var emailError by mutableStateOf<String?>(null)
+        private set
+    
+    private var validationJob: Job? = null
+    
     init {
-        auth.currentUser?.let { user ->
+        authRepository.currentUser?.let { user ->
             userName = user.displayName ?: ""
         }
     }
-
+    
     val isContinueEnabled: Boolean
-        get() = email.matches(emailPattern)
+        get() = emailValidator.isValidFormat(email) && !isValidatingEmail && emailError == null
 
-    fun onEmailChanged(newEmail: String) {
+    // Email валидация
+    fun onEmailChanged(newEmail: String, context: Context) {
         email = newEmail
-        isError = newEmail.isNotEmpty() && !newEmail.matches(emailPattern)
+        emailError = null
+        
+        validationJob?.cancel()
+        
+        if (emailValidator.isValidFormat(newEmail)) {
+            isValidatingEmail = true
+            validationJob = viewModelScope.launch {
+                when (val result = emailValidator.validate(newEmail, context)) {
+                    is ValidationResult.Success -> {
+                        isValidatingEmail = false
+                        emailError = null
+                    }
+                    is ValidationResult.Error -> {
+                        isValidatingEmail = false
+                        emailError = result.message
+                    }
+                }
+            }
+        } else {
+            isValidatingEmail = false
+        }
     }
 
+    // Навигация
     fun checkEmailAndNavigate(
+        context: Context,
         onExists: () -> Unit,
         onGoogleOnly: () -> Unit,
-        onNotExists: () -> Unit
+        onNotExists: () -> Unit,
+        onError: (String) -> Unit
     ) {
+        if (!NetworkUtils.isNetworkAvailable(context)) {
+            onError("Нет подключения к интернету")
+            return
+        }
+        
         viewModelScope.launch {
-            try {
-                @Suppress("DEPRECATION")
-                val methods = auth.fetchSignInMethodsForEmail(email).await()
-                val list = methods.signInMethods ?: emptyList()
-                when {
-                    list.contains("google.com") && !list.contains(EmailAuthProvider.EMAIL_PASSWORD_SIGN_IN_METHOD) -> onGoogleOnly()
-                    list.isNotEmpty() -> onExists()
-                    else -> onNotExists()
-                }
-            } catch (e: Exception) {
-                // как нового пользователя
-                onNotExists()
+            when (val result = authRepository.checkEmailExists(email)) {
+                is EmailExistsResult.Exists -> onExists()
+                is EmailExistsResult.GoogleOnly -> onGoogleOnly()
+                is EmailExistsResult.NotExists -> onNotExists()
+                is EmailExistsResult.Error -> onError(result.message)
             }
         }
     }
+
+    // Аутентификация
+
+    private var lastAttemptTime = 0L
+    private var attemptCount = 0
+    
     fun signInWithEmail(
+        context: Context,
         enteredPassword: String,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
+        if (!NetworkUtils.isNetworkAvailable(context)) {
+            onError("Нет подключения к интернету")
+            return
+        }
+        
+        // Rate limiting
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastAttemptTime < 3000 && attemptCount >= 3) {
+            onError("Слишком много попыток. Подождите.")
+            return
+        }
+        
         viewModelScope.launch {
-            try {
-                auth.signInWithEmailAndPassword(email, enteredPassword).await()
-                onSuccess()
-            } catch (e: Exception) {
-                onError(e.toRusError())
+            when (val result = authRepository.signInWithEmail(email, enteredPassword)) {
+                is AuthResult.Success -> {
+                    attemptCount = 0
+                    onSuccess()
+                }
+                is AuthResult.Error -> {
+                    attemptCount++
+                    lastAttemptTime = currentTime
+                    onError(result.message)
+                }
             }
         }
     }
-
-    fun registerUser(onSuccess: () -> Unit, onError: (String) -> Unit) {
+    
+    fun registerUser(
+        context: Context,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        if (!NetworkUtils.isNetworkAvailable(context)) {
+            onError("Нет подключения к интернету")
+            return
+        }
+        
         viewModelScope.launch {
-            try {
-                val result = auth.createUserWithEmailAndPassword(email, password).await()
-                val profileUpdates = userProfileChangeRequest { displayName = userName }
-                result.user?.updateProfile(profileUpdates)?.await()
-                onSuccess()
-            } catch (e: Exception) {
-                onError(e.toRusError())
+            when (val result = authRepository.registerUser(email, password, userName)) {
+                is AuthResult.Success -> onSuccess()
+                is AuthResult.Error -> onError(result.message)
             }
         }
     }
-
-
-    fun signOut() {
-        auth.signOut()
-        email = ""
-        password = ""
-        userName = ""
-        isGoogleFlow = false
-    }
-
+    
     fun signInWithGoogle(
+        context: Context,
         idToken: String,
         onSuccess: (isNewUser: Boolean) -> Unit,
         onError: (String) -> Unit
     ) {
+        if (!NetworkUtils.isNetworkAvailable(context)) {
+            onError("Нет подключения к интернету")
+            return
+        }
+        
         viewModelScope.launch {
-            try {
-                val credential = GoogleAuthProvider.getCredential(idToken, null)
-                val result = auth.signInWithCredential(credential).await()
-                val isNewUser = result.additionalUserInfo?.isNewUser ?: false
-                isGoogleFlow = true
-                if (!isNewUser) {
-                    userName = result.user?.displayName ?: ""
+            when (val result = authRepository.signInWithGoogle(idToken)) {
+                is GoogleSignInResult.Success -> {
+                    isGoogleFlow = true
+                    if (!result.isNewUser) {
+                        userName = result.displayName
+                    }
+                    onSuccess(result.isNewUser)
                 }
-                onSuccess(isNewUser)
-            } catch (e: Exception) {
-                onError(e.toRusError())
+                is GoogleSignInResult.Error -> onError(result.message)
             }
         }
+    }
+    
+    fun signOut() {
+        authRepository.signOut()
+        email = ""
+        password = ""
+        userName = ""
+        isGoogleFlow = false
     }
 }

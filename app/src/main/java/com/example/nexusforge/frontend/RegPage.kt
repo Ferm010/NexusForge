@@ -81,16 +81,26 @@ fun RegPageScreen(
             OutlinedTextField(
                 value = vm.email,
                 onValueChange = {
-                    vm.onEmailChanged(it)
+                    vm.onEmailChanged(it, context)
                     emailError = null
                 },
                 label = { Text("Email") },
                 singleLine = true,
-                isError = vm.isError || emailError != null,
+                isError = emailError != null || vm.emailError != null,
                 supportingText = {
                     when {
-                        emailError != null -> Text(text = emailError!!)
-                        vm.isError -> Text(text = "Введите корректный email")
+                        emailError != null -> Text(
+                            text = emailError!!,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        vm.emailError != null -> Text(
+                            text = vm.emailError!!,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        vm.isValidatingEmail -> Text(
+                            text = "Проверка email...",
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
             )
@@ -110,6 +120,7 @@ fun RegPageScreen(
                             val googleIdTokenCredential =
                                 GoogleIdTokenCredential.createFrom(result.credential.data)
                             vm.signInWithGoogle(
+                                context = context,
                                 idToken = googleIdTokenCredential.idToken,
                                 onSuccess = { isNewUser ->
                                     googleSignInError = null
@@ -158,15 +169,17 @@ fun RegPageScreen(
             Button(
                 onClick = {
                     vm.checkEmailAndNavigate(
+                        context = context,
                         onExists = onNavigateToAuthPassword,
                         onGoogleOnly = {
                             emailError = "Этот email зарегистрирован через Google. " +
                                     "Войдите через кнопку «Продолжить через Google»."
                         },
-                        onNotExists = onNavigateToEula
+                        onNotExists = onNavigateToEula,
+                        onError = { emailError = it }
                     )
                 },
-                enabled = vm.isContinueEnabled
+                enabled = vm.isContinueEnabled && !vm.isValidatingEmail
             ) {
                 Text("Продолжить")
             }

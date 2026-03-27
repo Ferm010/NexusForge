@@ -8,9 +8,7 @@ plugins {
 
 android {
     namespace = "com.example.nexusforge"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.nexusforge"
@@ -20,15 +18,28 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        
+        // Хранение ключей в BuildConfig (читается из local.properties)
+        val properties = org.jetbrains.kotlin.konan.properties.Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            properties.load(localPropertiesFile.inputStream())
+        }
+        
+        buildConfigField("String", "WEB_CLIENT_ID", "\"${properties.getProperty("WEB_CLIENT_ID", "")}\"")
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        debug {
+            isMinifyEnabled = false
         }
     }
     compileOptions {
@@ -40,6 +51,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
