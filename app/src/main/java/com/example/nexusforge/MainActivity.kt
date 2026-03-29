@@ -5,17 +5,21 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nexusforge.backend.MyAppNav3
 import com.example.nexusforge.backend.SecurityCheck
-import com.example.nexusforge.frontend.RegNamePage
 import com.example.nexusforge.ui.theme.NexusForgeTheme
+import com.example.nexusforge.viewmodels.ThemeViewModel
 import kotlin.system.exitProcess
 
 class MainActivity : ComponentActivity() {
@@ -32,11 +36,27 @@ class MainActivity : ComponentActivity() {
         
         enableEdgeToEdge()
         setContent {
-            NexusForgeTheme {
-                Surface(modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background) {
-                    //MyApp()
-                    MyAppNav3()
+            val themeViewModel: ThemeViewModel = viewModel()
+            val systemDarkTheme = isSystemInDarkTheme()
+            
+            LaunchedEffect(Unit) {
+                themeViewModel.initTheme(systemDarkTheme)
+            }
+            
+            Crossfade(
+                targetState = themeViewModel.isDarkTheme ?: systemDarkTheme,
+                animationSpec = tween(durationMillis = 400),
+                label = "theme_transition"
+            ) { isDark ->
+                key(isDark) {
+                    NexusForgeTheme(darkTheme = isDark) {
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = MaterialTheme.colorScheme.background
+                        ) {
+                            MyAppNav3(themeViewModel = themeViewModel)
+                        }
+                    }
                 }
             }
         }
@@ -63,21 +83,5 @@ class MainActivity : ComponentActivity() {
         }
         
         return true
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    NexusForgeTheme {
-        Greeting("Android")
     }
 }

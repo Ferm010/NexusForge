@@ -18,7 +18,10 @@ sealed interface Destination : NavKey {
     @Serializable data object FavoritePage : Destination
     @Serializable data object ProfilePage : Destination
     @Serializable data object SettingsPage : Destination
+    @Serializable data object CreateAlert : Destination
+
     /* @Serializable data object ResetPassPage : Destination
+
 
 
 
