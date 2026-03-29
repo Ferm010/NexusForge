@@ -16,7 +16,7 @@ import com.example.nexusforge.frontend.mainmenu.SearchAppBar
 import com.example.nexusforge.viewmodels.RegViewModel
 
 @Composable
-fun ProfilePage(
+fun favoritePage(
     vm: RegViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onProfileClick: () -> Unit = {}
@@ -25,10 +25,10 @@ fun ProfilePage(
         NameAppBar(
             onBackClick = onBackClick,
             onProfileClick = onProfileClick,
-            namePage = "Профиль",
+            namePage = "Избранное",
             userPhotoUrl = vm.userPhotoUrl
         )
-
+        
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -36,7 +36,7 @@ fun ProfilePage(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Профиль",
+                text = "Избранное",
                 style = MaterialTheme.typography.displayMedium
             )
         }

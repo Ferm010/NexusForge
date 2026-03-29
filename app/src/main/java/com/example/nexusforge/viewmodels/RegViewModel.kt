@@ -20,8 +20,14 @@ class RegViewModel : ViewModel() {
     var email by mutableStateOf("")
         private set
     var password by mutableStateOf("")
+    var confirmPassword by mutableStateOf("")
     var userName by mutableStateOf("")
+    var userPhotoUrl by mutableStateOf<String?>(null)
+        private set
     var isGoogleFlow by mutableStateOf(false)
+    
+    // Auth password state
+    var authPassword by mutableStateOf("")
     
     var isValidatingEmail by mutableStateOf(false)
         private set
@@ -33,6 +39,14 @@ class RegViewModel : ViewModel() {
     init {
         authRepository.currentUser?.let { user ->
             userName = user.displayName ?: ""
+            userPhotoUrl = user.photoUrl?.toString()
+        }
+    }
+    
+    fun refreshUserData() {
+        authRepository.currentUser?.let { user ->
+            userName = user.displayName ?: ""
+            userPhotoUrl = user.photoUrl?.toString()
         }
     }
     
@@ -115,6 +129,7 @@ class RegViewModel : ViewModel() {
             when (val result = authRepository.signInWithEmail(email, enteredPassword)) {
                 is AuthResult.Success -> {
                     attemptCount = 0
+                    refreshUserData()
                     onSuccess()
                 }
                 is AuthResult.Error -> {
@@ -138,7 +153,10 @@ class RegViewModel : ViewModel() {
         
         viewModelScope.launch {
             when (val result = authRepository.registerUser(email, password, userName)) {
-                is AuthResult.Success -> onSuccess()
+                is AuthResult.Success -> {
+                    refreshUserData()
+                    onSuccess()
+                }
                 is AuthResult.Error -> onError(result.message)
             }
         }
@@ -162,6 +180,7 @@ class RegViewModel : ViewModel() {
                     if (!result.isNewUser) {
                         userName = result.displayName
                     }
+                    refreshUserData()
                     onSuccess(result.isNewUser)
                 }
                 is GoogleSignInResult.Error -> onError(result.message)
@@ -173,7 +192,10 @@ class RegViewModel : ViewModel() {
         authRepository.signOut()
         email = ""
         password = ""
+        confirmPassword = ""
         userName = ""
+        userPhotoUrl = null
         isGoogleFlow = false
+        authPassword = ""
     }
 }

@@ -37,7 +37,6 @@ fun AuthPasswordPage(
     onNavigateToMainMenu: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -53,9 +52,9 @@ fun AuthPasswordPage(
             )
             Spacer(modifier = Modifier.size(16.dp))
             OutlinedTextField(
-                value = password,
+                value = vm.authPassword,
                 onValueChange = {
-                    password = it
+                    vm.authPassword = it
                     errorMessage = null
                 },
                 label = { Text("Пароль") },
@@ -83,12 +82,12 @@ fun AuthPasswordPage(
                 onClick = {
                     vm.signInWithEmail(
                         context = context,
-                        enteredPassword = password,
+                        enteredPassword = vm.authPassword,
                         onSuccess = onNavigateToMainMenu,
                         onError = { errorMessage = it }
                     )
                 },
-                enabled = password.isNotEmpty()
+                enabled = vm.authPassword.isNotEmpty()
             ) {
                 Text("Войти")
             }

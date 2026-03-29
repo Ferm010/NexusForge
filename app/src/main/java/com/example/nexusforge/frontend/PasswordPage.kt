@@ -31,10 +31,9 @@ import com.example.nexusforge.viewmodels.RegViewModel
 
 @Composable
 fun PasswordPage(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier, onNavigateToRegName: () -> Unit = {}) {
-    var confirmPassword by remember { mutableStateOf("") }
     val isPasswordValid = vm.password.length >= 6
-    val passwordsMatch = vm.password == confirmPassword
-    val canContinue = isPasswordValid && passwordsMatch && confirmPassword.isNotEmpty()
+    val passwordsMatch = vm.password == vm.confirmPassword
+    val canContinue = isPasswordValid && passwordsMatch && vm.confirmPassword.isNotEmpty()
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(
@@ -62,14 +61,14 @@ fun PasswordPage(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier, 
                 }
             )
             OutlinedTextField(
-                value = confirmPassword,
-                onValueChange = { confirmPassword = it },
+                value = vm.confirmPassword,
+                onValueChange = { vm.confirmPassword = it },
                 label = { Text("Подтвердите пароль") },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
-                isError = confirmPassword.isNotEmpty() && !passwordsMatch,
+                isError = vm.confirmPassword.isNotEmpty() && !passwordsMatch,
                 supportingText = {
-                    if (confirmPassword.isNotEmpty() && !passwordsMatch) {
+                    if (vm.confirmPassword.isNotEmpty() && !passwordsMatch) {
                         Text("Пароли не совпадают")
                     }
                 }

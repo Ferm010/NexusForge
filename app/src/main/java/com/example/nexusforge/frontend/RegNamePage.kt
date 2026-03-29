@@ -32,10 +32,8 @@ import com.example.nexusforge.viewmodels.RegViewModel
 @Composable
 fun RegNamePage(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier, onNavigateToMainMenu: () -> Unit = {}){
     val context = LocalContext.current
-    var name by remember { mutableStateOf("") }
-    var isError by remember { mutableStateOf(false) }
     var registerError by remember { mutableStateOf<String?>(null) }
-    val isNameValid = name.trim().length >= 3
+    val isNameValid = vm.userName.trim().length >= 3
 
     Box(
         modifier = modifier.fillMaxSize()
@@ -52,17 +50,16 @@ fun RegNamePage(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier, o
             )
             Spacer(modifier = Modifier.size(16.dp))
             OutlinedTextField(
-                value = name,
+                value = vm.userName,
                 onValueChange = { newValue: String ->
-                    name = newValue
-                    isError = name.isNotEmpty() && !isNameValid
+                    vm.userName = newValue
                     registerError = null
                 },
                 label = { Text("Имя") },
                 singleLine = true,
-                isError = isError,
+                isError = vm.userName.isNotEmpty() && !isNameValid,
                 supportingText = {
-                    if (isError) {
+                    if (vm.userName.isNotEmpty() && !isNameValid) {
                         Text(text = "Введите имя от 3 символов")
                     }
                 }
@@ -89,7 +86,7 @@ fun RegNamePage(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier, o
         ) {
             Button(
                 onClick = {
-                    vm.userName = name.trim()
+                    vm.userName = vm.userName.trim()
                     vm.registerUser(
                         context = context,
                         onSuccess = onNavigateToMainMenu,
