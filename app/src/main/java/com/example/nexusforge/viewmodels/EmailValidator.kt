@@ -2,6 +2,7 @@ package com.example.nexusforge.viewmodels
 
 import android.content.Context
 import android.util.Log
+import com.example.nexusforge.R
 import com.example.nexusforge.backend.NetworkUtils
 import kotlinx.coroutines.delay
 
@@ -22,7 +23,7 @@ class EmailValidator {
 
         // 1. Проверка формата
         if (!isValidFormat(email)) {
-            return ValidationResult.Error("Введите корректный email")
+            return ValidationResult.Error(context.getString(R.string.error_email_invalid))
         }
 
         // 2. Реальная проверка доступа к интернету
@@ -30,7 +31,7 @@ class EmailValidator {
         val hasInternet = NetworkUtils.hasInternetAccess()
         Log.d("EmailValidator", "Интернет: $hasInternet")
         if (!hasInternet) {
-            return ValidationResult.Error("Нет подключения к интернету")
+            return ValidationResult.Error(context.getString(R.string.error_no_internet))
         }
 
         // 3. Проверка существования домена
@@ -38,7 +39,7 @@ class EmailValidator {
         val domainExists = NetworkUtils.checkEmailDomainExists(email)
         Log.d("EmailValidator", "Успешно $domainExists")
         if (!domainExists) {
-            return ValidationResult.Error("Домен не существует. Проверьте правильность email.")
+            return ValidationResult.Error(context.getString(R.string.error_domain_not_exists))
         }
         
         Log.d("EmailValidator", "Успешно")

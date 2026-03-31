@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.nexusforge.R
 import com.example.nexusforge.data.GameVersion
@@ -93,7 +94,7 @@ fun ExpandableFabMenu(
                     ) {
                         item {
                             Text(
-                                text = "Тип проекта",
+                                text = stringResource(R.string.type_project),
                                 style = MaterialTheme.typography.titleMedium,
                                 modifier = Modifier.padding(bottom = 8.dp)
                             )
@@ -101,7 +102,7 @@ fun ExpandableFabMenu(
                         
                         item {
                             FabMenuItem(
-                                text = "Модпаки",
+                                text = stringResource(R.string.modpacks),
                                 isSelected = currentMode == SearchMode.MODPACK,
                                 onClick = {
                                     onModeChange(SearchMode.MODPACK)
@@ -111,7 +112,7 @@ fun ExpandableFabMenu(
                         
                         item {
                             FabMenuItem(
-                                text = "Моды",
+                                text = stringResource(R.string.mods),
                                 isSelected = currentMode == SearchMode.MOD,
                                 onClick = {
                                     onModeChange(SearchMode.MOD)
@@ -125,7 +126,7 @@ fun ExpandableFabMenu(
                         
                         item {
                             Text(
-                                text = "Версия Minecraft",
+                                text = stringResource(R.string.ver_minecraft),
                                 style = MaterialTheme.typography.titleMedium,
                                 modifier = Modifier.padding(bottom = 8.dp)
                             )
@@ -133,7 +134,7 @@ fun ExpandableFabMenu(
                         
                         item {
                             FabMenuItem(
-                                text = "Все версии",
+                                text = stringResource(R.string.all_versions),
                                 isSelected = selectedVersion == null,
                                 onClick = {
                                     onVersionChange(null)
@@ -160,7 +161,7 @@ fun ExpandableFabMenu(
             ) {
                 Icon(
                     painter = painterResource(R.drawable.list),
-                    contentDescription = if (expanded) "Закрыть меню" else "Открыть меню",
+                    contentDescription = if (expanded) "close menu" else "open menu",
                     modifier = Modifier.rotate(rotation)
                 )
             }

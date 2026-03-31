@@ -19,6 +19,7 @@ sealed interface Destination : NavKey {
     @Serializable data object ProfilePage : Destination
     @Serializable data object SettingsPage : Destination
     @Serializable data object TechnicalPage : Destination
+    @Serializable data object LanguagePage : Destination
     @Serializable data object CreateAlert : Destination
     @Serializable data class ProjectDetailsPage(val projectId: String) : Destination
 

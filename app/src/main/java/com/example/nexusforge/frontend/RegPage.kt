@@ -1,7 +1,5 @@
 package com.example.nexusforge.frontend
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,8 +36,8 @@ import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nexusforge.R
 import com.example.nexusforge.backend.WEB_CLIENT_ID
-import com.example.nexusforge.ui.theme.NexusForgeTheme
 import com.example.nexusforge.ui.theme.logo
+import com.example.nexusforge.viewmodels.LanguageViewModel
 import com.example.nexusforge.viewmodels.RegViewModel
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -49,6 +47,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun RegPageScreen(
     vm: RegViewModel = viewModel(),
+    languageViewModel: LanguageViewModel = viewModel(),
     modifier: Modifier = Modifier,
     onNavigateToEula: () -> Unit,
     onNavigateToAuthPassword: () -> Unit,
@@ -56,13 +55,16 @@ fun RegPageScreen(
 ){
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val currentLang = languageViewModel.currentLanguage
     var googleSignInError by remember { mutableStateOf<String?>(null) }
     var emailError by remember { mutableStateOf<String?>(null) }
+    
+    val googleOnlyErrorText = stringResource(R.string.google_only_error)
+    val signInGoogleText = stringResource(R.string.sign_in_google)
 
     Box(
         modifier = modifier.fillMaxSize()
     ) {
-        // 1. Центральный контент (имя приложения, лого, поле ввода, кнопка Google)
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -84,7 +86,7 @@ fun RegPageScreen(
                     vm.onEmailChanged(it, context)
                     emailError = null
                 },
-                label = { Text("Email") },
+                label = { Text(stringResource(R.string.email)) },
                 singleLine = true,
                 isError = emailError != null || vm.emailError != null,
                 supportingText = {
@@ -98,7 +100,7 @@ fun RegPageScreen(
                             color = MaterialTheme.colorScheme.error
                         )
                         vm.isValidatingEmail -> Text(
-                            text = "Проверка email...",
+                            text = stringResource(R.string.checking_email),
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -129,7 +131,6 @@ fun RegPageScreen(
                                 onError = { googleSignInError = it }
                             )
                         } catch (e: GetCredentialException) {
-                            // Пользователь отменил выбор аккаунта или нет доступных аккаунтов
                         }
                     }
                 },
@@ -142,7 +143,7 @@ fun RegPageScreen(
                     modifier = Modifier.size(24.dp)
                 )
                 Text(
-                    "Продолжить через Google",
+                    signInGoogleText,
                     modifier = Modifier.padding(start = 8.dp)
                 )
             }
@@ -156,7 +157,6 @@ fun RegPageScreen(
             }
         }
 
-        // 2. Кнопка "Продолжить" в правом нижнем углу
         Row(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.Bottom,
@@ -172,8 +172,7 @@ fun RegPageScreen(
                         context = context,
                         onExists = onNavigateToAuthPassword,
                         onGoogleOnly = {
-                            emailError = "Этот email зарегистрирован через Google. " +
-                                    "Войдите через кнопку «Продолжить через Google»."
+                            emailError = googleOnlyErrorText
                         },
                         onNotExists = onNavigateToEula,
                         onError = { emailError = it }
@@ -181,11 +180,10 @@ fun RegPageScreen(
                 },
                 enabled = vm.isContinueEnabled && !vm.isValidatingEmail
             ) {
-                Text("Продолжить")
+                Text(stringResource(R.string.continue_btn))
             }
         }
 
-        // 3. Текст "By Ferm" в нижнем центре
         Column(
             verticalArrangement = Arrangement.Bottom,
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -195,7 +193,7 @@ fun RegPageScreen(
                 .align(Alignment.BottomCenter)
         ) {
             Text(
-                text = "By Ferm",
+                text = stringResource(R.string.by_ferm),
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(bottom = 12.dp)
             )

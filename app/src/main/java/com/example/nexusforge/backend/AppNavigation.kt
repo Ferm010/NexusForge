@@ -11,6 +11,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -32,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.entryProvider
@@ -46,9 +48,9 @@ import com.example.nexusforge.frontend.PasswordPage
 import com.example.nexusforge.frontend.ProfilePage
 import com.example.nexusforge.frontend.RegNamePage
 import com.example.nexusforge.frontend.RegPageScreen
-import com.example.nexusforge.frontend.SearchPage
 import com.example.nexusforge.frontend.SettingPage
 import com.example.nexusforge.frontend.TechnicalPage
+import com.example.nexusforge.frontend.LanguagePage
 import com.example.nexusforge.frontend.favoritePage
 import com.example.nexusforge.viewmodels.RegViewModel
 import com.example.nexusforge.viewmodels.ThemeViewModel
@@ -58,6 +60,10 @@ import com.google.firebase.auth.FirebaseAuth
 @Composable
 fun MyAppNav3(themeViewModel: ThemeViewModel) {
     val vm: RegViewModel = viewModel()
+    val languageViewModel: com.example.nexusforge.viewmodels.LanguageViewModel = viewModel()
+    val context = LocalContext.current
+    languageViewModel.initLanguage(context)
+    
     val startDestination: Destination =
         if (FirebaseAuth.getInstance().currentUser != null) Destination.MainMenu
         else Destination.RegPage
@@ -74,6 +80,7 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
             entry<Destination.RegPage> {
                 RegPageScreen(
                     vm = vm,
+                    languageViewModel = languageViewModel,
                     onNavigateToEula = { backStack += Destination.EulaPage },
                     onNavigateToAuthPassword = { backStack += Destination.AuthPassPage },
                     onNavigateToMainMenu = { backStack += Destination.MainMenu }
@@ -97,6 +104,7 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
             entry<Destination.RegPassPage> {
                 PasswordPage(
                     vm = vm,
+                    languageViewModel = languageViewModel,
                     onNavigateToRegName = { backStack += Destination.NameRegPage }
                 )
             }
@@ -104,6 +112,7 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
             entry<Destination.NameRegPage> {
                 RegNamePage(
                     vm = vm,
+                    languageViewModel = languageViewModel,
                     onNavigateToMainMenu = {
                         backStack.clear()
                         backStack += Destination.MainMenu
@@ -114,6 +123,7 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
             entry<Destination.AuthPassPage> {
                 AuthPasswordPage(
                     vm = vm,
+                    languageViewModel = languageViewModel,
                     onNavigateToMainMenu = {
                         backStack.clear()
                         backStack += Destination.MainMenu
@@ -155,7 +165,7 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                     }
                                 },
                                 icon = { Icon(painter = painterResource(R.drawable.search_white,), "Search") },
-                                label = { Text("Поиск") }
+                                label = { Text(text = stringResource(R.string.search)) }
                             )
 
                             // Кнопка: Избранное
@@ -168,7 +178,7 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                     }
                                 },
                                 icon = { Icon(painter = painterResource(R.drawable.bookmark,), "Search") },
-                                label = { Text("Избранное") }
+                                label = { Text(text = stringResource(R.string.favorites))}
                             )
 
                             // Кнопка: создать
@@ -178,7 +188,7 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                     showCreateAlert = true
                                 },
                                 icon = { Icon(painter = painterResource(R.drawable.add,), "Search") },
-                                label = { Text("Создать") }
+                                label = { Text(text = stringResource(R.string.create)) }
                             )
 
                             // Кнопка: Профиль
@@ -191,7 +201,7 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                     }
                                 },
                                 icon = { Icon(painter = painterResource(R.drawable.person,), "Search") },
-                                label = { Text("Профиль") }
+                                label = { Text(text = stringResource(R.string.profile)) }
                             )
                             // Кнопка: Настройки
                             NavigationBarItem(
@@ -203,7 +213,7 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                     }
                                 },
                                 icon = { Icon(painter = painterResource(R.drawable.settings,), "Search") },
-                                label = { Text("Настройки") }
+                                label = { Text(text = stringResource(R.string.settings)) }
                             )
                         }
                     }
@@ -254,11 +264,19 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                 )
                             }
                             entry<Destination.ProfilePage> {
-                                ProfilePage()
+                                ProfilePage(
+                                    onSignOut = {
+                                        vm.signOut()
+                                        backStack.clear()
+                                        backStack += Destination.RegPage
+                                    },
+                                    vm = vm
+                                )
                             }
                             entry<Destination.SettingsPage> {
                                 SettingPage(
                                     themeViewModel = themeViewModel,
+                                    languageViewModel = languageViewModel,
                                     onBackClick = {
                                         tabBackStack.clear()
                                         tabBackStack += Destination.MainMenu
@@ -268,12 +286,28 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                     },
                                     onTechnicalSupportClick = {
                                         tabBackStack += Destination.TechnicalPage
+                                    },
+                                    onLanguageClick = {
+                                        tabBackStack += Destination.LanguagePage
                                     }
                                 )
                             }
                             entry<Destination.TechnicalPage> {
                                 TechnicalPage(
                                     vm = vm,
+                                    languageViewModel = languageViewModel,
+                                    onBackClick = {
+                                        tabBackStack.removeLastOrNull()
+                                    },
+                                    onProfileClick = {
+                                        tabBackStack += Destination.ProfilePage
+                                    }
+                                )
+                            }
+                            entry<Destination.LanguagePage> {
+                                LanguagePage(
+                                    vm = vm,
+                                    languageViewModel = languageViewModel,
                                     onBackClick = {
                                         tabBackStack.removeLastOrNull()
                                     },
@@ -309,13 +343,13 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                                             ) {
                                                 Text(
-                                                    text = projectDetailsViewModel.errorMessage ?: "Ошибка",
+                                                    text = projectDetailsViewModel.errorMessage ?: stringResource(R.string.error_generic),
                                                     color = MaterialTheme.colorScheme.error
                                                 )
                                                 Button(onClick = { 
                                                     projectDetailsViewModel.loadProject(projectId)
                                                 }) {
-                                                    Text("Повторить")
+                                                    Text(text = stringResource(R.string.retry))
                                                 }
                                             }
                                         }

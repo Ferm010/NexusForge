@@ -1,28 +1,32 @@
 package com.example.nexusforge.backend
-import com.google.firebase.auth.FirebaseAuthException
-fun Exception.toRusError(): String {
-    if (this is FirebaseAuthException) {
-        return when (errorCode) {
-            "ERROR_INVALID_EMAIL" -> "Некорректный формат email-адреса."
-            "ERROR_WRONG_PASSWORD",
-            "ERROR_INVALID_CREDENTIAL" -> "Неверный пароль. Попробуйте ещё раз."
-            "ERROR_WEAK_PASSWORD" -> "Пароль слишком простой. Используйте не менее 6 символов."
-            "ERROR_USER_NOT_FOUND" -> "Пользователь с таким email не найден."
-            "ERROR_USER_DISABLED" -> "Этот аккаунт заблокирован. Обратитесь в поддержку."
-            "ERROR_USER_TOKEN_EXPIRED",
-            "ERROR_INVALID_USER_TOKEN" -> "Сессия истекла. Войдите заново."
-            "ERROR_REQUIRES_RECENT_LOGIN" -> "Для этого действия нужно войти заново."
-            "ERROR_EMAIL_ALREADY_IN_USE" -> "Этот email уже зарегистрирован."
-            "ERROR_OPERATION_NOT_ALLOWED" -> "Данный способ входа не разрешён. Обратитесь к администратору."
-            "ERROR_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL" ->
-                "Аккаунт уже существует, но был создан другим способом входа."
-            "ERROR_CREDENTIAL_ALREADY_IN_USE" -> "Этот аккаунт Google уже привязан."
-            "ERROR_NETWORK_REQUEST_FAILED" ->
-                "Нет соединения с интернетом. Проверьте сеть и попробуйте снова."
-            "ERROR_TOO_MANY_REQUESTS" ->
-                "Слишком много попыток. Подождите немного и попробуйте снова."
-            else -> "Произошла ошибка авторизации. Попробуйте позже."
-        }
+
+import android.content.Context
+import com.example.nexusforge.R
+
+private val errorMessagesMap = mapOf(
+    "ERROR_INVALID_EMAIL" to R.string.error_invalid_email,
+    "ERROR_WRONG_PASSWORD" to R.string.error_wrong_password,
+    "ERROR_INVALID_CREDENTIAL" to R.string.error_wrong_password,
+    "ERROR_WEAK_PASSWORD" to R.string.error_weak_password,
+    "ERROR_USER_NOT_FOUND" to R.string.error_user_not_found,
+    "ERROR_USER_DISABLED" to R.string.error_user_disabled,
+    "ERROR_USER_TOKEN_EXPIRED" to R.string.error_token_expired,
+    "ERROR_INVALID_USER_TOKEN" to R.string.error_token_expired,
+    "ERROR_REQUIRES_RECENT_LOGIN" to R.string.error_requires_recent_login,
+    "ERROR_EMAIL_ALREADY_IN_USE" to R.string.error_email_already_in_use,
+    "ERROR_OPERATION_NOT_ALLOWED" to R.string.error_operation_not_allowed,
+    "ERROR_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL" to R.string.error_account_exists_different_credential,
+    "ERROR_CREDENTIAL_ALREADY_IN_USE" to R.string.error_credential_already_in_use,
+    "ERROR_NETWORK_REQUEST_FAILED" to R.string.error_network_failed,
+    "ERROR_TOO_MANY_REQUESTS" to R.string.error_too_many_requests,
+    "ERROR_GENERIC" to R.string.error_generic
+)
+
+fun errorCodeToString(context: Context, errorCode: String): String {
+    val resId = errorMessagesMap[errorCode]
+    return if (resId != null) {
+        context.getString(resId)
+    } else {
+        context.getString(R.string.error_authorization)
     }
-    return "Произошла ошибка. Попробуйте позже."
 }

@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nexusforge.R
@@ -63,7 +64,7 @@ fun favoritePage(
             NameAppBar(
                 onBackClick = onBackClick,
                 onProfileClick = onProfileClick,
-                namePage = if (showCustomModpacks) "Пользовательские сборки" else "Избранное",
+                namePage = if (showCustomModpacks) stringResource(R.string.custom_modpack) else stringResource(R.string.favorites),
                 userPhotoUrl = vm.userPhotoUrl
             )
             
@@ -91,7 +92,7 @@ fun favoritePage(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Нет избранных проектов",
+                            text = stringResource(R.string.not_favorite_modpacks),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -203,13 +204,13 @@ fun FavoritesFabMenu(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "Сборки",
+                            text = stringResource(R.string.modpacks),
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                         
                         FabMenuItem(
-                            text = "Обычные сборки",
+                            text = stringResource(R.string.default_modpack),
                             isSelected = !showCustomModpacks,
                             onClick = {
                                 onModeChange(false)
@@ -218,7 +219,7 @@ fun FavoritesFabMenu(
                         )
                         
                         FabMenuItem(
-                            text = "Пользовательские сборки",
+                            text = stringResource(R.string.custom_modpack),
                             isSelected = showCustomModpacks,
                             onClick = {
                                 onModeChange(true)
@@ -235,7 +236,7 @@ fun FavoritesFabMenu(
             ) {
                 Icon(
                     painter = painterResource(R.drawable.list),
-                    contentDescription = if (expanded) "Закрыть меню" else "Открыть меню",
+                    contentDescription = if (expanded) "Close menu" else "Open menu",
                     modifier = Modifier.rotate(rotation)
                 )
             }
@@ -272,12 +273,12 @@ fun CustomModpacksList(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "Нет пользовательских сборок",
+                    text = stringResource(R.string.zero_modpacks),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "Создайте свою первую сборку",
+                    text = stringResource(R.string.zero_custom_modpacks),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

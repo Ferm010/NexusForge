@@ -1,5 +1,6 @@
 package com.example.nexusforge.frontend.mainmenu
 
+import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,12 +10,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.nexusforge.R
 import com.example.nexusforge.data.ModrinthProject
 import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 @Composable
@@ -23,6 +26,8 @@ fun ProjectCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -35,7 +40,6 @@ fun ProjectCard(
                 .padding(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Иконка проекта
             if (project.iconUrl != null) {
                 AsyncImage(
                     model = project.iconUrl,
@@ -62,7 +66,6 @@ fun ProjectCard(
                 }
             }
             
-            // Информация о проекте
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -82,13 +85,12 @@ fun ProjectCard(
                     overflow = TextOverflow.Ellipsis
                 )
                 
-                // Строка 1: Автор, загрузки, версия
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Автор: ${project.author}",
+                        text = "${stringResource(R.string.author)}: ${project.author}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -120,13 +122,12 @@ fun ProjectCard(
                     }
                 }
                 
-                // Строка 2: Загружено и Обновлено в 2 столбца
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "Загружено: ${formatDate(project.dateCreated)}",
+                        text = "${stringResource(R.string.downloads)}: ${formatDate(context, project.dateCreated)}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -138,7 +139,7 @@ fun ProjectCard(
                     )
                     
                     Text(
-                        text = "Обновлено: ${formatDate(project.dateModified)}",
+                        text = "${stringResource(R.string.last_updates)}: ${formatDate(context, project.dateModified)}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -156,26 +157,30 @@ private fun formatDownloads(downloads: Int): String {
     }
 }
 
-private fun formatDate(dateString: String): String {
-    return try {
+@Composable
+private fun formatDate(context: Context, dateString: String): String {
+    val daysBetween = try {
         val date = ZonedDateTime.parse(dateString)
         val now = ZonedDateTime.now()
-        val daysBetween = ChronoUnit.DAYS.between(date, now)
-        
-        when {
-            daysBetween == 0L -> "Сегодня"
-            daysBetween == 1L -> "Вчера"
-            daysBetween < 7 -> "$daysBetween дн. назад"
-            daysBetween < 30 -> "${daysBetween / 7} нед. назад"
-            daysBetween < 365 -> "${daysBetween / 30} мес. назад"
-            else -> "${daysBetween / 365} г. назад"
-        }
+        ChronoUnit.DAYS.between(date, now)
     } catch (e: Exception) {
-        dateString.take(10) // Возвращаем дату в формате YYYY-MM-DD
+        return dateString.take(10)
+    }
+    
+    return when (daysBetween) {
+        0L -> stringResource(R.string.today)
+        1L -> stringResource(R.string.yesterday)
+        else -> {
+            when {
+                daysBetween < 7 -> "$daysBetween ${stringResource(R.string.days_ago)}"
+                daysBetween < 30 -> "${daysBetween / 7} ${stringResource(R.string.weeks_ago)}"
+                daysBetween < 365 -> "${daysBetween / 30} ${stringResource(R.string.month_ago)}"
+                else -> "${daysBetween / 365} ${stringResource(R.string.years_ago)}"
+            }
+        }
     }
 }
 
 private fun getLatestVersion(versions: List<String>): String {
-    // Берем последнюю версию из списка (обычно они отсортированы от новых к старым)
     return versions.firstOrNull() ?: "N/A"
 }

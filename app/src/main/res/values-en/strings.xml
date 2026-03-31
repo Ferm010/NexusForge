@@ -1,0 +1,183 @@
+<resources>
+    <!-- App -->
+    <string name="app_name">NexusForge</string>
+    <string name="upname">Nexus</string>
+    <string name="downname">Forge</string>
+    <string name="by_ferm">Developed by Ferm</string>
+
+    <!-- Navigation -->
+    <string name="back">Back</string>
+    <string name="search">Search</string>
+    <string name="favorites">Favorites</string>
+    <string name="create">Create</string>
+    <string name="profile">Profile</string>
+    <string name="settings">Settings</string>
+
+    <!-- Auth -->
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    
+    <!-- Error Messages -->
+    <string name="error_invalid_email">Invalid email address format.</string>
+    <string name="error_email_invalid">Enter a valid email</string>
+    <string name="error_no_internet">No internet connection</string>
+    <string name="error_domain_not_exists">Domain does not exist. Check your email.</string>
+    <string name="error_wrong_password">Incorrect password. Please try again.</string>
+    <string name="error_weak_password">Password is too weak. Use at least 6 characters.</string>
+    <string name="error_user_not_found">No user found with this email.</string>
+    <string name="error_user_disabled">This account has been disabled. Contact support.</string>
+    <string name="error_token_expired">Session expired. Please sign in again.</string>
+    <string name="error_requires_recent_login">You need to sign in again for this action.</string>
+    <string name="error_email_already_in_use">This email is already registered.</string>
+    <string name="error_operation_not_allowed">This sign-in method is not allowed. Contact administrator.</string>
+    <string name="error_account_exists_different_credential">Account already exists but was created with a different sign-in method.</string>
+    <string name="error_credential_already_in_use">This Google account is already linked.</string>
+    <string name="error_network_failed">No internet connection. Check your network and try again.</string>
+    <string name="error_too_many_requests">Too many attempts. Please wait and try again.</string>
+    <string name="error_generic">An error occurred. Please try again later.</string>
+    <string name="error_authorization">Authorization error. Please try again later.</string>
+    <string name="confirm_password">Confirm password</string>
+    <string name="continue_btn">Continue</string>
+    <string name="sign_in">Sign In</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="sign_in_google">Continue with Google</string>
+    <string name="enter_password">Enter password</string>
+    <string name="create_password">Create password</string>
+    <string name="create_name">Choose a name</string>
+    <string name="name">Name</string>
+    <string name="password_hint">Password must be at least 6 characters</string>
+    <string name="passwords_dont_match">Passwords do not match</string>
+    <string name="name_hint">Enter name with 3+ characters</string>
+    <string name="checking_email">Checking email…</string>
+    <string name="google_only_error">This email is registered via Google. Sign in using the \"Continue with Google\" button.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="themes">Themes</string>
+    <string name="support">Support</string>
+    <string name="technical_support">Technical Support</string>
+    <string name="change_language">Change Language</string>
+    <string name="app_version">App Version</string>
+    <string name="dark_theme">Dark theme</string>
+    <string name="light_theme">Light theme</string>
+
+    <!-- Language -->
+    <string name="language_title">Change Language</string>
+    <string name="choose_language">Choose language</string>
+    <string name="lang_russian">Русский</string>
+    <string name="lang_english">English</string>
+    <string name="lang_german">Deutsch</string>
+    <string name="lang_spanish">Español</string>
+    <string name="lang_french">Français</string>
+
+    <!-- Technical Support -->
+    <string name="tech_support_title">Technical Support</string>
+    <string name="contacts">Support Contacts</string>
+    <string name="telegram">Telegram</string>
+    <string name="vk">VK</string>
+    <string name="discord">Discord</string>
+    <string name="github">GitHub</string>
+    <string name="working_hours">Working Hours</string>
+    <string name="working_hours_text">Mon-Fri: 9:00 - 18:00 (MSK)</string>
+    <string name="faq">Frequently Asked Questions</string>
+    <string name="faq_create_modpack">How to create a modpack?</string>
+    <string name="faq_create_modpack_answer">Press the "Create" button in the bottom navigation bar and select "Create modpack".</string>
+    <string name="faq_add_favorite">How to add a project to favorites?</string>
+    <string name="faq_add_favorite_answer">Open the project page and tap the bookmark icon in the top right corner.</string>
+    <string name="faq_change_theme">How to change the app theme?</string>
+    <string name="faq_change_theme_answer">Go to "Settings" and tap the theme icon to switch between light and dark theme.</string>
+    <string name="social_networks">Social networks for feedback</string>
+
+    <!-- Main Menu -->
+    <string name="featured_projects">Featured Projects</string>
+    <string name="search_projects">Search projects…</string>
+    <string name="no_results">No results found</string>
+    <string name="loading">Loading…</string>
+    <string name="error_loading">Error loading</string>
+    <string name="retry">Retry</string>
+    <string name="filters">Filters</string>
+    <string name="sort_by">Sort by</string>
+    <string name="apply">Apply</string>
+    <string name="reset">Reset</string>
+    <string name="all_versions">All versions</string>
+    <string name="modpacks">Modpacks</string>
+    <string name="mods">Mods</string>
+    <string name="plugins">Plugins</string>
+
+    <!-- Project Details -->
+    <string name="download">Download</string>
+    <string name="open_in_browser">Open in browser</string>
+    <string name="add_to_favorites">Add to favorites</string>
+    <string name="remove_from_favorites">Remove from favorites</string>
+    <string name="project_info">Project info</string>
+    <string name="categories">Categories</string>
+    <string name="versions">Versions</string>
+    <string name="stats">Stats</string>
+    <string name="downloads">Downloads</string>
+    <string name="followers">Followers</string>
+    <string name="changelog">Changelog</string>
+
+    <!-- Profile -->
+    <string name="my_projects">My Projects</string>
+    <string name="settings_profile">Profile Settings</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="change_data">Change Data</string>
+    <string name="delete_account">Delete Account</string>
+    <string name="sign_out_account">Sign Out</string>
+    <string name="no_username">No name</string>
+    <string name="change_data_title">Change Data</string>
+    <string name="new_name">New name</string>
+    <string name="new_email">New email</string>
+    <string name="current_password">Current password</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="google_account_error">Function not available for Google account</string>
+    <string name="confirm_delete_account">Confirm account deletion</string>
+    <string name="account_deleted">Account deleted</string>
+    <string name="data_updated">Data updated</string>
+    <string name="confirm_sign_out">Confirm sign out</string>
+    <string name="sign_out_message">Are you sure you want to sign out?</string>
+
+    <!-- Create -->
+    <string name="create_modpack">Create Modpack</string>
+    <string name="create_template">Create Template</string>
+    <string name="select_type">Select Type</string>
+
+    <!-- Favorites -->
+    <string name="your_favorites">Your Favorites</string>
+    <string name="no_favorites">No favorite projects</string>
+    <string name="zero_modpacks">Add the first modpacks</string>
+    <string name="zero_custom_modpacks">Create your first build by clicking on the \'Create\' button.</string>
+    <string name="custom_modpack">Custom modpacks</string>
+    <string name="default_modpack">Default modpacks</string>
+    <string name="not_favorite_modpacks">Not favorite modpacks</string>
+    <string name="eula_accept">Accept</string>
+    <string name="eula">EULA</string>
+    <string name="select_dialog">Select</string>
+    <string name="sample">Sample</string>
+    <string name="author">Author</string>
+    <string name="subscribers">Subscribers</string>
+    <string name="create_at">Create date</string>
+    <string name="last_updates">Last updates</string>
+    <string name="info">Info</string>
+    <string name="tags">Tags</string>
+    <string name="ver_minecraft">Supported Minecraft versions</string>
+    <string name="verisons">Versions</string>
+    <string name="open_modpack">Open in Modrinth</string>
+    <string name="button_download">Download</string>
+    <string name="searchbar">Search modpacks or mods</string>
+    <string name="today">Today</string>
+    <string name="yesterday">Yesterday</string>
+    <string name="days_ago">d. ago</string>
+    <string name="weeks_ago">w. ago</string>
+    <string name="month_ago">mo. ago</string>
+    <string name="years_ago">y. ago</string>
+    <string name="modpacks_today">Modpacks today</string>
+    <string name="mods_today">Mods today</string>
+    <string name="found">Found</string>
+    <string name="filter">Filter</string>
+    <string name="popular">Popular</string>
+    <string name="newest">Newest</string>
+    <string name="type_project">Project Type</string>
+</resources>

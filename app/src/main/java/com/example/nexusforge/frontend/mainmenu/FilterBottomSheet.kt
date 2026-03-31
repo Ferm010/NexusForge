@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.nexusforge.R
 import com.example.nexusforge.viewmodels.SortOption
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,7 +28,7 @@ fun FilterBottomSheet(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Сортировка",
+                text = stringResource(R.string.filter),
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -46,7 +48,7 @@ fun FilterBottomSheet(
                             onSortChange(SortOption.RELEVANCE)
                             onDismiss()
                         },
-                        label = { Text("Сначала популярные") },
+                        label = { Text(text = stringResource(R.string.popular)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     
@@ -56,7 +58,7 @@ fun FilterBottomSheet(
                             onSortChange(SortOption.NEWEST)
                             onDismiss()
                         },
-                        label = { Text("Новые") },
+                        label = { Text(text = stringResource(R.string.newest)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -72,17 +74,16 @@ fun FilterBottomSheet(
                             onSortChange(SortOption.DOWNLOADS_DESC)
                             onDismiss()
                         },
-                        label = { Text("По загрузкам ↓") },
+                        label = { Text(text = stringResource(R.string.downloads) + "↓") },
                         modifier = Modifier.fillMaxWidth()
                     )
-                    
                     FilterChip(
                         selected = currentSort == SortOption.DOWNLOADS_ASC,
                         onClick = {
                             onSortChange(SortOption.DOWNLOADS_ASC)
                             onDismiss()
                         },
-                        label = { Text("По загрузкам ↑") },
+                        label = { Text(text = stringResource(R.string.downloads) + "↑") },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }

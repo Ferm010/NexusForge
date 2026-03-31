@@ -1,5 +1,183 @@
 <resources>
+    <!-- App -->
     <string name="app_name">NexusForge</string>
     <string name="upname">Nexus</string>
     <string name="downname">Forge</string>
+    <string name="by_ferm">Разработал Ferm</string>
+
+    <!-- Navigation -->
+    <string name="back">Назад</string>
+    <string name="search">Поиск</string>
+    <string name="favorites">Избранное</string>
+    <string name="create">Создать</string>
+    <string name="profile">Профиль</string>
+    <string name="settings">Настройки</string>
+
+    <!-- Auth -->
+    <string name="email">Email</string>
+    
+    <!-- Error Messages -->
+    <string name="error_invalid_email">Некорректный формат email-адреса.</string>
+    <string name="error_email_invalid">Введите корректный email</string>
+    <string name="error_no_internet">Нет подключения к интернету</string>
+    <string name="error_domain_not_exists">Домен не существует. Проверьте правильность email.</string>
+    <string name="error_wrong_password">Неверный пароль. Попробуйте ещё раз.</string>
+    <string name="error_weak_password">Пароль слишком простой. Используйте не менее 6 символов.</string>
+    <string name="error_user_not_found">Пользователь с таким email не найден.</string>
+    <string name="error_user_disabled">Этот аккаунт заблокирован. Обратитесь в поддержку.</string>
+    <string name="error_token_expired">Сессия истекла. Войдите заново.</string>
+    <string name="error_requires_recent_login">Для этого действия нужно войти заново.</string>
+    <string name="error_email_already_in_use">Этот email уже зарегистрирован.</string>
+    <string name="error_operation_not_allowed">Данный способ входа не разрешён. Обратитесь к администратору.</string>
+    <string name="error_account_exists_different_credential">Аккаунт уже существует, но был создан другим способом входа.</string>
+    <string name="error_credential_already_in_use">Этот аккаунт Google уже привязан.</string>
+    <string name="error_network_failed">Нет соединения с интернетом. Проверьте сеть и попробуйте снова.</string>
+    <string name="error_too_many_requests">Слишком много попыток. Подождите немного и попробуйте снова.</string>
+    <string name="error_generic">Произошла ошибка. Попробуйте позже.</string>
+    <string name="error_authorization">Произошла ошибка авторизации. Попробуйте позже.</string>
+    <string name="password">Пароль</string>
+    <string name="confirm_password">Подтвердите пароль</string>
+    <string name="continue_btn">Продолжить</string>
+    <string name="sign_in">Войти</string>
+    <string name="sign_up">Зарегистристрироваться</string>
+    <string name="sign_out">Выйти</string>
+    <string name="sign_in_google">Продолжить через Google</string>
+    <string name="enter_password">Введите пароль</string>
+    <string name="create_password">Создайте пароль</string>
+    <string name="create_name">Придумайте имя</string>
+    <string name="name">Имя</string>
+    <string name="password_hint">Пароль должен быть не менее 6 символов</string>
+    <string name="passwords_dont_match">Пароли не совпадают</string>
+    <string name="name_hint">Введите имя от 3 символов</string>
+    <string name="checking_email">Проверка email…</string>
+    <string name="google_only_error">Этот email зарегистрирован через Google. Войдите через кнопку «Продолжить через Google».</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Настройки</string>
+    <string name="themes">Темы</string>
+    <string name="support">Поддержка</string>
+    <string name="technical_support">Техническая поддержка</string>
+    <string name="change_language">Смена языка</string>
+    <string name="app_version">Версия приложения</string>
+    <string name="dark_theme">Тёмная тема</string>
+    <string name="light_theme">Светлая тема</string>
+
+    <!-- Language -->
+    <string name="language_title">Смена языка</string>
+    <string name="choose_language">Выберите язык</string>
+    <string name="lang_russian">Русский</string>
+    <string name="lang_english">English</string>
+    <string name="lang_german">Deutsch</string>
+    <string name="lang_spanish">Español</string>
+    <string name="lang_french">Français</string>
+
+    <!-- Technical Support -->
+    <string name="tech_support_title">Техническая поддержка</string>
+    <string name="contacts">Контакты поддержки</string>
+    <string name="telegram">Telegram</string>
+    <string name="vk">VK</string>
+    <string name="discord">Discord</string>
+    <string name="github">GitHub</string>
+    <string name="working_hours">Часы работы</string>
+    <string name="working_hours_text">Пн-Пт: 9:00 - 18:00 (МСК)</string>
+    <string name="faq">Часто задаваемые вопросы</string>
+    <string name="faq_create_modpack">Как создать модпак?</string>
+    <string name="faq_create_modpack_answer">Нажмите на кнопку «Создать» в нижней панели навигации и выберите «Создать модпак».</string>
+    <string name="faq_add_favorite">Как добавить проект в избранное?</string>
+    <string name="faq_add_favorite_answer">Откройте страницу проекта и нажмите на иконку закладки в правом верхнем углу.</string>
+    <string name="faq_change_theme">Как изменить тему приложения?</string>
+    <string name="faq_change_theme_answer">Перейдите в раздел «Настройки» и нажмите на иконку темы для переключения между светлой и тёмной темой.</string>
+    <string name="social_networks">Социальные сети для обратной связи</string>
+
+    <!-- Main Menu -->
+    <string name="featured_projects">Рекомендуемые проекты</string>
+    <string name="search_projects">Поиск проектов…</string>
+    <string name="no_results">Ничего не найдено</string>
+    <string name="loading">Загрузка…</string>
+    <string name="error_loading">Ошибка загрузки</string>
+    <string name="retry">Повторить</string>
+    <string name="filters">Фильтры</string>
+    <string name="sort_by">Сортировка</string>
+    <string name="apply">Применить</string>
+    <string name="reset">Сбросить</string>
+    <string name="all_versions">Все версии</string>
+    <string name="modpacks">Модпаки</string>
+    <string name="mods">Моды</string>
+    <string name="plugins">Плагины</string>
+
+    <!-- Project Details -->
+    <string name="download">Скачать</string>
+    <string name="open_in_browser">Открыть в браузере</string>
+    <string name="add_to_favorites">Добавить в избранное</string>
+    <string name="remove_from_favorites">Удалить из избранного</string>
+    <string name="project_info">Информация о проекте</string>
+    <string name="categories">Категории</string>
+    <string name="versions">Версии</string>
+    <string name="stats">Статистика</string>
+    <string name="downloads">Загрузок</string>
+    <string name="followers">Подписчиков</string>
+    <string name="changelog">Список изменений</string>
+
+    <!-- Profile -->
+    <string name="my_projects">Мои проекты</string>
+    <string name="settings_profile">Настройки профиля</string>
+    <string name="edit_profile">Редактировать профиль</string>
+    <string name="change_data">Изменить данные</string>
+    <string name="delete_account">Удалить аккаунт</string>
+    <string name="sign_out_account">Выйти из аккаунта</string>
+    <string name="no_username">Без имени</string>
+    <string name="change_data_title">Изменение данных</string>
+    <string name="new_name">Новое имя</string>
+    <string name="new_email">Новый email</string>
+    <string name="current_password">Текущий пароль</string>
+    <string name="save">Сохранить</string>
+    <string name="cancel">Отмена</string>
+    <string name="google_account_error">Функция недоступна для аккаунта Google</string>
+    <string name="confirm_delete_account">Подтвердите удаление аккаунта</string>
+    <string name="account_deleted">Аккаунт удалён</string>
+    <string name="data_updated">Данные обновлены</string>
+    <string name="confirm_sign_out">Подтвердите выход</string>
+    <string name="sign_out_message">Вы точно хотите выйти из аккаунта?</string>
+
+    <!-- Create -->
+    <string name="create_modpack">Создать модпак</string>
+    <string name="create_template">Создать шаблон</string>
+    <string name="select_type">Выберите тип</string>
+
+    <!-- Favorites -->
+    <string name="your_favorites">Ваше избранное</string>
+    <string name="no_favorites">Нет избранных проектов</string>
+    <string name="zero_modpacks">Добавьте первую сборку</string>
+    <string name="zero_custom_modpacks">Создайте первую сборку свою кнопку нажав на \'Создать\'</string>
+    <string name="custom_modpack">Пользовательские сборки</string>
+    <string name="default_modpack">Обычные сборки</string>
+    <string name="not_favorite_modpacks">Нет избранных сборок</string>
+    <string name="eula_accept">Принять</string>
+    <string name="eula">Пользовательское соглашение</string>
+    <string name="select_dialog">Что вы хотите создать?</string>
+    <string name="sample">Шаблон</string>
+    <string name="author">Автор</string>
+    <string name="subscribers">Подписчиков</string>
+    <string name="create_at">Дата создания</string>
+    <string name="last_updates">Последнее обновление</string>
+    <string name="info">Описание</string>
+    <string name="tags">Теги</string>
+    <string name="ver_minecraft">Поддерживаемые версии Minecraft</string>
+    <string name="verisons">Версии</string>
+    <string name="open_modpack">Открыть на Modrinth</string>
+    <string name="button_download">Скачать</string>
+    <string name="searchbar">Найти сборку или мод</string>
+    <string name="today">Сегодня</string>
+    <string name="yesterday">Вчера</string>
+    <string name="days_ago">дн.</string>
+    <string name="weeks_ago">нед.</string>
+    <string name="month_ago">мес.</string>
+    <string name="years_ago">г.</string>
+    <string name="modpacks_today">Сборки дня</string>
+    <string name="mods_today">Моды дня</string>
+    <string name="found">Найдена</string>
+    <string name="filter">Фильтр</string>
+    <string name="popular">Сначала популярные</string>
+    <string name="newest">Новые</string>
+    <string name="type_project">Тип проекта</string>
 </resources>

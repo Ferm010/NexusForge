@@ -9,9 +9,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.nexusforge.R
 import com.example.nexusforge.backend.EulaType
 import com.example.nexusforge.backend.parseEulaText
 import com.example.nexusforge.ui.theme.AppIcon
@@ -31,7 +33,7 @@ fun EulaScreenContainer(rawEulaText: String, onNavigateBack: () -> Unit, onAccep
         topBar = {
             TopAppBar(
                 title = {
-                    Text("Пользовательское соглашение")
+                    Text(text = stringResource(R.string.eula))
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) { AppIcon(
@@ -96,7 +98,7 @@ fun EulaScreenContainer(rawEulaText: String, onNavigateBack: () -> Unit, onAccep
                     modifier = Modifier
                         .padding(bottom = 16.dp)
                 ) {
-                    Text("Принять соглашение")
+                    Text(text = stringResource(R.string.eula_accept))
                 }
             }
         }

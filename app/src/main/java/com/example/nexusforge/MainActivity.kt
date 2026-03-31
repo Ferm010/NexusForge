@@ -14,8 +14,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.nexusforge.backend.LocaleHelper
+import com.example.nexusforge.backend.LocaleHelper.onAttach
 import com.example.nexusforge.backend.MyAppNav3
 import com.example.nexusforge.backend.SecurityCheck
 import com.example.nexusforge.ui.theme.NexusForgeTheme
@@ -23,8 +28,15 @@ import com.example.nexusforge.viewmodels.ThemeViewModel
 import kotlin.system.exitProcess
 
 class MainActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(onAttach(newBase))
+    }
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Применяем сохранённый язык
+        LocaleHelper.applyLocale(this)
         
         // Проверка безопасности при запуске
         if (!performSecurityChecks()) {

@@ -23,14 +23,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.nexusforge.R
 import com.example.nexusforge.ui.theme.logo
+import com.example.nexusforge.viewmodels.LanguageViewModel
 import com.example.nexusforge.viewmodels.RegViewModel
 
 @Composable
-fun RegNamePage(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier, onNavigateToMainMenu: () -> Unit = {}){
+fun RegNamePage(
+    vm: RegViewModel = viewModel(),
+    languageViewModel: LanguageViewModel = viewModel(),
+    modifier: Modifier = Modifier, 
+    onNavigateToMainMenu: () -> Unit = {}
+){
     val context = LocalContext.current
     var registerError by remember { mutableStateOf<String?>(null) }
     val isNameValid = vm.userName.trim().length >= 3
@@ -45,7 +53,7 @@ fun RegNamePage(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier, o
         ) {
             logo()
             Text(
-                text = "Придумайте имя",
+                text = stringResource(R.string.create_name),
                 style = MaterialTheme.typography.headlineLarge,
             )
             Spacer(modifier = Modifier.size(16.dp))
@@ -55,12 +63,12 @@ fun RegNamePage(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier, o
                     vm.userName = newValue
                     registerError = null
                 },
-                label = { Text("Имя") },
+                label = { Text(stringResource(R.string.name)) },
                 singleLine = true,
                 isError = vm.userName.isNotEmpty() && !isNameValid,
                 supportingText = {
                     if (vm.userName.isNotEmpty() && !isNameValid) {
-                        Text(text = "Введите имя от 3 символов")
+                        Text(text = stringResource(R.string.name_hint))
                     }
                 }
             )
@@ -74,7 +82,6 @@ fun RegNamePage(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier, o
             }
         }
 
-        // 2. Кнопка "Продолжить" в правом нижнем углу
         Row(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.Bottom,
@@ -95,11 +102,10 @@ fun RegNamePage(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier, o
                 },
                 enabled = isNameValid
             ) {
-                Text("Продолжить")
+                Text(stringResource(R.string.continue_btn))
             }
         }
 
-        // 3. Текст "By Ferm" в нижнем центре
         Column(
             verticalArrangement = Arrangement.Bottom,
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -109,7 +115,7 @@ fun RegNamePage(vm: RegViewModel = viewModel(), modifier: Modifier = Modifier, o
                 .align(Alignment.BottomCenter)
         ) {
             Text(
-                text = "By Ferm",
+                text = stringResource(R.string.by_ferm),
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(bottom = 12.dp)
             )

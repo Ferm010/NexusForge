@@ -27,6 +27,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -101,18 +103,19 @@ fun MainMenuPage(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = if (menuVm.searchMode == com.example.nexusforge.viewmodels.SearchMode.MODPACK) 
-                                        "Сборки дня" 
-                                    else 
-                                        "Моды дня",
+                                    text = if (menuVm.searchMode == com.example.nexusforge.viewmodels.SearchMode.MODPACK)
+                                        stringResource(R.string.modpacks_today)
+                                    else
+                                        stringResource(R.string.mods_today),
                                     style = MaterialTheme.typography.headlineMedium,
-                                    modifier = Modifier.padding(vertical = 8.dp)
+                                    modifier = Modifier.padding(vertical = 8.dp),
+                                    textAlign = TextAlign.Center
                                 )
                                 
                                 IconButton(onClick = { showFilterSheet = true }) {
                                     Icon(
                                         painter = painterResource(R.drawable.list),
-                                        contentDescription = "Фильтр"
+                                        contentDescription = "filter"
                                     )
                                 }
                             }
@@ -193,15 +196,16 @@ fun MainMenuPage(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Найдено: ${state.projects.size}",
+                                    text = stringResource(R.string.found) + ": ${state.projects.size}",
                                     style = MaterialTheme.typography.titleMedium,
+                                    textAlign = TextAlign.Center,
                                     modifier = Modifier.padding(vertical = 8.dp)
                                 )
                                 
                                 IconButton(onClick = { showFilterSheet = true }) {
                                     Icon(
                                         painter = painterResource(R.drawable.list),
-                                        contentDescription = "Фильтр"
+                                        contentDescription = "filter"
                                     )
                                 }
                             }
@@ -260,7 +264,7 @@ fun MainMenuPage(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(onClick = { menuVm.searchProjects() }) {
-                            Text("Повторить")
+                            Text(text = stringResource(R.string.retry))
                         }
                     }
                 }

@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.nexusforge.R
@@ -56,7 +57,7 @@ fun ProjectDetailsPage(
                                 if (isFavorite) R.drawable.add_bookmark_fiiled 
                                 else R.drawable.add_bookmark
                             ),
-                            contentDescription = if (isFavorite) "Удалить из избранного" else "Добавить в избранное",
+                            contentDescription = if (isFavorite) "delete favorite" else "add favorite",
                             tint = if (isFavorite) MaterialTheme.colorScheme.primary 
                                    else MaterialTheme.colorScheme.onSurface
                         )
@@ -123,7 +124,7 @@ fun ProjectDetailsPage(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Автор:",
+                            text = stringResource(R.string.author) + ":",
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(
@@ -138,7 +139,7 @@ fun ProjectDetailsPage(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Скачиваний:",
+                            text = stringResource(R.string.downloads) + ":",
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(
@@ -153,7 +154,7 @@ fun ProjectDetailsPage(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Подписчиков:",
+                            text = stringResource(R.string.subscribers) + ":",
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(
@@ -168,7 +169,7 @@ fun ProjectDetailsPage(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Дата создания:",
+                            text = stringResource(R.string.create_at) + ":",
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(
@@ -182,7 +183,7 @@ fun ProjectDetailsPage(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Последнее обновление:",
+                            text = stringResource(R.string.last_updates) + ":",
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(
@@ -202,7 +203,7 @@ fun ProjectDetailsPage(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "Описание",
+                        text = stringResource(R.string.info),
                         style = MaterialTheme.typography.titleMedium
                     )
                     Text(
@@ -241,18 +242,18 @@ fun ProjectDetailsPage(
                                     modifier = Modifier.weight(1f)
                                 ) {
                                     Text(
-                                        text = "Категории",
+                                        text = stringResource(R.string.tags),
                                         style = MaterialTheme.typography.titleMedium
                                     )
                                     Text(
-                                        text = "${project.categories.size} категорий",
+                                        text = "${project.categories.size} " + stringResource(R.string.tags),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                                 Icon(
                                     imageVector = if (categoriesExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                    contentDescription = if (categoriesExpanded) "Скрыть" else "Показать",
+                                    contentDescription = if (categoriesExpanded) "unshow" else "show",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
@@ -307,18 +308,18 @@ fun ProjectDetailsPage(
                                     modifier = Modifier.weight(1f)
                                 ) {
                                     Text(
-                                        text = "Поддерживаемые версии Minecraft",
+                                        text = stringResource(R.string.ver_minecraft),
                                         style = MaterialTheme.typography.titleMedium
                                     )
                                     Text(
-                                        text = "${project.versions.size} версий",
+                                        text = "${project.versions.size} " + stringResource(R.string.versions),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                                 Icon(
                                     imageVector = if (versionsExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                    contentDescription = if (versionsExpanded) "Скрыть" else "Показать",
+                                    contentDescription = if (versionsExpanded) "unshow" else "show",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
@@ -355,14 +356,14 @@ fun ProjectDetailsPage(
                     onClick = onOpenWebPage,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Открыть на Modrinth")
+                    Text(text = stringResource(R.string.open_modpack))
                 }
                 
                 OutlinedButton(
                     onClick = onDownload,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Скачать")
+                    Text(text = stringResource(R.string.button_download))
                 }
             }
             

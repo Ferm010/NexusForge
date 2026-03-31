@@ -23,16 +23,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.nexusforge.R
 import com.example.nexusforge.ui.theme.logo
+import com.example.nexusforge.viewmodels.LanguageViewModel
 import com.example.nexusforge.viewmodels.RegViewModel
 
 @Composable
 fun AuthPasswordPage(
     vm: RegViewModel = viewModel(),
+    languageViewModel: LanguageViewModel = viewModel(),
     modifier: Modifier = Modifier,
     onNavigateToMainMenu: () -> Unit = {}
 ) {
@@ -47,7 +51,7 @@ fun AuthPasswordPage(
         ) {
             logo()
             Text(
-                text = "Введите пароль",
+                text = stringResource(R.string.enter_password),
                 style = MaterialTheme.typography.headlineLarge,
             )
             Spacer(modifier = Modifier.size(16.dp))
@@ -57,7 +61,7 @@ fun AuthPasswordPage(
                     vm.authPassword = it
                     errorMessage = null
                 },
-                label = { Text("Пароль") },
+                label = { Text(stringResource(R.string.password)) },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 isError = errorMessage != null,
@@ -89,7 +93,7 @@ fun AuthPasswordPage(
                 },
                 enabled = vm.authPassword.isNotEmpty()
             ) {
-                Text("Войти")
+                Text(stringResource(R.string.sign_in))
             }
         }
 
@@ -102,7 +106,7 @@ fun AuthPasswordPage(
                 .align(Alignment.BottomCenter)
         ) {
             Text(
-                text = "By Ferm",
+                text = stringResource(R.string.by_ferm),
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
