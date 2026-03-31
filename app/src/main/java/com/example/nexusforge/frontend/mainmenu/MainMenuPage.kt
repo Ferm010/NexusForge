@@ -4,21 +4,36 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.nexusforge.R
 import com.example.nexusforge.viewmodels.MainMenuViewModel
 import com.example.nexusforge.viewmodels.RegViewModel
+import com.example.nexusforge.viewmodels.SearchUiState
 
 @Composable
 fun MainMenuPage(
@@ -28,9 +43,19 @@ fun MainMenuPage(
     onSignOut: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onCreateModpack: () -> Unit = {},
-    onCreateTemplate: () -> Unit = {}
+    onCreateTemplate: () -> Unit = {},
+    onProjectClick: (String) -> Unit = {}
 ) {
     BackHandler(enabled = true) { }
+    
+    var showFilterSheet by remember { mutableStateOf(false) }
+    
+    // Загружаем сборки дня при первом открытии
+    LaunchedEffect(Unit) {
+        if (menuVm.featuredProjects.isEmpty()) {
+            menuVm.loadFeaturedProjects()
+        }
+    }
     
     Box(modifier = modifier.fillMaxSize()) {
         Column(
@@ -39,13 +64,18 @@ fun MainMenuPage(
             // Search App Bar
             SearchAppBar(
                 searchQuery = menuVm.searchQuery,
-                onSearchQueryChange = { menuVm.searchQuery = it },
+                onSearchQueryChange = { 
+                    menuVm.searchQuery = it
+                    if (it.isNotEmpty()) {
+                        menuVm.searchProjects()
+                    } else {
+                        menuVm.clearSearch()
+                    }
+                },
                 onSearch = { query ->
-                    // Обработка поиска
-                    println("Поиск: $query")
+                    menuVm.searchProjects()
                 },
                 onBackClick = {
-                    // Очистка поиска
                     menuVm.clearSearch()
                 },
                 onProfileClick = onProfileClick,
@@ -54,44 +84,212 @@ fun MainMenuPage(
             )
             
             // Контент страницы
-            Column(
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-            ) {
-                if (menuVm.searchQuery.isNotEmpty()) {
-                    Text(
-                        text = "Результаты поиска: ${menuVm.searchQuery}",
-                        style = MaterialTheme.typography.headlineSmall,
-                    )
-                } else {
-                    Text(
-                        text = "Главное меню",
-                        style = MaterialTheme.typography.displayMedium,
-                    )
-                    if (vm.userName.isNotEmpty()) {
-                        Text(
-                            text = "Добро пожаловать, ${vm.userName}!",
-                            style = MaterialTheme.typography.headlineSmall,
-                            modifier = Modifier.padding(top = 16.dp)
-                        )
+            when (val state = menuVm.searchUiState) {
+                is SearchUiState.Idle -> {
+                    // Сборки дня / Моды дня
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = if (menuVm.searchMode == com.example.nexusforge.viewmodels.SearchMode.MODPACK) 
+                                        "Сборки дня" 
+                                    else 
+                                        "Моды дня",
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
+                                
+                                IconButton(onClick = { showFilterSheet = true }) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.list),
+                                        contentDescription = "Фильтр"
+                                    )
+                                }
+                            }
+                        }
+                        
+                        if (menuVm.isLoadingFeatured) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(32.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+                        }
+                        
+                        items(menuVm.featuredProjects) { project ->
+                            ProjectCard(
+                                project = project,
+                                onClick = {
+                                    onProjectClick(project.projectId)
+                                }
+                            )
+                        }
+                        
+                        // Индикатор загрузки следующей страницы
+                        if (menuVm.isLoadingMoreFeatured) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+                        }
+                        
+                        // Триггер для загрузки следующей страницы
+                        if (menuVm.hasMoreFeatured && !menuVm.isLoadingMoreFeatured && menuVm.featuredProjects.isNotEmpty()) {
+                            item {
+                                LaunchedEffect(Unit) {
+                                    menuVm.loadMoreFeaturedProjects()
+                                }
+                            }
+                        }
+                        
+                        item {
+                            Spacer(modifier = Modifier.height(80.dp))
+                        }
                     }
                 }
                 
-                Spacer(modifier = Modifier.height(32.dp))
-                Button(onClick = onSignOut) {
-                    Text("Выйти из аккаунта")
+                is SearchUiState.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+                
+                is SearchUiState.Success -> {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Найдено: ${state.projects.size}",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
+                                
+                                IconButton(onClick = { showFilterSheet = true }) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.list),
+                                        contentDescription = "Фильтр"
+                                    )
+                                }
+                            }
+                        }
+                        
+                        items(state.projects) { project ->
+                            ProjectCard(
+                                project = project,
+                                onClick = {
+                                    onProjectClick(project.projectId)
+                                }
+                            )
+                        }
+                        
+                        // Индикатор загрузки следующей страницы
+                        if (menuVm.isLoadingMore) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+                        }
+                        
+                        // Триггер для загрузки следующей страницы
+                        if (menuVm.hasMoreResults && !menuVm.isLoadingMore && state.projects.isNotEmpty()) {
+                            item {
+                                LaunchedEffect(Unit) {
+                                    menuVm.loadMoreSearchResults()
+                                }
+                            }
+                        }
+                        
+                        item {
+                            Spacer(modifier = Modifier.height(80.dp))
+                        }
+                    }
+                }
+                
+                is SearchUiState.Error -> {
+                    Column(
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Ошибка: ${state.message}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = { menuVm.searchProjects() }) {
+                            Text("Повторить")
+                        }
+                    }
                 }
             }
         }
         
         // FAB Menu справа снизу
         ExpandableFabMenu(
-            onCreateModpack = onCreateModpack,
-            onCreateTemplate = onCreateTemplate,
+            currentMode = menuVm.searchMode,
+            selectedVersion = menuVm.selectedVersion,
+            gameVersions = menuVm.gameVersions,
+            onModeChange = { mode ->
+                menuVm.changeSearchMode(mode)
+            },
+            onVersionChange = { version ->
+                menuVm.changeVersion(version)
+            },
             modifier = Modifier.fillMaxSize()
+        )
+    }
+    
+    // Filter Bottom Sheet
+    if (showFilterSheet) {
+        FilterBottomSheet(
+            currentSort = menuVm.sortOption,
+            onSortChange = { sortOption ->
+                menuVm.changeSortOption(sortOption)
+            },
+            onDismiss = { showFilterSheet = false }
         )
     }
 }

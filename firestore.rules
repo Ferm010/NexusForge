@@ -1,0 +1,39 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Функция проверки аутентификации
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Функция проверки владельца
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Правила для пользовательских данных
+    match /users/{userId} {
+      // Пользователь может читать и писать только свои данные
+      allow read, write: if isOwner(userId);
+      
+      // Избранные проекты пользователя
+      match /favorites/{projectId} {
+        // Только владелец может управлять своим избранным
+        allow read, write: if isOwner(userId);
+      }
+      
+      // Пользовательские сборки модов
+      match /custom_modpacks/{modpackId} {
+        // Только владелец может управлять своими сборками
+        allow read, write: if isOwner(userId);
+      }
+    }
+    
+    // Запретить доступ ко всем остальным документам
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -18,10 +18,11 @@ sealed interface Destination : NavKey {
     @Serializable data object FavoritePage : Destination
     @Serializable data object ProfilePage : Destination
     @Serializable data object SettingsPage : Destination
+    @Serializable data object TechnicalPage : Destination
     @Serializable data object CreateAlert : Destination
+    @Serializable data class ProjectDetailsPage(val projectId: String) : Destination
 
     /* @Serializable data object ResetPassPage : Destination
-
 
 
 
@@ -62,5 +63,4 @@ sealed interface Destination : NavKey {
     // Алерт выхода из аккаунта
     @Serializable data object ExitAccAlert : Destination */
 }
-
 

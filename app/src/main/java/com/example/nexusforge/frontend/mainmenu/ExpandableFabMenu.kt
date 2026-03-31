@@ -13,9 +13,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SmallFloatingActionButton
@@ -33,11 +38,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.nexusforge.R
+import com.example.nexusforge.data.GameVersion
+import com.example.nexusforge.viewmodels.SearchMode
 
 @Composable
 fun ExpandableFabMenu(
-    onCreateModpack: () -> Unit,
-    onCreateTemplate: () -> Unit,
+    currentMode: SearchMode = SearchMode.MODPACK,
+    selectedVersion: String?,
+    gameVersions: List<GameVersion>,
+    onModeChange: (SearchMode) -> Unit = {},
+    onVersionChange: (String?) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -71,27 +81,76 @@ fun ExpandableFabMenu(
                 enter = fadeIn() + expandVertically(expandFrom = Alignment.Bottom),
                 exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Bottom)
             ) {
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    shadowElevation = 8.dp,
+                    modifier = Modifier.widthIn(max = 280.dp)
                 ) {
-                    // Опция 1: Создать модпак
-                    FabMenuItem(
-                        text = "Модпаки",
-                        onClick = {
-                            expanded = false
-                            onCreateModpack()
+                    LazyColumn(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        item {
+                            Text(
+                                text = "Тип проекта",
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
                         }
-                    )
-                    
-                    // Опция 2: Создать шаблон
-                    FabMenuItem(
-                        text = "Сборки",
-                        onClick = {
-                            expanded = false
-                            onCreateTemplate()
+                        
+                        item {
+                            FabMenuItem(
+                                text = "Модпаки",
+                                isSelected = currentMode == SearchMode.MODPACK,
+                                onClick = {
+                                    onModeChange(SearchMode.MODPACK)
+                                }
+                            )
                         }
-                    )
+                        
+                        item {
+                            FabMenuItem(
+                                text = "Моды",
+                                isSelected = currentMode == SearchMode.MOD,
+                                onClick = {
+                                    onModeChange(SearchMode.MOD)
+                                }
+                            )
+                        }
+                        
+                        item {
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                        }
+                        
+                        item {
+                            Text(
+                                text = "Версия Minecraft",
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                        }
+                        
+                        item {
+                            FabMenuItem(
+                                text = "Все версии",
+                                isSelected = selectedVersion == null,
+                                onClick = {
+                                    onVersionChange(null)
+                                }
+                            )
+                        }
+                        
+                        items(gameVersions) { version ->
+                            FabMenuItem(
+                                text = version.version,
+                                isSelected = selectedVersion == version.version,
+                                onClick = {
+                                    onVersionChange(version.version)
+                                }
+                            )
+                        }
+                    }
                 }
             }
             
@@ -112,33 +171,28 @@ fun ExpandableFabMenu(
 @Composable
 fun FabMenuItem(
     text: String,
+    isSelected: Boolean = false,
     onClick: () -> Unit
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = if (isSelected) 
+            MaterialTheme.colorScheme.primaryContainer 
+        else 
+            MaterialTheme.colorScheme.surfaceVariant,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
     ) {
-        // Текст подсказка
-        Surface(
-            shape = RoundedCornerShape(8.dp),
-            color = MaterialTheme.colorScheme.surface,
-            shadowElevation = 4.dp
-        ) {
-            Text(
-                text = text,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-        
-        // Маленькая FAB
-        SmallFloatingActionButton(
-            onClick = onClick
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.list),
-                contentDescription = text
-            )
-        }
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (isSelected)
+                MaterialTheme.colorScheme.onPrimaryContainer
+            else
+                MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
+
