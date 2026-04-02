@@ -108,5 +108,6 @@ data class ModFile(
     val size: Long = 0,
     val url: String? = null,
     @SerialName("primary")
-    val primary: Boolean? = null
+    val primary: Boolean? = null,
+    val hashes: Map<String, String>? = null
 )

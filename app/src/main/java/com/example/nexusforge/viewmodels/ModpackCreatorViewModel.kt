@@ -6,10 +6,12 @@ import android.os.Environment
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.nexusforge.data.ModReference
 import com.example.nexusforge.data.ModrinthProject
 import com.example.nexusforge.data.ModpackMod
 import com.example.nexusforge.network.ModrinthApi
 import com.example.nexusforge.repository.FirestoreRepository
+import com.example.nexusforge.utils.MrpackGenerator
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -115,6 +117,10 @@ class ModpackCreatorViewModel : ViewModel() {
         viewModelScope.launch {
             var downloadUrl = ""
             var modVersion = ""
+            var fileName: String? = null
+            var fileSize: Long? = null
+            var sha1: String? = null
+            var sha512: String? = null
             
             try {
                 android.util.Log.d("ModpackCreator", "Fetching versions for: ${mod.actualProjectId}")
@@ -138,16 +144,37 @@ class ModpackCreatorViewModel : ViewModel() {
                 
                 if (matchingVersion != null) {
                     android.util.Log.d("ModpackCreator", "Found matching version: ${matchingVersion.versionNumber}")
-                    downloadUrl = matchingVersion.files.firstOrNull()?.url ?: ""
+                    val file = matchingVersion.files.firstOrNull()
+                    downloadUrl = file?.url ?: ""
                     modVersion = matchingVersion.versionNumber
-                    android.util.Log.d("ModpackCreator", "Download URL: $downloadUrl")
+                    fileName = file?.filename
+                    fileSize = file?.size
+                    
+                    // Получаем хеши из API
+                    android.util.Log.d("ModpackCreator", "File hashes map: ${file?.hashes}")
+                    sha1 = file?.hashes?.get("sha1")
+                    sha512 = file?.hashes?.get("sha512")
+                    
+                    // Если хешей нет, попробуем другие ключи
+                    if (sha1 == null || sha512 == null) {
+                        android.util.Log.w("ModpackCreator", "Missing hashes in API response, available keys: ${file?.hashes?.keys}")
+                    }
+                    
+                    android.util.Log.d("ModpackCreator", "Download URL: $downloadUrl, fileName: $fileName, size: $fileSize")
+                    android.util.Log.d("ModpackCreator", "Hashes - SHA1: $sha1, SHA512: $sha512")
                 } else {
                     // Try to get first available version
                     val firstVersion = versions.firstOrNull()
                     if (firstVersion != null) {
-                        downloadUrl = firstVersion.files.firstOrNull()?.url ?: ""
+                        val file = firstVersion.files.firstOrNull()
+                        downloadUrl = file?.url ?: ""
                         modVersion = firstVersion.versionNumber
+                        fileName = file?.filename
+                        fileSize = file?.size
+                        sha1 = file?.hashes?.get("sha1")
+                        sha512 = file?.hashes?.get("sha512")
                         android.util.Log.d("ModpackCreator", "Using first version: $modVersion, URL: $downloadUrl")
+                        android.util.Log.d("ModpackCreator", "Hashes - SHA1: $sha1, SHA512: $sha512")
                     }
                 }
             } catch (e: Exception) {
@@ -164,7 +191,11 @@ class ModpackCreatorViewModel : ViewModel() {
                         name = mod.title,
                         version = modVersion,
                         downloadUrl = downloadUrl,
-                        iconUrl = mod.iconUrl
+                        iconUrl = mod.iconUrl,
+                        fileName = fileName,
+                        fileSize = fileSize,
+                        sha1 = sha1,
+                        sha512 = sha512
                     )
                 )
                 android.util.Log.d("ModpackCreator", "Added mod with version: '$modVersion'")
@@ -257,7 +288,11 @@ class ModpackCreatorViewModel : ViewModel() {
                         "title" to it.name,
                         "version" to it.version,
                         "downloadUrl" to it.downloadUrl,
-                        "iconUrl" to it.iconUrl
+                        "iconUrl" to it.iconUrl,
+                        "fileName" to it.fileName,
+                        "fileSize" to it.fileSize,
+                        "sha1" to it.sha1,
+                        "sha512" to it.sha512
                     )},
                     "authorId" to userId,
                     "createdAt" to System.currentTimeMillis(),
@@ -304,7 +339,11 @@ class ModpackCreatorViewModel : ViewModel() {
                         "title" to it.name,
                         "version" to it.version,
                         "downloadUrl" to it.downloadUrl,
-                        "iconUrl" to it.iconUrl
+                        "iconUrl" to it.iconUrl,
+                        "fileName" to it.fileName,
+                        "fileSize" to it.fileSize,
+                        "sha1" to it.sha1,
+                        "sha512" to it.sha512
                     )},
                     "authorId" to userId,
                     "createdAt" to System.currentTimeMillis(),
@@ -374,7 +413,11 @@ class ModpackCreatorViewModel : ViewModel() {
                         "title" to it.name,
                         "version" to it.version,
                         "downloadUrl" to it.downloadUrl,
-                        "iconUrl" to it.iconUrl
+                        "iconUrl" to it.iconUrl,
+                        "fileName" to it.fileName,
+                        "fileSize" to it.fileSize,
+                        "sha1" to it.sha1,
+                        "sha512" to it.sha512
                     )},
                     "authorId" to userId,
                     "createdAt" to System.currentTimeMillis(),
@@ -387,6 +430,119 @@ class ModpackCreatorViewModel : ViewModel() {
                 
                 _state.value = _state.value.copy(isGenerating = false)
                 onProgress(step, "", true, null)
+                
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(
+                    isGenerating = false,
+                    error = e.message
+                )
+                onProgress(0, "", true, e.message)
+            }
+        }
+    }
+    
+    fun generateMrpackWithProgress(
+        context: Context,
+        onProgress: (currentStep: Int, modName: String, isComplete: Boolean, error: String?) -> Unit
+    ) {
+        val currentState = _state.value
+        if (currentState.modpackName.isEmpty() || 
+            currentState.selectedMinecraftVersion.isEmpty() || 
+            currentState.selectedMods.isEmpty()) {
+            onProgress(0, "", true, "Invalid state")
+            return
+        }
+        
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isGenerating = true)
+            
+            try {
+                onProgress(1, "Preparing mrpack...", false, null)
+                
+                val modpackId = if (currentState.modpackId.isNotEmpty()) {
+                    currentState.modpackId
+                } else {
+                    UUID.randomUUID().toString()
+                }
+                val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+                
+                // Получаем последнюю версию модлоадера
+                val modLoaderVersion = try {
+                    withContext(Dispatchers.IO) {
+                        getLatestLoaderVersion(currentState.selectedModLoader, currentState.selectedMinecraftVersion)
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("ModpackCreator", "Failed to get loader version: ${e.message}")
+                    null
+                }
+                
+                android.util.Log.d("ModpackCreator", "Using modloader version: $modLoaderVersion")
+                
+                // Конвертируем ModpackMod в ModReference с необходимыми данными
+                val modReferences = currentState.selectedMods.map { mod ->
+                    ModReference(
+                        projectId = mod.projectId,
+                        title = mod.name,
+                        iconUrl = mod.iconUrl,
+                        required = true,
+                        downloadUrl = mod.downloadUrl,
+                        fileName = mod.fileName ?: "${mod.name.replace(" ", "_")}.jar",
+                        fileSize = mod.fileSize ?: 0L,
+                        sha1 = mod.sha1,
+                        sha512 = mod.sha512
+                    )
+                }
+                
+                val mrpackGenerator = MrpackGenerator(context)
+                
+                withContext(Dispatchers.IO) {
+                    val mrpackFile = mrpackGenerator.generateMrpack(
+                        modpackName = currentState.modpackName,
+                        modpackDescription = currentState.modpackDescription,
+                        minecraftVersion = currentState.selectedMinecraftVersion,
+                        modLoader = currentState.selectedModLoader,
+                        modLoaderVersion = modLoaderVersion,
+                        mods = modReferences,
+                        onProgress = { step, modName ->
+                            onProgress(step, modName, false, null)
+                        }
+                    )
+                    
+                    if (mrpackFile != null) {
+                        onProgress(currentState.selectedMods.size + 3, "Saving to downloads...", false, null)
+                        saveToDownloads(context, mrpackFile, currentState.modpackName)
+                    } else {
+                        throw Exception("Failed to generate mrpack")
+                    }
+                }
+                
+                val modpackData = hashMapOf(
+                    "id" to modpackId,
+                    "name" to currentState.modpackName,
+                    "minecraftVersion" to currentState.selectedMinecraftVersion,
+                    "modLoader" to currentState.selectedModLoader,
+                    "mods" to currentState.selectedMods.map { hashMapOf(
+                        "projectId" to it.projectId,
+                        "title" to it.name,
+                        "version" to it.version,
+                        "downloadUrl" to it.downloadUrl,
+                        "iconUrl" to it.iconUrl,
+                        "fileName" to it.fileName,
+                        "fileSize" to it.fileSize,
+                        "sha1" to it.sha1,
+                        "sha512" to it.sha512
+                    )},
+                    "authorId" to userId,
+                    "createdAt" to System.currentTimeMillis(),
+                    "updatedAt" to System.currentTimeMillis(),
+                    "isCustom" to true,
+                    "isFavorite" to true
+                )
+                
+                firestoreRepository.saveCustomModpack(modpackId, modpackData)
+                
+                _state.value = _state.value.copy(isGenerating = false)
+                onProgress(currentState.selectedMods.size + 4, "", true, null)
                 
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
@@ -510,11 +666,45 @@ class ModpackCreatorViewModel : ViewModel() {
     fun setModpackId(id: String) {
         _state.value = _state.value.copy(modpackId = id)
     }
+    
+    private suspend fun getLatestLoaderVersion(modLoader: String, minecraftVersion: String): String? {
+        return try {
+            when (modLoader.lowercase()) {
+                "forge" -> {
+                    // Получаем версии Forge для данной версии Minecraft
+                    // Modrinth API: /tag/loader/{loader}/versions
+                    val response = ModrinthApi.retrofitService.searchProjects(
+                        query = "forge",
+                        facets = "[[\"project_type:modpack\"],[\"versions:$minecraftVersion\"]]",
+                        limit = 1
+                    )
+                    // Для простоты возвращаем null, так как Modrinth API не предоставляет прямой доступ к версиям лоадеров
+                    // Можно использовать Forge API или другой источник
+                    null
+                }
+                "fabric" -> {
+                    // Аналогично для Fabric
+                    null
+                }
+                "neoforge" -> {
+                    null
+                }
+                "quilt" -> {
+                    null
+                }
+                else -> null
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("ModpackCreator", "Error getting loader version: ${e.message}")
+            null
+        }
+    }
 }
 
 data class ModpackCreatorState(
     val modpackId: String = "",
     val modpackName: String = "",
+    val modpackDescription: String = "",
     val selectedMinecraftVersion: String = "",
     val selectedModLoader: String = "",
     val availableMinecraftVersions: List<String> = emptyList(),

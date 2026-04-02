@@ -61,6 +61,7 @@ data class GenerateProgress(
 @Composable
 fun GenerateModpackPage(
     vm: ModpackCreatorViewModel = viewModel(),
+    method: String = "local",
     onBackClick: () -> Unit = {},
     onComplete: () -> Unit = {}
 ) {
@@ -89,14 +90,42 @@ fun GenerateModpackPage(
         
         progress = progress.copy(currentStep = 0, totalSteps = state.selectedMods.size + 2)
         
-        vm.generateModpackWithProgress(context) { currentStep, modName, isComplete, error ->
-            progress = GenerateProgress(
-                currentStep = currentStep,
-                totalSteps = state.selectedMods.size + 2,
-                currentModName = modName,
-                isComplete = isComplete,
-                error = error
-            )
+        // Генерация в зависимости от метода
+        when (method) {
+            "local" -> {
+                vm.generateModpackWithProgress(context) { currentStep, modName, isComplete, error ->
+                    progress = GenerateProgress(
+                        currentStep = currentStep,
+                        totalSteps = state.selectedMods.size + 2,
+                        currentModName = modName,
+                        isComplete = isComplete,
+                        error = error
+                    )
+                }
+            }
+            "mrpack" -> {
+                vm.generateMrpackWithProgress(context) { currentStep, modName, isComplete, error ->
+                    progress = GenerateProgress(
+                        currentStep = currentStep,
+                        totalSteps = state.selectedMods.size + 4,
+                        currentModName = modName,
+                        isComplete = isComplete,
+                        error = error
+                    )
+                }
+            }
+            "google_drive" -> {
+                // TODO: Реализовать загрузку в Google Drive
+                vm.generateModpackWithProgress(context) { currentStep, modName, isComplete, error ->
+                    progress = GenerateProgress(
+                        currentStep = currentStep,
+                        totalSteps = state.selectedMods.size + 2,
+                        currentModName = modName,
+                        isComplete = isComplete,
+                        error = error
+                    )
+                }
+            }
         }
     }
     
@@ -142,7 +171,10 @@ fun GenerateModpackPage(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "${state.modpackName}.zip",
+                    text = when (method) {
+                        "mrpack" -> "${state.modpackName}.mrpack"
+                        else -> "${state.modpackName}.zip"
+                    },
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

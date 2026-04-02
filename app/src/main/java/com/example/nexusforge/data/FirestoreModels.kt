@@ -47,7 +47,12 @@ data class ModReference(
     val projectId: String = "",
     val title: String = "",
     val iconUrl: String? = null,
-    val required: Boolean = true // обязательный или опциональный мод
+    val required: Boolean = true, // обязательный или опциональный мод
+    val downloadUrl: String? = null,
+    val fileName: String? = null,
+    val fileSize: Long? = null,
+    val sha1: String? = null,
+    val sha512: String? = null
 )
 
 /**

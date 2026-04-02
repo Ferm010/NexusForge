@@ -196,4 +196,14 @@
     <string name="custom_modpacks">My Modpacks</string>
     <string name="enter_modpack_name">Enter modpack name</string>
     <string name="select_minecraft_version">Select Minecraft version</string>
+    
+    <!-- Generation Methods -->
+    <string name="select_generation_method">Select Generation Method</string>
+    <string name="choose_generation_method">How would you like to generate the modpack?</string>
+    <string name="local_generation">Local</string>
+    <string name="local_generation_desc">Save modpack to device</string>
+    <string name="mrpack_generation">Modrinth Pack (.mrpack)</string>
+    <string name="mrpack_generation_desc">Create .mrpack file for launchers</string>
+    <string name="google_drive_generation">Google Drive</string>
+    <string name="google_drive_generation_desc">Upload modpack to cloud</string>
 </resources>

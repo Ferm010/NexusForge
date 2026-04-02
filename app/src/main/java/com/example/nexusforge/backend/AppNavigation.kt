@@ -46,6 +46,7 @@ import com.example.nexusforge.frontend.CreateModpackPage
 import com.example.nexusforge.frontend.CreateTemplatePage
 import com.example.nexusforge.frontend.TemplatesListPage
 import com.example.nexusforge.frontend.GenerateModpackPage
+import com.example.nexusforge.frontend.SelectGenerationMethodPage
 import com.example.nexusforge.frontend.EulaScreen
 import com.example.nexusforge.frontend.mainmenu.MainMenuPage
 import com.example.nexusforge.frontend.PasswordPage
@@ -337,12 +338,29 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                         tabBackStack.removeLastOrNull()
                                     },
                                     onModpackCreated = { modpackId ->
-                                        tabBackStack += Destination.GenerateModpackPage
+                                        tabBackStack += Destination.SelectGenerationMethodPage
+                                    }
+                                )
+                            }
+                            entry<Destination.SelectGenerationMethodPage> {
+                                SelectGenerationMethodPage(
+                                    onBackClick = {
+                                        tabBackStack.removeLastOrNull()
+                                    },
+                                    onMethodSelected = { method ->
+                                        val methodString = when(method) {
+                                            com.example.nexusforge.frontend.GenerationMethod.LOCAL -> "local"
+                                            com.example.nexusforge.frontend.GenerationMethod.MRPACK -> "mrpack"
+                                            com.example.nexusforge.frontend.GenerationMethod.GOOGLE_DRIVE -> "google_drive"
+                                        }
+                                        tabBackStack += Destination.GenerateModpackPage(methodString)
                                     }
                                 )
                             }
                             entry<Destination.GenerateModpackPage> {
+                                val method = it.method
                                 GenerateModpackPage(
+                                    method = method,
                                     onBackClick = {
                                         tabBackStack.removeLastOrNull()
                                     },
@@ -390,7 +408,7 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                     },
                                     onGenerateClick = {
                                         tabBackStack.removeLastOrNull()
-                                        tabBackStack += Destination.GenerateModpackPage
+                                        tabBackStack += Destination.SelectGenerationMethodPage
                                     }
                                 )
                             }

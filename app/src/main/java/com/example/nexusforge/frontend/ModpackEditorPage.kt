@@ -130,14 +130,19 @@ fun ModpackEditorPage(
                             }
                             
                             val modVersion = matchingVersion?.versionNumber ?: versions.firstOrNull()?.versionNumber ?: ""
+                            val file = matchingVersion?.files?.firstOrNull() ?: versions.firstOrNull()?.files?.firstOrNull()
                             
                             vm.addModDirectly(
                                 ModpackMod(
                                     projectId = modRef.projectId,
                                     name = modRef.title,
                                     version = modVersion,
-                                    downloadUrl = modRef.iconUrl ?: "",
-                                    iconUrl = modRef.iconUrl
+                                    downloadUrl = modRef.downloadUrl ?: file?.url ?: "",
+                                    iconUrl = modRef.iconUrl,
+                                    fileName = modRef.fileName ?: file?.filename,
+                                    fileSize = modRef.fileSize ?: file?.size,
+                                    sha1 = modRef.sha1 ?: file?.hashes?.get("sha1"),
+                                    sha512 = modRef.sha512 ?: file?.hashes?.get("sha512")
                                 )
                             )
                         } catch (e: Exception) {
@@ -147,8 +152,12 @@ fun ModpackEditorPage(
                                     projectId = modRef.projectId,
                                     name = modRef.title,
                                     version = "",
-                                    downloadUrl = modRef.iconUrl ?: "",
-                                    iconUrl = modRef.iconUrl
+                                    downloadUrl = modRef.downloadUrl ?: "",
+                                    iconUrl = modRef.iconUrl,
+                                    fileName = modRef.fileName,
+                                    fileSize = modRef.fileSize,
+                                    sha1 = modRef.sha1,
+                                    sha512 = modRef.sha512
                                 )
                             )
                         }

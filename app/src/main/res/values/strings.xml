@@ -227,4 +227,14 @@
     <string name="template_saved">Шаблон сохранен</string>
     <string name="template_deleted">Шаблон удален</string>
     <string name="delete">Удалить</string>
+    
+    <!-- Generation Methods -->
+    <string name="select_generation_method">Выберите метод генерации</string>
+    <string name="choose_generation_method">Как вы хотите сгенерировать сборку?</string>
+    <string name="local_generation">Локально</string>
+    <string name="local_generation_desc">Сохранить сборку на устройство</string>
+    <string name="mrpack_generation">Modrinth Pack (.mrpack)</string>
+    <string name="mrpack_generation_desc">Создать .mrpack файл для лаунчеров</string>
+    <string name="google_drive_generation">Google Drive</string>
+    <string name="google_drive_generation_desc">Загрузить сборку в облако</string>
 </resources>
