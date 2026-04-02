@@ -180,4 +180,20 @@
     <string name="popular">Popular</string>
     <string name="newest">Newest</string>
     <string name="type_project">Project Type</string>
+    
+    <!-- Modpack Creator -->
+    <string name="modpack_name">Modpack Name</string>
+    <string name="minecraft_version">Minecraft Version</string>
+    <string name="search_mods">Search Mods</string>
+    <string name="add_mod">Add Mod</string>
+    <string name="remove_mod">Remove Mod</string>
+    <string name="selected_mods">Selected Mods</string>
+    <string name="generate_pack">Generate</string>
+    <string name="export_zip">Export to ZIP</string>
+    <string name="no_mods_selected">No mods selected</string>
+    <string name="generating">Generating…</string>
+    <string name="modpack_created">Modpack created!</string>
+    <string name="custom_modpacks">My Modpacks</string>
+    <string name="enter_modpack_name">Enter modpack name</string>
+    <string name="select_minecraft_version">Select Minecraft version</string>
 </resources>

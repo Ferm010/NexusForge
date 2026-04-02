@@ -54,14 +54,15 @@ data class ModReference(
  * Пользовательская сборка модов
  */
 data class CustomModpack(
-    @DocumentId
-    val id: String = "",
+    val id: String = "", // ID документа
     val name: String = "",
     val description: String = "",
-    val createdAt: Timestamp = Timestamp.now(),
-    val updatedAt: Timestamp = Timestamp.now(),
+    val createdAt: Any = Timestamp.now(),
+    val updatedAt: Any = Timestamp.now(),
     val minecraftVersion: String = "",
-    val modLoader: String = "", // "forge", "fabric", "quilt", "neoforge"
+    val modLoader: String = "",
     val mods: List<ModReference> = emptyList(),
-    val iconUrl: String? = null
+    val iconUrl: String? = null,
+    val isFavorite: Boolean = false,
+    val isCustom: Boolean = false
 )

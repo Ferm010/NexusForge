@@ -150,6 +150,7 @@
     <string name="zero_modpacks">Добавьте первую сборку</string>
     <string name="zero_custom_modpacks">Создайте первую сборку свою кнопку нажав на \'Создать\'</string>
     <string name="custom_modpack">Пользовательские сборки</string>
+    <string name="favorite_projects">Избранные проекты</string>
     <string name="default_modpack">Обычные сборки</string>
     <string name="not_favorite_modpacks">Нет избранных сборок</string>
     <string name="eula_accept">Принять</string>
@@ -180,4 +181,50 @@
     <string name="popular">Сначала популярные</string>
     <string name="newest">Новые</string>
     <string name="type_project">Тип проекта</string>
+    
+    <!-- Modpack Creator -->
+    <string name="modpack_name">Название сборки</string>
+    <string name="minecraft_version">Версия Minecraft</string>
+    <string name="search_mods">Поиск модов</string>
+    <string name="add_mod">Добавить мод</string>
+    <string name="remove_mod">Удалить мод</string>
+    <string name="selected_mods">Выбранные моды</string>
+    <string name="generate_pack">Сгенерировать</string>
+    <string name="export_zip">Экспорт в ZIP</string>
+    <string name="no_mods_selected">Моды не выбраны</string>
+    <string name="generating">Генерация…</string>
+    <string name="modpack_created">Сборка создана!</string>
+    <string name="custom_modpacks">Мои сборки</string>
+    <string name="enter_modpack_name">Введите название сборки</string>
+    <string name="select_minecraft_version">Выберите версию Minecraft</string>
+    <string name="mod_loader">ModLoader</string>
+    <string name="select_mod_loader">Выберите</string>
+    <string name="edit_modpack">Редактировать сборку</string>
+    <string name="save_only">Сохранить</string>
+    <string name="generate">Сгенерировать</string>
+    <string name="modpack_saved">Сборка сохранена!</string>
+    <string name="warning">Внимание</string>
+    <string name="version_changed_warning">Вы изменили версию Minecraft. Добавленные моды могут быть несовместимы с новой версией. Очистить все моды?</string>
+    <string name="loader_changed_warning">Вы изменили модлоадер. Добавленные моды могут быть несовместимы с новым модлоадером. Очистить все моды?</string>
+    <string name="clear_mods">Очистить</string>
+    <string name="unsaved_changes">Несохраненные изменения</string>
+    <string name="unsaved_changes_message">Вы не сохранили изменения. Если вы выйдете, изменения будут потеряны.</string>
+    <string name="exit">Выйти</string>
+    <string name="stay">Остаться</string>
+    <string name="add_to_pack">Добавить в сборку</string>
+    <string name="already_in_pack">Уже в сборке</string>
+    <string name="follows">Подписчиков</string>
+    
+    <!-- Templates -->
+    <string name="templates">Шаблоны</string>
+    <string name="edit_template">Редактировать шаблон</string>
+    <string name="template_name">Название шаблона</string>
+    <string name="template_description">Описание шаблона</string>
+    <string name="save_template">Сохранить шаблон</string>
+    <string name="delete_template">Удалить шаблон</string>
+    <string name="use_template">Использовать шаблон</string>
+    <string name="no_templates">Нет шаблонов</string>
+    <string name="template_saved">Шаблон сохранен</string>
+    <string name="template_deleted">Шаблон удален</string>
+    <string name="delete">Удалить</string>
 </resources>

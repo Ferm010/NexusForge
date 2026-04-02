@@ -29,6 +29,12 @@ service cloud.firestore {
         // Только владелец может управлять своими сборками
         allow read, write: if isOwner(userId);
       }
+      
+      // Шаблоны модпаков пользователя
+      match /templates/{templateId} {
+        // Только владелец может управлять своими шаблонами
+        allow read, write: if isOwner(userId);
+      }
     }
     
     // Запретить доступ ко всем остальным документам

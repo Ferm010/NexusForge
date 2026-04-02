@@ -2,6 +2,7 @@ package com.example.nexusforge.network
 
 import com.example.nexusforge.data.GameVersion
 import com.example.nexusforge.data.ModrinthProject
+import com.example.nexusforge.data.ModrinthVersion
 import com.example.nexusforge.data.ModrinthSearchResponse
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
@@ -50,6 +51,16 @@ interface ModrinthApiService {
     suspend fun getProjects(
         @Query("ids") ids: String
     ): List<ModrinthProject>
+    
+    @GET("project/{id}/version")
+    suspend fun getProjectVersions(
+        @retrofit2.http.Path("id") projectId: String
+    ): List<ModrinthVersion>
+    
+    @GET("project/{id}")
+    suspend fun getProject(
+        @retrofit2.http.Path("id") projectId: String
+    ): ModrinthProject
 }
 
 object ModrinthApi {

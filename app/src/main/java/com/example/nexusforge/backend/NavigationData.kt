@@ -21,7 +21,13 @@ sealed interface Destination : NavKey {
     @Serializable data object TechnicalPage : Destination
     @Serializable data object LanguagePage : Destination
     @Serializable data object CreateAlert : Destination
+    @Serializable data object CreateModpackPage : Destination
+    @Serializable data object GenerateModpackPage : Destination
     @Serializable data class ProjectDetailsPage(val projectId: String) : Destination
+    @Serializable data class ModpackEditorPage(val modpackId: String) : Destination
+    @Serializable data object TemplatesListPage : Destination
+    @Serializable data object CreateTemplatePage : Destination
+    @Serializable data class EditTemplatePage(val templateId: String) : Destination
 
     /* @Serializable data object ResetPassPage : Destination
 

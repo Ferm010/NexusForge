@@ -42,6 +42,10 @@ import androidx.navigation3.ui.NavDisplay
 import com.example.nexusforge.R
 import com.example.nexusforge.frontend.AuthPasswordPage
 import com.example.nexusforge.frontend.CreateAlertDialog
+import com.example.nexusforge.frontend.CreateModpackPage
+import com.example.nexusforge.frontend.CreateTemplatePage
+import com.example.nexusforge.frontend.TemplatesListPage
+import com.example.nexusforge.frontend.GenerateModpackPage
 import com.example.nexusforge.frontend.EulaScreen
 import com.example.nexusforge.frontend.mainmenu.MainMenuPage
 import com.example.nexusforge.frontend.PasswordPage
@@ -51,6 +55,7 @@ import com.example.nexusforge.frontend.RegPageScreen
 import com.example.nexusforge.frontend.SettingPage
 import com.example.nexusforge.frontend.TechnicalPage
 import com.example.nexusforge.frontend.LanguagePage
+import com.example.nexusforge.frontend.ModpackEditorPage
 import com.example.nexusforge.frontend.favoritePage
 import com.example.nexusforge.viewmodels.RegViewModel
 import com.example.nexusforge.viewmodels.ThemeViewModel
@@ -139,12 +144,12 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                     CreateAlertDialog(
                         onDismiss = { showCreateAlert = false },
                         onCreateModpack = {
-                            // Навигация на создание модпака
-                            // tabBackStack += Destination.CreateModpackPage
+                            showCreateAlert = false
+                            tabBackStack += Destination.CreateModpackPage
                         },
                         onCreateTemplate = {
-                            // Навигация на создание шаблона
-                            // tabBackStack += Destination.CreateTemplatePage
+                            showCreateAlert = false
+                            tabBackStack += Destination.CreateTemplatePage
                         }
                     )
                 }
@@ -236,12 +241,10 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                         tabBackStack += Destination.ProfilePage
                                     },
                                     onCreateModpack = {
-                                        // TODO: Навигация на создание модпака
-                                        // tabBackStack += Destination.CreateModpackPage
+                                        tabBackStack += Destination.CreateModpackPage
                                     },
                                     onCreateTemplate = {
-                                        // TODO: Навигация на создание шаблона
-                                        // tabBackStack += Destination.CreateTemplatePage
+                                        tabBackStack += Destination.CreateTemplatePage
                                     },
                                     onProjectClick = { projectId ->
                                         tabBackStack += Destination.ProjectDetailsPage(projectId)
@@ -260,6 +263,18 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                     },
                                     onProjectClick = { projectId ->
                                         tabBackStack += Destination.ProjectDetailsPage(projectId)
+                                    },
+                                    onModpackClick = { modpackId ->
+                                        tabBackStack += Destination.ModpackEditorPage(modpackId)
+                                    },
+                                    onTemplatesClick = {
+                                        tabBackStack += Destination.TemplatesListPage
+                                    },
+                                    onEditTemplate = { templateId ->
+                                        tabBackStack += Destination.EditTemplatePage(templateId)
+                                    },
+                                    onCreateTemplate = {
+                                        tabBackStack += Destination.CreateTemplatePage
                                     }
                                 )
                             }
@@ -313,6 +328,69 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                     },
                                     onProfileClick = {
                                         tabBackStack += Destination.ProfilePage
+                                    }
+                                )
+                            }
+                            entry<Destination.CreateModpackPage> {
+                                CreateModpackPage(
+                                    onBackClick = {
+                                        tabBackStack.removeLastOrNull()
+                                    },
+                                    onModpackCreated = { modpackId ->
+                                        tabBackStack += Destination.GenerateModpackPage
+                                    }
+                                )
+                            }
+                            entry<Destination.GenerateModpackPage> {
+                                GenerateModpackPage(
+                                    onBackClick = {
+                                        tabBackStack.removeLastOrNull()
+                                    },
+                                    onComplete = {
+                                        tabBackStack.clear()
+                                        tabBackStack += Destination.MainMenu
+                                    }
+                                )
+                            }
+                            entry<Destination.TemplatesListPage> {
+                                TemplatesListPage(
+                                    onBackClick = {
+                                        tabBackStack.removeLastOrNull()
+                                    },
+                                    onCreateTemplate = {
+                                        tabBackStack += Destination.CreateTemplatePage
+                                    },
+                                    onEditTemplate = { templateId ->
+                                        tabBackStack += Destination.EditTemplatePage(templateId)
+                                    }
+                                )
+                            }
+                            entry<Destination.CreateTemplatePage> {
+                                CreateTemplatePage(
+                                    onBackClick = {
+                                        tabBackStack.removeLastOrNull()
+                                    }
+                                )
+                            }
+                            entry<Destination.EditTemplatePage> {
+                                val templateId = it.templateId
+                                CreateTemplatePage(
+                                    templateId = templateId,
+                                    onBackClick = {
+                                        tabBackStack.removeLastOrNull()
+                                    }
+                                )
+                            }
+                            entry<Destination.ModpackEditorPage> {
+                                val modpackId = it.modpackId
+                                ModpackEditorPage(
+                                    modpackId = modpackId,
+                                    onBackClick = {
+                                        tabBackStack.removeLastOrNull()
+                                    },
+                                    onGenerateClick = {
+                                        tabBackStack.removeLastOrNull()
+                                        tabBackStack += Destination.GenerateModpackPage
                                     }
                                 )
                             }

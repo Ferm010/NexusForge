@@ -2,9 +2,11 @@ package com.example.nexusforge.repository
 
 import com.example.nexusforge.data.CustomModpack
 import com.example.nexusforge.data.FavoriteProject
+import com.example.nexusforge.data.ModpackTemplate
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -138,7 +140,41 @@ class FirestoreRepository(
                 }
                 
                 val modpacks = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(CustomModpack::class.java)
+                    val modpack = doc.toObject(CustomModpack::class.java)
+                    modpack?.copy(id = doc.id)
+                } ?: emptyList()
+                
+                trySend(modpacks)
+            }
+        
+        awaitClose { listener.remove() }
+    }
+    
+    /**
+     * Получить избранные пользовательские сборки
+     */
+    fun getFavoriteModpacks(): Flow<List<CustomModpack>> = callbackFlow {
+        val userId = getUserId()
+        if (userId == null) {
+            trySend(emptyList())
+            close()
+            return@callbackFlow
+        }
+        
+        val listener = firestore.collection("users")
+            .document(userId)
+            .collection("custom_modpacks")
+            .whereEqualTo("isFavorite", true)
+            .orderBy("updatedAt", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                
+                val modpacks = snapshot?.documents?.mapNotNull { doc ->
+                    val modpack = doc.toObject(CustomModpack::class.java)
+                    modpack?.copy(id = doc.id)
                 } ?: emptyList()
                 
                 trySend(modpacks)
@@ -223,9 +259,132 @@ class FirestoreRepository(
                 .await()
             
             val modpack = doc.toObject(CustomModpack::class.java)
+                ?.copy(id = doc.id)
             Result.success(modpack)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
+    
+    /**
+     * Сохранить пользовательскую сборку (для конструктора)
+     */
+    suspend fun saveCustomModpack(modpackId: String, modpackData: Map<String, Any>): Result<Unit> {
+        return try {
+            val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
+            
+            firestore.collection("users")
+                .document(userId)
+                .collection("custom_modpacks")
+                .document(modpackId)
+                .set(modpackData, com.google.firebase.firestore.SetOptions.merge())
+                .await()
+            
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    // ==================== ШАБЛОНЫ ====================
+    
+    /**
+     * Получить все шаблоны пользователя
+     */
+    fun getTemplates(): Flow<List<ModpackTemplate>> = callbackFlow {
+        val userId = getUserId()
+        if (userId == null) {
+            trySend(emptyList())
+            close()
+            return@callbackFlow
+        }
+        
+        val listener = firestore.collection("users")
+            .document(userId)
+            .collection("templates")
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                
+                val templates = snapshot?.documents?.mapNotNull { doc ->
+                    doc.toObject(ModpackTemplate::class.java)?.copy(id = doc.id)
+                } ?: emptyList()
+                
+                trySend(templates)
+            }
+        
+        awaitClose { listener.remove() }
+    }
+    
+    /**
+     * Сохранить шаблон
+     */
+    suspend fun saveTemplate(template: ModpackTemplate): Result<String> {
+        return try {
+            val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
+            
+            val templateData = template.copy(userId = userId)
+            val docRef = if (template.id.isEmpty()) {
+                firestore.collection("users")
+                    .document(userId)
+                    .collection("templates")
+                    .document()
+            } else {
+                firestore.collection("users")
+                    .document(userId)
+                    .collection("templates")
+                    .document(template.id)
+            }
+            
+            docRef.set(templateData).await()
+            Result.success(docRef.id)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    /**
+     * Получить шаблон по ID
+     */
+    suspend fun getTemplate(templateId: String): Result<ModpackTemplate?> {
+        return try {
+            val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
+            
+            val doc = firestore.collection("users")
+                .document(userId)
+                .collection("templates")
+                .document(templateId)
+                .get()
+                .await()
+            
+            val template = doc.toObject(ModpackTemplate::class.java)?.copy(id = doc.id)
+            Result.success(template)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    /**
+     * Удалить шаблон
+     */
+    suspend fun deleteTemplate(templateId: String): Result<Unit> {
+        return try {
+            val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
+            
+            firestore.collection("users")
+                .document(userId)
+                .collection("templates")
+                .document(templateId)
+                .delete()
+                .await()
+            
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
+
