@@ -87,3 +87,11 @@
 -assumenosideeffects class kotlin.jvm.internal.Intrinsics {
     static void checkParameterIsNotNull(java.lang.Object, java.lang.String);
 }
+
+# Google Drive API
+-keep class com.google.api.client.** { *; }
+-keep class com.google.api.services.drive.** { *; }
+-dontwarn com.google.api.client.**
+-dontwarn com.google.api.services.drive.**
+-dontwarn javax.annotation.**
+-dontwarn org.apache.http.**
