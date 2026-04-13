@@ -1,11 +1,13 @@
 package com.ferm.nexusforge.viewmodels
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ferm.nexusforge.data.ModpackTemplate
 import com.ferm.nexusforge.data.TemplateMod
 import com.ferm.nexusforge.data.ModrinthProject
 import com.ferm.nexusforge.repository.FirestoreRepository
+import com.ferm.nexusforge.utils.NetworkChecker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,12 +15,21 @@ import kotlinx.coroutines.launch
 
 class TemplateViewModel : ViewModel() {
     private val repository = FirestoreRepository()
+    private var networkChecker: NetworkChecker? = null
     
     private val _state = MutableStateFlow(TemplateState())
     val state: StateFlow<TemplateState> = _state.asStateFlow()
     
     private val _templates = MutableStateFlow<List<ModpackTemplate>>(emptyList())
     val templates: StateFlow<List<ModpackTemplate>> = _templates.asStateFlow()
+    
+    fun initializeNetworkChecker(context: Context) {
+        networkChecker = NetworkChecker(context)
+    }
+    
+    fun clearError() {
+        _state.value = _state.value.copy(error = null)
+    }
     
     init {
         loadTemplates()
@@ -61,6 +72,15 @@ class TemplateViewModel : ViewModel() {
     }
     
     fun saveTemplate(minecraftVersion: String, modLoader: String, onComplete: (Boolean) -> Unit) {
+        // Проверка сети перед сохранением
+        if (networkChecker?.isNetworkAvailable() == false) {
+            _state.value = _state.value.copy(
+                error = "Проблема сети. Проверьте подключение к интернету."
+            )
+            onComplete(false)
+            return
+        }
+        
         viewModelScope.launch {
             val template = ModpackTemplate(
                 id = _state.value.templateId,
@@ -112,5 +132,6 @@ data class TemplateState(
     val templateDescription: String = "",
     val selectedMods: List<TemplateMod> = emptyList(),
     val minecraftVersion: String = "",
-    val modLoader: String = ""
+    val modLoader: String = "",
+    val error: String? = null
 )

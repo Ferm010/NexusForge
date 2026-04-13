@@ -1,5 +1,6 @@
 package com.ferm.nexusforge.frontend
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -87,7 +88,10 @@ fun AuthPasswordPage(
                     vm.signInWithEmail(
                         context = context,
                         enteredPassword = vm.authPassword,
-                        onSuccess = onNavigateToMainMenu,
+                        onSuccess = {
+                            Toast.makeText(context, "Вы вошли в аккаунт", Toast.LENGTH_SHORT).show()
+                            onNavigateToMainMenu()
+                        },
                         onError = { errorMessage = it }
                     )
                 },

@@ -78,6 +78,8 @@ fun CreateTemplatePage(
     
     LaunchedEffect(Unit) {
         searchViewModel.resetState()
+        searchViewModel.initializeNetworkChecker(context)
+        templateViewModel.initializeNetworkChecker(context)
         if (templateId.isNotEmpty()) {
             templateViewModel.loadTemplate(templateId)
         } else {
@@ -103,6 +105,49 @@ fun CreateTemplatePage(
                 .padding(padding)
                 .padding(16.dp)
         ) {
+            // Отображение ошибки сети
+            if (templateState.error != null) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Error",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Text(
+                            text = templateState.error ?: "",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        IconButton(
+                            onClick = { templateViewModel.clearError() },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
+            }
+            
             OutlinedTextField(
                 value = templateState.templateName,
                 onValueChange = { templateViewModel.updateTemplateName(it) },
@@ -323,7 +368,8 @@ fun CreateTemplatePage(
                 enabled = templateState.templateName.isNotEmpty() && 
                          templateState.selectedMods.isNotEmpty() &&
                          searchState.selectedMinecraftVersion.isNotEmpty() &&
-                         searchState.selectedModLoader.isNotEmpty()
+                         searchState.selectedModLoader.isNotEmpty() &&
+                         templateState.error == null
             ) {
                 Text("Сохранить шаблон")
             }

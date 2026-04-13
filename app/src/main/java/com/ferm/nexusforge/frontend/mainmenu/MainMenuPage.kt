@@ -26,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -33,9 +34,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ferm.nexusforge.R
+import com.ferm.nexusforge.frontend.components.SkeletonListLoading
 import com.ferm.nexusforge.viewmodels.MainMenuViewModel
 import com.ferm.nexusforge.viewmodels.RegViewModel
 import com.ferm.nexusforge.viewmodels.SearchUiState
+import com.ferm.nexusforge.utils.NetworkChecker
 
 @Composable
 fun MainMenuPage(
@@ -51,11 +54,17 @@ fun MainMenuPage(
     BackHandler(enabled = true) { }
     
     var showFilterSheet by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val networkChecker = remember { NetworkChecker(context) }
     
     // Загружаем сборки дня при первом открытии
     LaunchedEffect(Unit) {
         if (menuVm.featuredProjects.isEmpty()) {
-            menuVm.loadFeaturedProjects()
+            if (networkChecker.isNetworkAvailable()) {
+                menuVm.loadFeaturedProjects()
+            } else {
+                menuVm.setError("Проблема сети. Проверьте подключение к интернету.")
+            }
         }
     }
     
@@ -123,14 +132,7 @@ fun MainMenuPage(
                         
                         if (menuVm.isLoadingFeatured) {
                             item {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(32.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    CircularProgressIndicator()
-                                }
+                                SkeletonListLoading(count = 3)
                             }
                         }
                         
@@ -173,11 +175,14 @@ fun MainMenuPage(
                 }
                 
                 is SearchUiState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp)
                     ) {
-                        CircularProgressIndicator()
+                        item {
+                            SkeletonListLoading(count = 5)
+                        }
                     }
                 }
                 
@@ -263,7 +268,13 @@ fun MainMenuPage(
                             color = MaterialTheme.colorScheme.error
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { menuVm.searchProjects() }) {
+                        Button(onClick = { 
+                            if (networkChecker.isNetworkAvailable()) {
+                                menuVm.searchProjects()
+                            } else {
+                                menuVm.setError("Проблема сети. Проверьте подключение к интернету.")
+                            }
+                        }) {
                             Text(text = stringResource(R.string.retry))
                         }
                     }

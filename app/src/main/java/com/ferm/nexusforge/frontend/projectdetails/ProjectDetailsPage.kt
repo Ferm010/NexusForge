@@ -1,7 +1,10 @@
 package com.ferm.nexusforge.frontend.projectdetails
 
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -18,12 +21,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.ferm.nexusforge.R
 import com.ferm.nexusforge.data.ModrinthProject
+import com.ferm.nexusforge.frontend.components.SkeletonProjectDetails
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
@@ -38,6 +43,8 @@ fun ProjectDetailsPage(
     onToggleFavorite: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -51,7 +58,11 @@ fun ProjectDetailsPage(
                     }
                 },
                 actions = {
-                    IconButton(onClick = onToggleFavorite) {
+                    IconButton(onClick = {
+                        onToggleFavorite()
+                        val message = if (isFavorite) "Сборка убрана из избранного" else "Сборка сохранена в избранное"
+                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                    }) {
                         Icon(
                             painter = painterResource(
                                 if (isFavorite) R.drawable.add_bookmark_fiiled 
@@ -327,13 +338,13 @@ fun ProjectDetailsPage(
                         
                         // Список версий
                         if (versionsExpanded) {
-                            Column(
+                            LazyColumn(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(16.dp),
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                project.versions.forEach { version ->
+                                items(project.versions) { version ->
                                     Text(
                                         text = version,
                                         style = MaterialTheme.typography.bodyMedium,

@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Search
 import android.widget.Toast
+import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -75,6 +76,8 @@ import com.ferm.nexusforge.data.ModrinthProject
 import com.ferm.nexusforge.repository.FirestoreRepository
 import com.ferm.nexusforge.data.ModpackMod
 import com.ferm.nexusforge.viewmodels.ModpackCreatorViewModel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -107,6 +110,7 @@ fun ModpackEditorPage(
     
     LaunchedEffect(modpackId) {
         try {
+            vm.initializeNetworkChecker(context)
             vm.setModpackId(modpackId)
             val result = firestoreRepository.getCustomModpack(modpackId)
             result.onSuccess { modpack ->
@@ -115,51 +119,69 @@ fun ModpackEditorPage(
                     vm.updateMinecraftVersion(pack.minecraftVersion)
                     vm.updateModLoader(pack.modLoader)
                     
-                    // Load mods with versions sequentially
-                    for (modRef in pack.mods) {
-                        try {
-                            val versions = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                com.ferm.nexusforge.network.ModrinthApi.retrofitService.getProjectVersions(modRef.projectId)
+                    // Load mods with versions in parallel with timeout
+                    kotlinx.coroutines.coroutineScope {
+                        val deferredMods = pack.mods.map { modRef ->
+                            async(kotlinx.coroutines.Dispatchers.IO) {
+                                try {
+                                    withTimeoutOrNull(10000L) { // 10 second timeout per mod
+                                        val versions = com.ferm.nexusforge.network.ModrinthApi.retrofitService.getProjectVersions(modRef.projectId)
+                                        
+                                        val matchingVersion = versions.firstOrNull { version ->
+                                            val versionsList = version.gameVersion.ifEmpty { version.gameVersions ?: emptyList() }
+                                            val hasMatchingVersion = versionsList.any { v -> v == pack.minecraftVersion }
+                                            val hasMatchingLoader = version.loaders.any { loader -> loader.equals(pack.modLoader, ignoreCase = true) }
+                                            hasMatchingVersion && hasMatchingLoader
+                                        }
+                                        
+                                        val modVersion = matchingVersion?.versionNumber ?: versions.firstOrNull()?.versionNumber ?: ""
+                                        val file = matchingVersion?.files?.firstOrNull() ?: versions.firstOrNull()?.files?.firstOrNull()
+                                        
+                                        ModpackMod(
+                                            projectId = modRef.projectId,
+                                            name = modRef.title,
+                                            version = modVersion,
+                                            downloadUrl = modRef.downloadUrl ?: file?.url ?: "",
+                                            iconUrl = modRef.iconUrl,
+                                            fileName = modRef.fileName ?: file?.filename,
+                                            fileSize = modRef.fileSize ?: file?.size,
+                                            sha1 = modRef.sha1 ?: file?.hashes?.get("sha1"),
+                                            sha512 = modRef.sha512 ?: file?.hashes?.get("sha512")
+                                        )
+                                    } ?: run {
+                                        android.util.Log.e("ModpackEditor", "Timeout loading version for ${modRef.title}")
+                                        ModpackMod(
+                                            projectId = modRef.projectId,
+                                            name = modRef.title,
+                                            version = "",
+                                            downloadUrl = modRef.downloadUrl ?: "",
+                                            iconUrl = modRef.iconUrl,
+                                            fileName = modRef.fileName,
+                                            fileSize = modRef.fileSize,
+                                            sha1 = modRef.sha1,
+                                            sha512 = modRef.sha512
+                                        )
+                                    }
+                                } catch (e: Exception) {
+                                    android.util.Log.e("ModpackEditor", "Error loading version for ${modRef.title}: ${e.message}")
+                                    ModpackMod(
+                                        projectId = modRef.projectId,
+                                        name = modRef.title,
+                                        version = "",
+                                        downloadUrl = modRef.downloadUrl ?: "",
+                                        iconUrl = modRef.iconUrl,
+                                        fileName = modRef.fileName,
+                                        fileSize = modRef.fileSize,
+                                        sha1 = modRef.sha1,
+                                        sha512 = modRef.sha512
+                                    )
+                                }
                             }
-                            
-                            val matchingVersion = versions.firstOrNull { version ->
-                                val versionsList = version.gameVersion.ifEmpty { version.gameVersions ?: emptyList() }
-                                val hasMatchingVersion = versionsList.any { v -> v == pack.minecraftVersion }
-                                val hasMatchingLoader = version.loaders.any { loader -> loader.equals(pack.modLoader, ignoreCase = true) }
-                                hasMatchingVersion && hasMatchingLoader
-                            }
-                            
-                            val modVersion = matchingVersion?.versionNumber ?: versions.firstOrNull()?.versionNumber ?: ""
-                            val file = matchingVersion?.files?.firstOrNull() ?: versions.firstOrNull()?.files?.firstOrNull()
-                            
-                            vm.addModDirectly(
-                                ModpackMod(
-                                    projectId = modRef.projectId,
-                                    name = modRef.title,
-                                    version = modVersion,
-                                    downloadUrl = modRef.downloadUrl ?: file?.url ?: "",
-                                    iconUrl = modRef.iconUrl,
-                                    fileName = modRef.fileName ?: file?.filename,
-                                    fileSize = modRef.fileSize ?: file?.size,
-                                    sha1 = modRef.sha1 ?: file?.hashes?.get("sha1"),
-                                    sha512 = modRef.sha512 ?: file?.hashes?.get("sha512")
-                                )
-                            )
-                        } catch (e: Exception) {
-                            android.util.Log.e("ModpackEditor", "Error loading version for ${modRef.title}: ${e.message}")
-                            vm.addModDirectly(
-                                ModpackMod(
-                                    projectId = modRef.projectId,
-                                    name = modRef.title,
-                                    version = "",
-                                    downloadUrl = modRef.downloadUrl ?: "",
-                                    iconUrl = modRef.iconUrl,
-                                    fileName = modRef.fileName,
-                                    fileSize = modRef.fileSize,
-                                    sha1 = modRef.sha1,
-                                    sha512 = modRef.sha512
-                                )
-                            )
+                        }
+                        
+                        // Wait for all requests to complete and add mods
+                        deferredMods.awaitAll().forEach { mod: ModpackMod ->
+                            vm.addModDirectly(mod)
                         }
                     }
                     
@@ -240,6 +262,49 @@ fun ModpackEditorPage(
                     .padding(padding)
                     .padding(16.dp)
             ) {
+                // Отображение ошибки сети
+                if (state.error != null) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Error",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Text(
+                                text = state.error ?: "",
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(
+                                onClick = { vm.clearError() },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Close",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
+                    }
+                }
+                
                 OutlinedTextField(
                     value = state.modpackName,
                     onValueChange = { vm.updateModpackName(it) },
@@ -461,7 +526,7 @@ fun ModpackEditorPage(
                             }
                         },
                         modifier = Modifier.weight(1f),
-                        enabled = state.modpackName.isNotEmpty() && state.selectedMinecraftVersion.isNotEmpty()
+                        enabled = state.modpackName.isNotEmpty() && state.selectedMinecraftVersion.isNotEmpty() && state.error == null
                     ) {
                         Text(stringResource(R.string.save_only))
                     }
@@ -474,7 +539,7 @@ fun ModpackEditorPage(
                             }
                         },
                         modifier = Modifier.weight(1f),
-                        enabled = state.modpackName.isNotEmpty() && state.selectedMinecraftVersion.isNotEmpty()
+                        enabled = state.modpackName.isNotEmpty() && state.selectedMinecraftVersion.isNotEmpty() && state.error == null
                     ) {
                         Text(stringResource(R.string.generate))
                     }

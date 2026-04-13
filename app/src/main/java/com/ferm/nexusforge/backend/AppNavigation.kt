@@ -61,6 +61,7 @@ import com.ferm.nexusforge.frontend.favoritePage
 import com.ferm.nexusforge.viewmodels.RegViewModel
 import com.ferm.nexusforge.viewmodels.ThemeViewModel
 import com.google.firebase.auth.FirebaseAuth
+import java.util.Map.entry
 
 @OptIn(ExperimentalAnimationApi::class) // Анимации
 @Composable
@@ -281,6 +282,10 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                             }
                             entry<Destination.ProfilePage> {
                                 ProfilePage(
+                                    onBackClick = {
+                                        tabBackStack.clear()
+                                        tabBackStack += Destination.MainMenu
+                                    },
                                     onSignOut = {
                                         vm.signOut()
                                         backStack.clear()

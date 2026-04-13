@@ -4,6 +4,7 @@ import com.ferm.nexusforge.data.GameVersion
 import com.ferm.nexusforge.data.ModrinthProject
 import com.ferm.nexusforge.data.ModrinthVersion
 import com.ferm.nexusforge.data.ModrinthSearchResponse
+import com.ferm.nexusforge.data.DependenciesResponse
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -11,6 +12,7 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.http.GET
 import retrofit2.http.Query
+import retrofit2.http.Path
 
 private const val BASE_URL = "https://api.modrinth.com/v2/"
 
@@ -59,8 +61,13 @@ interface ModrinthApiService {
     
     @GET("project/{id}")
     suspend fun getProject(
-        @retrofit2.http.Path("id") projectId: String
+        @Path("id") projectId: String
     ): ModrinthProject
+    
+    @GET("project/{id}/dependencies")
+    suspend fun getDependencies(
+        @Path("id") projectId: String
+    ): DependenciesResponse
 }
 
 object ModrinthApi {

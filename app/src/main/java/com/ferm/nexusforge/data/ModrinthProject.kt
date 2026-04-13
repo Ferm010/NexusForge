@@ -99,7 +99,18 @@ data class ModrinthVersion(
     @SerialName("primary_file")
     val primaryFile: String? = null,
     @SerialName("game_versions")
-    val gameVersions: List<String>? = null
+    val gameVersions: List<String>? = null,
+    val dependencies: List<ModDependencyInfo> = emptyList()
+)
+
+@Serializable
+data class ModDependencyInfo(
+    @SerialName("project_id")
+    val projectId: String? = null,
+    @SerialName("version_id")
+    val versionId: String? = null,
+    @SerialName("dependency_type")
+    val dependencyType: String = "required"
 )
 
 @Serializable
@@ -110,4 +121,10 @@ data class ModFile(
     @SerialName("primary")
     val primary: Boolean? = null,
     val hashes: Map<String, String>? = null
+)
+
+@Serializable
+data class DependenciesResponse(
+    val projects: List<ModrinthProject> = emptyList(),
+    val versions: List<ModrinthVersion> = emptyList()
 )

@@ -24,16 +24,27 @@ import com.ferm.nexusforge.backend.LocaleHelper.onAttach
 import com.ferm.nexusforge.backend.MyAppNav3
 import com.ferm.nexusforge.backend.SecurityCheck
 import com.ferm.nexusforge.ui.theme.NexusForgeTheme
+import com.ferm.nexusforge.utils.AnalyticsHelper
 import com.ferm.nexusforge.viewmodels.ThemeViewModel
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlin.system.exitProcess
 
 class MainActivity : ComponentActivity() {
+    // Ленивая инициализация Analytics
+    private val analyticsHelper: AnalyticsHelper by lazy {
+        AnalyticsHelper(this)
+    }
+    
     override fun attachBaseContext(newBase: android.content.Context) {
         super.attachBaseContext(onAttach(newBase))
     }
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Инициализация Firebase Crashlytics
+        FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
+        Log.d("Crashlytics", "Crashlytics initialized")
         
         // Применяем сохранённый язык
         LocaleHelper.applyLocale(this)
@@ -53,6 +64,8 @@ class MainActivity : ComponentActivity() {
             
             LaunchedEffect(Unit) {
                 themeViewModel.initTheme(systemDarkTheme)
+                // Логируем открытие приложения
+                analyticsHelper.logScreenView("MainActivity")
             }
             
             Crossfade(

@@ -1,5 +1,6 @@
 package com.ferm.nexusforge.viewmodels
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -8,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.ferm.nexusforge.data.GameVersion
 import com.ferm.nexusforge.data.ModrinthProject
 import com.ferm.nexusforge.network.ModrinthApi
+import com.ferm.nexusforge.utils.AnalyticsHelper
 import kotlinx.coroutines.launch
 
 enum class SearchMode {
@@ -185,7 +187,10 @@ class MainMenuViewModel : ViewModel() {
                     response.hits
                 }
                 
-                featuredProjects = featuredProjects + projects
+                // Оптимизация: используем toMutableList вместо +
+                val currentProjects = featuredProjects.toMutableList()
+                currentProjects.addAll(projects)
+                featuredProjects = currentProjects
                 featuredOffset += response.hits.size
                 hasMoreFeatured = response.hits.size >= 20
             } catch (e: Exception) {
@@ -303,7 +308,10 @@ class MainMenuViewModel : ViewModel() {
                 }
                 
                 val currentProjects = (searchUiState as SearchUiState.Success).projects
-                searchUiState = SearchUiState.Success(currentProjects + projects)
+                // Оптимизация: используем toMutableList вместо +
+                val updatedProjects = currentProjects.toMutableList()
+                updatedProjects.addAll(projects)
+                searchUiState = SearchUiState.Success(updatedProjects)
                 searchOffset += response.hits.size
                 hasMoreResults = response.hits.size >= 20
             } catch (e: Exception) {
@@ -312,5 +320,9 @@ class MainMenuViewModel : ViewModel() {
                 isLoadingMore = false
             }
         }
+    }
+    
+    fun setError(message: String) {
+        searchUiState = SearchUiState.Error(message)
     }
 }

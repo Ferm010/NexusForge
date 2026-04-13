@@ -202,7 +202,6 @@ fun GenerateModpackPage(
     ) { padding ->
         LaunchedEffect(progress.isComplete, progress.error) {
             if (progress.isComplete && progress.error == null) {
-                kotlinx.coroutines.delay(1500)
                 onComplete()
             }
         }

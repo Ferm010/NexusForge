@@ -9,10 +9,12 @@ import androidx.lifecycle.viewModelScope
 import com.ferm.nexusforge.data.ModReference
 import com.ferm.nexusforge.data.ModrinthProject
 import com.ferm.nexusforge.data.ModpackMod
+import com.ferm.nexusforge.data.ModDependencyInfo
 import com.ferm.nexusforge.network.ModrinthApi
 import com.ferm.nexusforge.repository.FirestoreRepository
 import com.ferm.nexusforge.repository.GoogleDriveRepository
 import com.ferm.nexusforge.utils.MrpackGenerator
+import com.ferm.nexusforge.utils.NetworkChecker
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -42,8 +44,16 @@ class ModpackCreatorViewModel : ViewModel() {
     private val _state = MutableStateFlow(ModpackCreatorState())
     val state: StateFlow<ModpackCreatorState> = _state.asStateFlow()
     
-    private val firestoreRepository = FirestoreRepository()
+    // Ленивая инициализация - создаются только при первом использовании
+    private val firestoreRepository: FirestoreRepository by lazy {
+        FirestoreRepository()
+    }
     private var googleDriveRepository: GoogleDriveRepository? = null
+    private var networkChecker: NetworkChecker? = null
+    
+    fun initializeNetworkChecker(context: Context) {
+        networkChecker = NetworkChecker(context)
+    }
     
     fun initializeGoogleDrive(context: Context) {
         googleDriveRepository = GoogleDriveRepository(context)
@@ -58,6 +68,14 @@ class ModpackCreatorViewModel : ViewModel() {
     fun loadMinecraftVersions() {
         viewModelScope.launch {
             try {
+                if (networkChecker?.isNetworkAvailable() == false) {
+                    _state.value = _state.value.copy(
+                        error = "Проблема сети. Проверьте подключение к интернету.",
+                        availableMinecraftVersions = listOf("1.21", "1.20.4", "1.20.2", "1.20.1", "1.19.4", "1.19.3", "1.19.2", "1.19.1", "1.18.2", "1.18.1", "1.17.1", "1.16.5", "1.16.4", "1.16.3", "1.16.2", "1.16.1")
+                    )
+                    return@launch
+                }
+                
                 val versions = withContext(Dispatchers.IO) {
                     ModrinthApi.retrofitService.getGameVersions()
                 }
@@ -71,6 +89,7 @@ class ModpackCreatorViewModel : ViewModel() {
                 )
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
+                    error = "Проблема сети. Проверьте подключение к интернету.",
                     availableMinecraftVersions = listOf("1.21", "1.20.4", "1.20.2", "1.20.1", "1.19.4", "1.19.3", "1.19.2", "1.19.1", "1.18.2", "1.18.1", "1.17.1", "1.16.5", "1.16.4", "1.16.3", "1.16.2", "1.16.1")
                 )
             }
@@ -95,6 +114,14 @@ class ModpackCreatorViewModel : ViewModel() {
         viewModelScope.launch {
             _state.value = _state.value.copy(isSearching = true)
             try {
+                if (networkChecker?.isNetworkAvailable() == false) {
+                    _state.value = _state.value.copy(
+                        isSearching = false,
+                        error = "Проблема сети. Проверьте подключение к интернету."
+                    )
+                    return@launch
+                }
+                
                 val facetsBuilder = StringBuilder("[[\"versions:$minecraftVersion\"],[\"categories:$modLoader\"]]")
                 val response = withContext(Dispatchers.IO) {
                     ModrinthApi.retrofitService.searchProjects(
@@ -110,14 +137,38 @@ class ModpackCreatorViewModel : ViewModel() {
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
                     isSearching = false,
-                    error = e.message
+                    error = "Проблема сети. Проверьте подключение к интернету."
                 )
             }
         }
     }
     
     fun updateModLoader(modLoader: String) {
-        _state.value = _state.value.copy(selectedModLoader = modLoader)
+        if (_state.value.selectedMods.isNotEmpty() && _state.value.selectedModLoader != modLoader) {
+            _state.value = _state.value.copy(showModLoaderWarning = true, pendingModLoader = modLoader)
+        } else {
+            _state.value = _state.value.copy(selectedModLoader = modLoader)
+        }
+    }
+    
+    fun clearError() {
+        _state.value = _state.value.copy(error = null)
+    }
+    
+    fun confirmModLoaderChange() {
+        _state.value = _state.value.copy(
+            selectedModLoader = _state.value.pendingModLoader,
+            selectedMods = emptyList(),
+            showModLoaderWarning = false,
+            pendingModLoader = ""
+        )
+    }
+    
+    fun cancelModLoaderChange() {
+        _state.value = _state.value.copy(
+            showModLoaderWarning = false,
+            pendingModLoader = ""
+        )
     }
     
     fun addMod(mod: ModrinthProject) {
@@ -131,6 +182,13 @@ class ModpackCreatorViewModel : ViewModel() {
             var sha512: String? = null
             
             try {
+                if (networkChecker?.isNetworkAvailable() == false) {
+                    _state.value = _state.value.copy(
+                        error = "Проблема сети. Проверьте подключение к интернету."
+                    )
+                    return@launch
+                }
+                
                 android.util.Log.d("ModpackCreator", "Fetching versions for: ${mod.actualProjectId}")
                 
                 val versions = withContext(Dispatchers.IO) {
@@ -208,9 +266,100 @@ class ModpackCreatorViewModel : ViewModel() {
                 )
                 android.util.Log.d("ModpackCreator", "Added mod with version: '$modVersion'")
                 _state.value = _state.value.copy(selectedMods = currentMods)
+                
+                // Получаем и добавляем зависимости
+                addDependencies(mod.actualProjectId)
             } else {
                 android.util.Log.d("ModpackCreator", "Mod already exists in list")
             }
+        }
+    }
+    
+    private fun addDependencies(projectId: String) {
+        viewModelScope.launch {
+            try {
+                val deps = withContext(Dispatchers.IO) {
+                    ModrinthApi.retrofitService.getDependencies(projectId)
+                }
+                
+                // Получаем обязательные зависимости
+                val requiredDeps = mutableListOf<ModDependencyInfo>()
+                for (version in deps.versions) {
+                    for (dep in version.dependencies) {
+                        if (dep.dependencyType == "required" && dep.projectId != null) {
+                            if (requiredDeps.none { it.projectId == dep.projectId }) {
+                                requiredDeps.add(dep)
+                            }
+                        }
+                    }
+                }
+                
+                // Добавляем каждую зависимость
+                for (dep in requiredDeps) {
+                    val depProject = deps.projects.find { it.actualProjectId == dep.projectId }
+                    if (depProject != null) {
+                        addModDependency(depProject)
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.d("ModpackCreator", "No dependencies found or error: ${e.message}")
+            }
+        }
+    }
+    
+    private suspend fun addModDependency(mod: ModrinthProject) {
+        var downloadUrl = ""
+        var modVersion = ""
+        var fileName: String? = null
+        var fileSize: Long? = null
+        var sha1: String? = null
+        var sha512: String? = null
+        
+        try {
+            val versions = withContext(Dispatchers.IO) {
+                ModrinthApi.retrofitService.getProjectVersions(mod.actualProjectId)
+            }
+            
+            val mcVersion = _state.value.selectedMinecraftVersion
+            val modLoader = _state.value.selectedModLoader
+            
+            val matchingVersion = versions.firstOrNull { version ->
+                val versionsList = version.gameVersion.ifEmpty { version.gameVersions ?: emptyList() }
+                val hasMatchingVersion = versionsList.any { it == mcVersion }
+                val hasMatchingLoader = version.loaders.any { it.equals(modLoader, ignoreCase = true) }
+                hasMatchingVersion && hasMatchingLoader
+            } ?: versions.firstOrNull()
+            
+            if (matchingVersion != null) {
+                val file = matchingVersion.files.firstOrNull()
+                downloadUrl = file?.url ?: ""
+                modVersion = matchingVersion.versionNumber
+                fileName = file?.filename
+                fileSize = file?.size
+                sha1 = file?.hashes?.get("sha1")
+                sha512 = file?.hashes?.get("sha512")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("ModpackCreator", "Error fetching dependency versions: ${e.message}")
+        }
+        
+        val currentMods = _state.value.selectedMods.toMutableList()
+        if (currentMods.none { it.projectId == mod.actualProjectId }) {
+            currentMods.add(
+                ModpackMod(
+                    projectId = mod.actualProjectId,
+                    name = mod.title,
+                    version = modVersion,
+                    downloadUrl = downloadUrl,
+                    iconUrl = mod.iconUrl,
+                    fileName = fileName,
+                    fileSize = fileSize,
+                    sha1 = sha1,
+                    sha512 = sha512
+                )
+            )
+            android.util.Log.d("ModpackCreator", "Auto-added dependency: ${mod.title}")
+            _state.value = _state.value.copy(selectedMods = currentMods)
         }
     }
     
@@ -237,10 +386,32 @@ class ModpackCreatorViewModel : ViewModel() {
     }
     
     fun updateMinecraftVersion(version: String) {
+        if (_state.value.selectedMods.isNotEmpty() && _state.value.selectedMinecraftVersion != version) {
+            _state.value = _state.value.copy(showVersionWarning = true, pendingVersion = version)
+        } else {
+            _state.value = _state.value.copy(
+                selectedMinecraftVersion = version,
+                searchResults = emptyList(),
+                searchQuery = ""
+            )
+        }
+    }
+    
+    fun confirmVersionChange() {
         _state.value = _state.value.copy(
-            selectedMinecraftVersion = version,
+            selectedMinecraftVersion = _state.value.pendingVersion,
+            selectedMods = emptyList(),
             searchResults = emptyList(),
-            searchQuery = ""
+            searchQuery = "",
+            showVersionWarning = false,
+            pendingVersion = ""
+        )
+    }
+    
+    fun cancelVersionChange() {
+        _state.value = _state.value.copy(
+            showVersionWarning = false,
+            pendingVersion = ""
         )
     }
     
@@ -282,7 +453,6 @@ class ModpackCreatorViewModel : ViewModel() {
             try {
                 withContext(Dispatchers.IO) {
                     val zipFile = createZipFile(currentState)
-                    delay(2000) // 2 second delay before sharing
                     shareZipFile(context, zipFile, currentState.modpackName)
                 }
                 
@@ -325,6 +495,14 @@ class ModpackCreatorViewModel : ViewModel() {
     fun saveModpackOnly(onComplete: () -> Unit) {
         val currentState = _state.value
         if (currentState.modpackName.isEmpty() || currentState.selectedMinecraftVersion.isEmpty()) {
+            return
+        }
+        
+        // Проверка сети перед сохранением
+        if (networkChecker?.isNetworkAvailable() == false) {
+            _state.value = _state.value.copy(
+                error = "Проблема сети. Проверьте подключение к интернету."
+            )
             return
         }
         
@@ -378,6 +556,15 @@ class ModpackCreatorViewModel : ViewModel() {
             currentState.selectedMinecraftVersion.isEmpty() || 
             currentState.selectedMods.isEmpty()) {
             onProgress(0, "", true, "Invalid state")
+            return
+        }
+        
+        // Проверка сети перед генерацией
+        if (networkChecker?.isNetworkAvailable() == false) {
+            _state.value = _state.value.copy(
+                error = "Проблема сети. Проверьте подключение к интернету."
+            )
+            onProgress(0, "", true, "Проблема сети. Проверьте подключение к интернету.")
             return
         }
         
@@ -458,6 +645,15 @@ class ModpackCreatorViewModel : ViewModel() {
             currentState.selectedMinecraftVersion.isEmpty() || 
             currentState.selectedMods.isEmpty()) {
             onProgress(0, "", true, "Invalid state")
+            return
+        }
+        
+        // Проверка сети перед генерацией
+        if (networkChecker?.isNetworkAvailable() == false) {
+            _state.value = _state.value.copy(
+                error = "Проблема сети. Проверьте подключение к интернету."
+            )
+            onProgress(0, "", true, "Проблема сети. Проверьте подключение к интернету.")
             return
         }
         
@@ -791,5 +987,9 @@ data class ModpackCreatorState(
     val selectedMods: List<ModpackMod> = emptyList(),
     val isSearching: Boolean = false,
     val isGenerating: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val showVersionWarning: Boolean = false,
+    val pendingVersion: String = "",
+    val showModLoaderWarning: Boolean = false,
+    val pendingModLoader: String = ""
 )

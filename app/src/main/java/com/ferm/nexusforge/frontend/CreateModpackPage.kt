@@ -1,6 +1,7 @@
 package com.ferm.nexusforge.frontend
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -44,6 +45,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -68,6 +70,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.ferm.nexusforge.R
 import com.ferm.nexusforge.data.ModrinthProject
 import com.ferm.nexusforge.data.ModpackTemplate
+import com.ferm.nexusforge.utils.debounce
 import com.ferm.nexusforge.viewmodels.ModpackCreatorViewModel
 import com.ferm.nexusforge.viewmodels.TemplateViewModel
 
@@ -89,9 +92,20 @@ fun CreateModpackPage(
     var selectedModDetails by remember { mutableStateOf<ModrinthProject?>(null) }
     var isLoadingModDetails by remember { mutableStateOf(false) }
     var showTemplateSelector by remember { mutableStateOf(false) }
+    var showExitWarning by remember { mutableStateOf(false) }
+    
+    // Debounced search function
+    val debouncedSearch = remember {
+        debounce<String>(delayMillis = 500, coroutineScope = scope) { query ->
+            if (query.length >= 2 && state.selectedMinecraftVersion.isNotEmpty()) {
+                vm.searchMods()
+            }
+        }
+    }
     
     LaunchedEffect(Unit) {
         vm.resetState()
+        vm.initializeNetworkChecker(context)
     }
     
     LaunchedEffect(selectedModDetails) {
@@ -100,12 +114,28 @@ fun CreateModpackPage(
         }
     }
     
+    // Обработка системной кнопки Back
+    BackHandler(enabled = true) {
+        if (state.modpackName.isNotEmpty() || state.selectedMods.isNotEmpty()) {
+            showExitWarning = true
+        } else {
+            onBackClick()
+        }
+    }
+    
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.create_modpack)) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = {
+                        // Проверяем есть ли несохраненные изменения
+                        if (state.modpackName.isNotEmpty() || state.selectedMods.isNotEmpty()) {
+                            showExitWarning = true
+                        } else {
+                            onBackClick()
+                        }
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -118,6 +148,49 @@ fun CreateModpackPage(
                 .padding(padding)
                 .padding(16.dp)
         ) {
+            // Отображение ошибки сети
+            if (state.error != null) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Error",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Text(
+                            text = state.error ?: "",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        IconButton(
+                            onClick = { vm.clearError() },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
+            }
+            
             OutlinedTextField(
                 value = state.modpackName,
                 onValueChange = { vm.updateModpackName(it) },
@@ -223,9 +296,7 @@ fun CreateModpackPage(
                 value = state.searchQuery,
                 onValueChange = { query ->
                     vm.updateSearchQuery(query)
-                    if (query.length >= 2 && state.selectedMinecraftVersion.isNotEmpty()) {
-                        vm.searchMods()
-                    }
+                    debouncedSearch(query)
                 },
                 label = { Text(stringResource(R.string.search_mods)) },
                 placeholder = { Text(stringResource(R.string.search_mods)) },
@@ -370,10 +441,70 @@ fun CreateModpackPage(
                     Icon(Icons.Default.Download, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.generate_pack))
-                }
             }
         }
     }
+    
+    // Alert для изменения версии Minecraft
+    if (state.showVersionWarning) {
+        AlertDialog(
+            onDismissRequest = { vm.cancelVersionChange() },
+            title = { Text("Изменить версию?") },
+            text = { Text("Вы изменили версию Minecraft. Все добавленные моды будут удалены, так как они могут быть несовместимы с новой версией.") },
+            confirmButton = {
+                Button(onClick = { vm.confirmVersionChange() }) {
+                    Text("Подтвердить")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { vm.cancelVersionChange() }) {
+                    Text("Отмена")
+                }
+            }
+        )
+    }
+    
+    // Alert для изменения модлоадера
+    if (state.showModLoaderWarning) {
+        AlertDialog(
+            onDismissRequest = { vm.cancelModLoaderChange() },
+            title = { Text("Изменить модлоадер?") },
+            text = { Text("Вы изменили модлоадер. Все добавленные моды будут удалены, так как они могут быть несовместимы с новым модлоадером.") },
+            confirmButton = {
+                Button(onClick = { vm.confirmModLoaderChange() }) {
+                    Text("Подтвердить")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { vm.cancelModLoaderChange() }) {
+                    Text("Отмена")
+                }
+            }
+        )
+    }
+    
+    // Alert для выхода с несохраненными изменениями
+    if (showExitWarning) {
+        AlertDialog(
+            onDismissRequest = { showExitWarning = false },
+            title = { Text("Выйти без сохранения?") },
+            text = { Text("У вас есть несохраненные изменения. Если вы выйдете, все данные будут потеряны.") },
+            confirmButton = {
+                Button(onClick = {
+                    showExitWarning = false
+                    onBackClick()
+                }) {
+                    Text("Выйти")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showExitWarning = false }) {
+                    Text("Остаться")
+                }
+            }
+        )
+    }
+}
     
     if (selectedModDetails != null) {
         ModalBottomSheet(

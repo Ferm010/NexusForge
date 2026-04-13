@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -16,8 +17,6 @@ import androidx.compose.ui.unit.dp
 import com.ferm.nexusforge.R
 import com.ferm.nexusforge.backend.EulaType
 import com.ferm.nexusforge.backend.parseEulaText
-import com.ferm.nexusforge.ui.theme.AppIcon
-import com.ferm.nexusforge.ui.theme.AppIcons
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,9 +35,11 @@ fun EulaScreenContainer(rawEulaText: String, onNavigateBack: () -> Unit, onAccep
                     Text(text = stringResource(R.string.eula))
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) { AppIcon(
-                        themedIcon = AppIcons.UNDO,
-                    )
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            painter = painterResource(R.drawable.undo),
+                            contentDescription = "Back"
+                        )
                     }
                 }
             )

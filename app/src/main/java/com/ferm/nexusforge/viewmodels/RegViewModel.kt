@@ -14,8 +14,14 @@ import kotlinx.coroutines.launch
 
 class RegViewModel : ViewModel() {
     
-    private val emailValidator = EmailValidator()
-    private val authRepository = AuthRepository()
+    // Ленивая инициализация - создаются только при первом использовании
+    private val emailValidator: EmailValidator by lazy {
+        EmailValidator()
+    }
+    private val authRepository: AuthRepository by lazy {
+        AuthRepository()
+    }
+    private var context: Context? = null
     
     // UI State
     var email by mutableStateOf("")
@@ -210,11 +216,20 @@ class RegViewModel : ViewModel() {
     
     fun isGoogleSignIn(): Boolean = authRepository.isGoogleSignIn()
     
+    fun setContext(ctx: Context) {
+        context = ctx
+    }
+    
     fun updateDisplayName(
         newName: String,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
+        if (context != null && !NetworkUtils.isNetworkAvailable(context!!)) {
+            onError("No internet connection")
+            return
+        }
+        
         viewModelScope.launch {
             when (val result = authRepository.updateDisplayName(newName)) {
                 is UpdateResult.Success -> {
@@ -232,6 +247,11 @@ class RegViewModel : ViewModel() {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
+        if (context != null && !NetworkUtils.isNetworkAvailable(context!!)) {
+            onError("No internet connection")
+            return
+        }
+        
         viewModelScope.launch {
             when (val result = authRepository.updateEmail(newEmail, password)) {
                 is UpdateResult.Success -> {
@@ -248,6 +268,11 @@ class RegViewModel : ViewModel() {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
+        if (context != null && !NetworkUtils.isNetworkAvailable(context!!)) {
+            onError("No internet connection")
+            return
+        }
+        
         viewModelScope.launch {
             when (val result = authRepository.deleteAccount(password)) {
                 is UpdateResult.Success -> {
