@@ -457,31 +457,33 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                         }
                                     }
                                      projectDetailsViewModel.project != null -> {
-                                        val favoritesViewModel: com.ferm.nexusforge.viewmodels.FavoritesViewModel = viewModel()
-                                        val favoriteProjects by favoritesViewModel.favoriteProjects.collectAsState()
-                                        
-                                        com.ferm.nexusforge.frontend.projectdetails.ProjectDetailsPage(
-                                            project = projectDetailsViewModel.project!!,
-                                            isFavorite = favoriteProjects.any { it.projectId == projectDetailsViewModel.project!!.projectId },
-                                            onToggleFavorite = {
-                                                favoritesViewModel.toggleFavorite(projectDetailsViewModel.project!!)
-                                            },
-                                            onBackClick = {
-                                                tabBackStack.removeLastOrNull()
-                                            },
-                                            onOpenWebPage = {
-                                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
-                                                    data = android.net.Uri.parse("https://modrinth.com/mod/${projectDetailsViewModel.project!!.projectId}")
+                                        projectDetailsViewModel.project?.let { project ->
+                                            val favoritesViewModel: com.ferm.nexusforge.viewmodels.FavoritesViewModel = viewModel()
+                                            val favoriteProjects by favoritesViewModel.favoriteProjects.collectAsState()
+                                            
+                                            com.ferm.nexusforge.frontend.projectdetails.ProjectDetailsPage(
+                                                project = project,
+                                                isFavorite = favoriteProjects.any { it.projectId == project.projectId },
+                                                onToggleFavorite = {
+                                                    favoritesViewModel.toggleFavorite(project)
+                                                },
+                                                onBackClick = {
+                                                    tabBackStack.removeLastOrNull()
+                                                },
+                                                onOpenWebPage = {
+                                                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                                                        data = android.net.Uri.parse("https://modrinth.com/mod/${project.projectId}")
+                                                    }
+                                                    context.startActivity(intent)
+                                                },
+                                                onDownload = {
+                                                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                                                        data = android.net.Uri.parse("https://modrinth.com/mod/${project.projectId}/versions")
+                                                    }
+                                                    context.startActivity(intent)
                                                 }
-                                                context.startActivity(intent)
-                                            },
-                                            onDownload = {
-                                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
-                                                    data = android.net.Uri.parse("https://modrinth.com/mod/${projectDetailsViewModel.project!!.projectId}/versions")
-                                                }
-                                                context.startActivity(intent)
-                                            }
-                                        )
+                                            )
+                                        }
                                     }
                                 }
                             }

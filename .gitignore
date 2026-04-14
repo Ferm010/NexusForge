@@ -22,3 +22,20 @@ local.properties
 *.aab
 *.ap_
 *.dex
+
+# Keystore files (содержат пароли для подписи)
+*.keystore
+*.jks
+
+# Play Store upload artifacts
+pepk_out.zip
+pepk_out/
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+
+# Backup files
+*.bak
+*.backup

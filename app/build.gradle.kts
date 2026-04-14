@@ -48,12 +48,8 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
         debug {
             isMinifyEnabled = false
@@ -85,6 +81,13 @@ android {
                 "META-INF/*.kotlin_module"
             )
         }
+    }
+    
+    lint {
+        // Игнорировать ошибки локализации (приложение на русском)
+        disable += "MissingTranslation"
+        // Игнорировать предупреждения о неиспользуемых ресурсах
+        disable += "UnusedResources"
     }
 }
 

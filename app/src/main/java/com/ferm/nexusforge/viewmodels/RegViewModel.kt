@@ -220,9 +220,11 @@ class RegViewModel : ViewModel() {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        if (context != null && !NetworkUtils.isNetworkAvailable(context!!)) {
-            onError("No internet connection")
-            return
+        context?.let { ctx ->
+            if (!NetworkUtils.isNetworkAvailable(ctx)) {
+                onError("No internet connection")
+                return
+            }
         }
         
         viewModelScope.launch {
@@ -242,9 +244,11 @@ class RegViewModel : ViewModel() {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        if (context != null && !NetworkUtils.isNetworkAvailable(context!!)) {
-            onError("No internet connection")
-            return
+        context?.let { ctx ->
+            if (!NetworkUtils.isNetworkAvailable(ctx)) {
+                onError("No internet connection")
+                return
+            }
         }
         
         viewModelScope.launch {
@@ -263,9 +267,11 @@ class RegViewModel : ViewModel() {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        if (context != null && !NetworkUtils.isNetworkAvailable(context!!)) {
-            onError("No internet connection")
-            return
+        context?.let { ctx ->
+            if (!NetworkUtils.isNetworkAvailable(ctx)) {
+                onError("No internet connection")
+                return
+            }
         }
         
         viewModelScope.launch {

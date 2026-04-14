@@ -4,20 +4,22 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.content.pm.Signature
 import android.os.Build
+import com.ferm.nexusforge.BuildConfig
 import java.security.MessageDigest
 
 object SecurityCheck {
     
     // SHA-256 хеш вашей подписи
-    private const val EXPECTED_SIGNATURE = "f91ebea77c4ee70e142cc0865659d3d9b9b43f14b8070d9db40a8dd40f89dab3"
+    private const val EXPECTED_SIGNATURE = "cb18947b4d94ad821ea0b3e5ecf96b96697632dc01a7b21f715adededbad6b84"
     
     /**
      * Проверка целостности приложения
      * Возвращает true если приложение не модифицировано
+     * В debug режиме проверка пропускается
      */
     fun verifyAppIntegrity(context: Context): Boolean {
-        if (EXPECTED_SIGNATURE == "f91ebea77c4ee70e142cc0865659d3d9b9b43f14b8070d9db40a8dd40f89dab3") {
-            // В debug режиме пропускаем проверку
+        // В debug режиме пропускаем проверку подписи
+        if (BuildConfig.DEBUG) {
             return true
         }
         
@@ -35,8 +37,14 @@ object SecurityCheck {
     
     /**
      * Проверка на root/эмулятор
+     * В debug режиме проверка пропускается
      */
     fun isDeviceSecure(): Boolean {
+        // В debug режиме пропускаем проверку
+        if (BuildConfig.DEBUG) {
+            return true
+        }
+        
         return !isRooted() && !isEmulator()
     }
     

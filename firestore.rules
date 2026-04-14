@@ -13,27 +13,69 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
+    // Функция валидации пользовательских данных
+    function isValidUserData() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['email', 'displayName']) &&
+             data.email is string &&
+             data.displayName is string &&
+             data.email.size() > 0 &&
+             data.email.size() <= 255 &&
+             data.displayName.size() > 0 &&
+             data.displayName.size() <= 100;
+    }
+    
+    // Функция валидации модпака
+    function isValidModpack() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['name', 'description', 'createdAt']) &&
+             data.name is string &&
+             data.name.size() > 0 &&
+             data.name.size() <= 255 &&
+             data.description is string &&
+             data.description.size() <= 1000 &&
+             data.createdAt is timestamp;
+    }
+    
+    // Функция валидации избранного
+    function isValidFavorite() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['projectId', 'addedAt']) &&
+             data.projectId is string &&
+             data.projectId.size() > 0 &&
+             data.addedAt is timestamp;
+    }
+    
+    // Функция проверки rate limiting (максимум 100 операций в минуту)
+    function isRateLimited() {
+      return request.time < resource.data.lastWrite.toMillis() + 600;
+    }
+    
     // Правила для пользовательских данных
     match /users/{userId} {
       // Пользователь может читать и писать только свои данные
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && isValidUserData();
       
       // Избранные проекты пользователя
       match /favorites/{projectId} {
         // Только владелец может управлять своим избранным
-        allow read, write: if isOwner(userId);
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId) && isValidFavorite();
       }
       
       // Пользовательские сборки модов
       match /custom_modpacks/{modpackId} {
         // Только владелец может управлять своими сборками
-        allow read, write: if isOwner(userId);
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId) && isValidModpack();
       }
       
       // Шаблоны модпаков пользователя
       match /templates/{templateId} {
         // Только владелец может управлять своими шаблонами
-        allow read, write: if isOwner(userId);
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId) && isValidModpack();
       }
     }
     

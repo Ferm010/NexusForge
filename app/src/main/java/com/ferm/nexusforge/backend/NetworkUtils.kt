@@ -44,7 +44,8 @@ object NetworkUtils {
             withContext(Dispatchers.IO) {
                 withTimeout(2000) {
                     val url = URL("https://www.google.com")
-                    val connection = url.openConnection() as HttpURLConnection
+                    val connection = url.openConnection() as? HttpURLConnection
+                        ?: return@withTimeout false
                     connection.connectTimeout = 1000
                     connection.readTimeout = 1000
                     connection.requestMethod = "HEAD"

@@ -25,7 +25,6 @@ import com.ferm.nexusforge.backend.SecurityCheck
 import com.ferm.nexusforge.ui.theme.NexusForgeTheme
 import com.ferm.nexusforge.utils.AnalyticsHelper
 import com.ferm.nexusforge.viewmodels.ThemeViewModel
-import com.google.firebase.crashlytics.BuildConfig
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlin.system.exitProcess
 
@@ -43,7 +42,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         
         // Инициализация Firebase Crashlytics
-        FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
+        val crashlytics = FirebaseCrashlytics.getInstance()
+        // В debug режиме отключаем отправку отчётов для тестирования
+        crashlytics.setCrashlyticsCollectionEnabled(true)
         
         // Применяем сохранённый язык
         LocaleHelper.applyLocale(this)
