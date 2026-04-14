@@ -48,58 +48,58 @@ class MrpackGenerator(private val context: Context) {
             mods.forEachIndexed { index, mod ->
                 onProgress(index + 1, "Processing ${mod.title}...")
                 
-                android.util.Log.d("MrpackGenerator", "Processing mod: ${mod.title}")
-                android.util.Log.d("MrpackGenerator", "  downloadUrl: ${mod.downloadUrl}")
-                android.util.Log.d("MrpackGenerator", "  sha1: ${mod.sha1}")
-                android.util.Log.d("MrpackGenerator", "  sha512: ${mod.sha512}")
-                
                 // Получаем информацию о файле мода
                 val downloadUrl = mod.downloadUrl
                 if (downloadUrl == null || downloadUrl.isEmpty()) {
-                    android.util.Log.w("MrpackGenerator", "Skipping ${mod.title} - no download URL")
                     return@forEachIndexed
                 }
                 
-                // Проверяем наличие хешей
-                var sha1 = mod.sha1
-                var sha512 = mod.sha512
+                // БЕЗОПАСНОСТЬ: Требуем хеши для всех модов - отклоняем если отсутствуют
+                val sha1 = mod.sha1
+                val sha512 = mod.sha512
                 
-                // Если хешей нет, вычисляем их (скачиваем файл)
                 if (sha1.isNullOrEmpty() || sha512.isNullOrEmpty()) {
-                    android.util.Log.w("MrpackGenerator", "Missing hashes for ${mod.title}, attempting to download and calculate...")
-                    try {
-                        val url = java.net.URL(downloadUrl)
-                        val connection = url.openConnection()
-                        connection.connectTimeout = 30000
-                        connection.readTimeout = 30000
-                        connection.connect()
-                        
-                        val tempFile = File.createTempFile("mod_", ".jar", context.cacheDir)
-                        connection.getInputStream().use { input ->
-                            tempFile.outputStream().use { output ->
-                                input.copyTo(output)
-                            }
+                    return@forEachIndexed
+                }
+                
+                // Скачиваем и проверяем целостность файла
+                try {
+                    val url = java.net.URL(downloadUrl)
+                    val connection = url.openConnection()
+                    connection.connectTimeout = 30000
+                    connection.readTimeout = 30000
+                    connection.connect()
+                    
+                    val tempFile = File.createTempFile("mod_", ".jar", context.cacheDir)
+                    connection.getInputStream().use { input ->
+                        tempFile.outputStream().use { output ->
+                            input.copyTo(output)
                         }
-                        
-                        sha1 = calculateSHA1(tempFile)
-                        sha512 = calculateSHA512(tempFile)
+                    }
+                    
+                    // БЕЗОПАСНОСТЬ: Проверяем оба хеша SHA-1 и SHA-512
+                    val calculatedSha1 = calculateSHA1(tempFile)
+                    val calculatedSha512 = calculateSHA512(tempFile)
+                    
+                    val sha1Valid = calculatedSha1.equals(sha1, ignoreCase = true)
+                    val sha512Valid = calculatedSha512.equals(sha512, ignoreCase = true)
+                    
+                    if (!sha1Valid || !sha512Valid) {
+                        android.util.Log.e("MrpackGenerator", "БЕЗОПАСНОСТЬ: Несовпадение хеша для ${mod.title}")
+                        // БЕЗОПАСНОСТЬ: Не логируем реальные значения хешей
                         tempFile.delete()
-                        
-                        android.util.Log.d("MrpackGenerator", "Calculated hashes for ${mod.title}: SHA1=$sha1, SHA512=$sha512")
-                    } catch (e: Exception) {
-                        android.util.Log.e("MrpackGenerator", "Failed to calculate hashes for ${mod.title}: ${e.message}")
-                        e.printStackTrace()
                         return@forEachIndexed
                     }
-                }
-                
-                // Финальная проверка - если хешей всё ещё нет, пропускаем мод
-                if (sha1.isNullOrEmpty() || sha512.isNullOrEmpty()) {
-                    android.util.Log.e("MrpackGenerator", "Skipping ${mod.title} - unable to obtain hashes (sha1=$sha1, sha512=$sha512)")
+                    
+                    tempFile.delete()
+                    
+                } catch (e: Exception) {
+                    android.util.Log.e("MrpackGenerator", "БЕЗОПАСНОСТЬ: Ошибка проверки ${mod.title}: ${e.message}")
+                    e.printStackTrace()
                     return@forEachIndexed
                 }
                 
-                android.util.Log.d("MrpackGenerator", "Adding ${mod.title} to mrpack with hashes: SHA1=$sha1, SHA512=$sha512")
+                android.util.Log.d("MrpackGenerator", "Добавляем ${mod.title} в mrpack")
                 
                 files.add(
                     ModrinthFile(
@@ -137,10 +137,6 @@ class MrpackGenerator(private val context: Context) {
             // Записываем index в файл
             val indexFile = File(tempDir, "modrinth.index.json")
             val jsonString = json.encodeToString(index)
-            
-            // Логируем JSON для отладки
-            android.util.Log.d("MrpackGenerator", "Generated JSON:")
-            android.util.Log.d("MrpackGenerator", jsonString)
             
             indexFile.writeText(jsonString)
             

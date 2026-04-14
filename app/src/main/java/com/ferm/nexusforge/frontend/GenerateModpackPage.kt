@@ -112,7 +112,7 @@ fun GenerateModpackPage(
         try {
             vm.initializeGoogleDrive(context)
         } catch (e: Exception) {
-            android.util.Log.e("GenerateModpackPage", "Failed to initialize Google Drive", e)
+            // Ошибка инициализации Google Drive
         }
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

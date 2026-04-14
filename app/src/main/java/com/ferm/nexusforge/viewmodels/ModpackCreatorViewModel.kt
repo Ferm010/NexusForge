@@ -172,106 +172,91 @@ class ModpackCreatorViewModel : ViewModel() {
     }
     
     fun addMod(mod: ModrinthProject) {
-        android.util.Log.d("ModpackCreator", "=== addMod called for: ${mod.title} (${mod.actualProjectId}) ===")
         viewModelScope.launch {
-            var downloadUrl = ""
-            var modVersion = ""
-            var fileName: String? = null
-            var fileSize: Long? = null
-            var sha1: String? = null
-            var sha512: String? = null
+            addModInternal(mod)
+        }
+    }
+    
+    suspend fun addModSuspend(mod: ModrinthProject) {
+        addModInternal(mod)
+    }
+    
+    private suspend fun addModInternal(mod: ModrinthProject) {
+        var downloadUrl = ""
+        var modVersion = ""
+        var fileName: String? = null
+        var fileSize: Long? = null
+        var sha1: String? = null
+        var sha512: String? = null
+        
+        try {
+            if (networkChecker?.isNetworkAvailable() == false) {
+                _state.value = _state.value.copy(
+                    error = "Проблема сети. Проверьте подключение к интернету."
+                )
+                return
+            }
             
-            try {
-                if (networkChecker?.isNetworkAvailable() == false) {
-                    _state.value = _state.value.copy(
-                        error = "Проблема сети. Проверьте подключение к интернету."
-                    )
-                    return@launch
-                }
+            val versions = withContext(Dispatchers.IO) {
+                ModrinthApi.retrofitService.getProjectVersions(mod.actualProjectId)
+            }
+            
+            val mcVersion = _state.value.selectedMinecraftVersion
+            val modLoader = _state.value.selectedModLoader
+            
+            val matchingVersion = versions.firstOrNull { version ->
+                val versionsList = version.gameVersion.ifEmpty { version.gameVersions ?: emptyList() }
+                val hasMatchingVersion = versionsList.any { it == mcVersion }
+                val hasMatchingLoader = version.loaders.any { it.equals(modLoader, ignoreCase = true) }
+                hasMatchingVersion && hasMatchingLoader
+            }
+            
+            if (matchingVersion != null) {
+                val file = matchingVersion.files.firstOrNull()
+                downloadUrl = file?.url ?: ""
+                modVersion = matchingVersion.versionNumber
+                fileName = file?.filename
+                fileSize = file?.size
                 
-                android.util.Log.d("ModpackCreator", "Fetching versions for: ${mod.actualProjectId}")
-                
-                val versions = withContext(Dispatchers.IO) {
-                    ModrinthApi.retrofitService.getProjectVersions(mod.actualProjectId)
-                }
-                
-                android.util.Log.d("ModpackCreator", "Found ${versions.size} versions for ${mod.projectId}")
-                
-                val mcVersion = _state.value.selectedMinecraftVersion
-                val modLoader = _state.value.selectedModLoader
-                android.util.Log.d("ModpackCreator", "Looking for MC version: $mcVersion, modLoader: $modLoader")
-                
-                val matchingVersion = versions.firstOrNull { version ->
-                    val versionsList = version.gameVersion.ifEmpty { version.gameVersions ?: emptyList() }
-                    val hasMatchingVersion = versionsList.any { it == mcVersion }
-                    val hasMatchingLoader = version.loaders.any { it.equals(modLoader, ignoreCase = true) }
-                    hasMatchingVersion && hasMatchingLoader
-                }
-                
-                if (matchingVersion != null) {
-                    android.util.Log.d("ModpackCreator", "Found matching version: ${matchingVersion.versionNumber}")
-                    val file = matchingVersion.files.firstOrNull()
+                // Получаем хеши из API
+                sha1 = file?.hashes?.get("sha1")
+                sha512 = file?.hashes?.get("sha512")
+            } else {
+                // Try to get first available version
+                val firstVersion = versions.firstOrNull()
+                if (firstVersion != null) {
+                    val file = firstVersion.files.firstOrNull()
                     downloadUrl = file?.url ?: ""
-                    modVersion = matchingVersion.versionNumber
+                    modVersion = firstVersion.versionNumber
                     fileName = file?.filename
                     fileSize = file?.size
-                    
-                    // Получаем хеши из API
-                    android.util.Log.d("ModpackCreator", "File hashes map: ${file?.hashes}")
                     sha1 = file?.hashes?.get("sha1")
                     sha512 = file?.hashes?.get("sha512")
-                    
-                    // Если хешей нет, попробуем другие ключи
-                    if (sha1 == null || sha512 == null) {
-                        android.util.Log.w("ModpackCreator", "Missing hashes in API response, available keys: ${file?.hashes?.keys}")
-                    }
-                    
-                    android.util.Log.d("ModpackCreator", "Download URL: $downloadUrl, fileName: $fileName, size: $fileSize")
-                    android.util.Log.d("ModpackCreator", "Hashes - SHA1: $sha1, SHA512: $sha512")
-                } else {
-                    // Try to get first available version
-                    val firstVersion = versions.firstOrNull()
-                    if (firstVersion != null) {
-                        val file = firstVersion.files.firstOrNull()
-                        downloadUrl = file?.url ?: ""
-                        modVersion = firstVersion.versionNumber
-                        fileName = file?.filename
-                        fileSize = file?.size
-                        sha1 = file?.hashes?.get("sha1")
-                        sha512 = file?.hashes?.get("sha512")
-                        android.util.Log.d("ModpackCreator", "Using first version: $modVersion, URL: $downloadUrl")
-                        android.util.Log.d("ModpackCreator", "Hashes - SHA1: $sha1, SHA512: $sha512")
-                    }
                 }
-            } catch (e: Exception) {
-                android.util.Log.e("ModpackCreator", "Error fetching versions: ${e.message}")
             }
-            
-            android.util.Log.d("ModpackCreator", "Final modVersion: '$modVersion'")
-            
-            val currentMods = _state.value.selectedMods.toMutableList()
-            if (currentMods.none { it.projectId == mod.actualProjectId }) {
-                currentMods.add(
-                    ModpackMod(
-                        projectId = mod.actualProjectId,
-                        name = mod.title,
-                        version = modVersion,
-                        downloadUrl = downloadUrl,
-                        iconUrl = mod.iconUrl,
-                        fileName = fileName,
-                        fileSize = fileSize,
-                        sha1 = sha1,
-                        sha512 = sha512
-                    )
+        } catch (e: Exception) {
+            // Ошибка при получении версий
+        }
+        
+        val currentMods = _state.value.selectedMods.toMutableList()
+        if (currentMods.none { it.projectId == mod.actualProjectId }) {
+            currentMods.add(
+                ModpackMod(
+                    projectId = mod.actualProjectId,
+                    name = mod.title,
+                    version = modVersion,
+                    downloadUrl = downloadUrl,
+                    iconUrl = mod.iconUrl,
+                    fileName = fileName,
+                    fileSize = fileSize,
+                    sha1 = sha1,
+                    sha512 = sha512
                 )
-                android.util.Log.d("ModpackCreator", "Added mod with version: '$modVersion'")
-                _state.value = _state.value.copy(selectedMods = currentMods)
-                
-                // Получаем и добавляем зависимости
-                addDependencies(mod.actualProjectId)
-            } else {
-                android.util.Log.d("ModpackCreator", "Mod already exists in list")
-            }
+            )
+            _state.value = _state.value.copy(selectedMods = currentMods)
+            
+            // Получаем и добавляем зависимости
+            addDependencies(mod.actualProjectId)
         }
     }
     
@@ -302,7 +287,7 @@ class ModpackCreatorViewModel : ViewModel() {
                     }
                 }
             } catch (e: Exception) {
-                android.util.Log.d("ModpackCreator", "No dependencies found or error: ${e.message}")
+                // Зависимости не найдены или ошибка
             }
         }
     }
@@ -340,7 +325,7 @@ class ModpackCreatorViewModel : ViewModel() {
                 sha512 = file?.hashes?.get("sha512")
             }
         } catch (e: Exception) {
-            android.util.Log.e("ModpackCreator", "Error fetching dependency versions: ${e.message}")
+            // Ошибка при получении версий зависимости
         }
         
         val currentMods = _state.value.selectedMods.toMutableList()
@@ -358,7 +343,6 @@ class ModpackCreatorViewModel : ViewModel() {
                     sha512 = sha512
                 )
             )
-            android.util.Log.d("ModpackCreator", "Auto-added dependency: ${mod.title}")
             _state.value = _state.value.copy(selectedMods = currentMods)
         }
     }
@@ -382,7 +366,9 @@ class ModpackCreatorViewModel : ViewModel() {
     }
     
     fun updateModpackName(name: String) {
-        _state.value = _state.value.copy(modpackName = name)
+        // БЕЗОПАСНОСТЬ: Санитизируем имя модпака для предотвращения path traversal атак
+        val sanitizedName = com.ferm.nexusforge.utils.InputSanitizer.sanitizeModpackName(name)
+        _state.value = _state.value.copy(modpackName = sanitizedName)
     }
     
     fun updateMinecraftVersion(version: String) {
@@ -770,8 +756,6 @@ class ModpackCreatorViewModel : ViewModel() {
                 onModProgress(mod.name)
                 try {
                     if (mod.downloadUrl.isNotEmpty()) {
-                        android.util.Log.d("ModpackCreator", "Downloading: ${mod.name} from ${mod.downloadUrl}")
-                        
                         val url = java.net.URL(mod.downloadUrl)
                         val connection = url.openConnection()
                         connection.connectTimeout = 15000
@@ -785,13 +769,9 @@ class ModpackCreatorViewModel : ViewModel() {
                         inputStream.copyTo(zos)
                         zos.closeEntry()
                         inputStream.close()
-                        
-                        android.util.Log.d("ModpackCreator", "Successfully downloaded: ${mod.name}")
-                    } else {
-                        android.util.Log.w("ModpackCreator", "Empty download URL for: ${mod.name}")
                     }
                 } catch (e: Exception) {
-                    android.util.Log.e("ModpackCreator", "Failed to download ${mod.name}: ${e.message}")
+                    // Ошибка при скачивании мода
                 }
             }
         }
@@ -899,7 +879,6 @@ class ModpackCreatorViewModel : ViewModel() {
                 else -> null
             }
         } catch (e: Exception) {
-            android.util.Log.e("ModpackCreator", "Error getting loader version: ${e.message}")
             null
         }
     }

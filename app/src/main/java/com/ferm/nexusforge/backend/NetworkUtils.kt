@@ -77,13 +77,10 @@ object NetworkUtils {
                     addresses.isNotEmpty()
                 }
             } catch (e: UnknownHostException) {
-                android.util.Log.d("NetworkUtils", "Domain not found: ${e.message}")
                 false
             } catch (e: TimeoutCancellationException) {
-                android.util.Log.d("NetworkUtils", "DNS timeout")
                 true
             } catch (e: Exception) {
-                android.util.Log.e("NetworkUtils", "DNS error: ${e.message}", e)
                 true
             }
         }

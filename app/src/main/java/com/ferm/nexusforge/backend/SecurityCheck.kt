@@ -8,15 +8,15 @@ import java.security.MessageDigest
 
 object SecurityCheck {
     
-    // SHA-256 хеш вашей подписи (заполните после первой сборки)
-    private const val EXPECTED_SIGNATURE = "YOUR_SIGNATURE_HASH_HERE"
+    // SHA-256 хеш вашей подписи
+    private const val EXPECTED_SIGNATURE = "f91ebea77c4ee70e142cc0865659d3d9b9b43f14b8070d9db40a8dd40f89dab3"
     
     /**
      * Проверка целостности приложения
      * Возвращает true если приложение не модифицировано
      */
     fun verifyAppIntegrity(context: Context): Boolean {
-        if (EXPECTED_SIGNATURE == "YOUR_SIGNATURE_HASH_HERE") {
+        if (EXPECTED_SIGNATURE == "f91ebea77c4ee70e142cc0865659d3d9b9b43f14b8070d9db40a8dd40f89dab3") {
             // В debug режиме пропускаем проверку
             return true
         }

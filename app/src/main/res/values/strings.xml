@@ -236,5 +236,22 @@
     <string name="mrpack_generation">Modrinth Pack (.mrpack)</string>
     <string name="mrpack_generation_desc">Создать .mrpack файл для лаунчеров</string>
     <string name="google_drive_generation">Google Drive</string>
-    <string name="google_drive_generation_desc">Загрузить сборку в облако</string>
+     <string name="google_drive_generation_desc">Загрузить сборку в облако</string>
+
+    <!-- Release Description -->
+    <string name="release_short_description">NexusForge - конструктор сборок для создания рабочих модпаков по Minecraft</string>
+    <string name="release_full_description">NexusForge - это мощный конструктор сборок, который позволяет вам легко создавать и управлять модпаками для Minecraft прямо со своего телефона или планшета.
+
+Основные возможности:
+• Создавайте собственные модпаки с помощью интуитивного интерфейса
+• Выбирайте из тысяч модов и плагинов для любой версии Minecraft
+• Управляйте своими сборками и сохраняйте их в облако
+• Экспортируйте модпаки в различные форматы (.mrpack, ZIP)
+• Используйте готовые шаблоны для быстрого старта
+• Синхронизируйте свои проекты между устройствами
+• Поддержка всех популярных модлоадеров (Forge, Fabric, Quilt)
+• Темная и светлая тема оформления
+• Поддержка русского, английского и других языков
+
+NexusForge делает создание модпаков доступным для всех - от новичков до опытных игроков. Начните создавать свой идеальный модпак прямо сейчас!</string>
 </resources>

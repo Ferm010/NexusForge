@@ -175,19 +175,15 @@ class RegViewModel : ViewModel() {
         onSuccess: (Boolean) -> Unit,
         onError: (String) -> Unit
     ) {
-        android.util.Log.d("RegViewModel", "signInWithGoogle called with idToken: ${idToken.take(20)}...")
-        
+        // БЕЗОПАСНОСТЬ: Не логируем токены и чувствительные данные аутентификации
         if (!NetworkUtils.isNetworkAvailable(context)) {
-            android.util.Log.e("RegViewModel", "No network available")
             onError(errorCodeToString(context, "ERROR_NETWORK_REQUEST_FAILED"))
             return
         }
         
         viewModelScope.launch {
-            android.util.Log.d("RegViewModel", "Calling authRepository.signInWithGoogle")
             when (val result = authRepository.signInWithGoogle(idToken)) {
                 is GoogleSignInResult.Success -> {
-                    android.util.Log.d("RegViewModel", "Google Sign-In Success: isNewUser=${result.isNewUser}, displayName=${result.displayName}")
                     isGoogleFlow = true
                     if (!result.isNewUser) {
                         userName = result.displayName
@@ -196,7 +192,6 @@ class RegViewModel : ViewModel() {
                     onSuccess(result.isNewUser)
                 }
                 is GoogleSignInResult.Error -> {
-                    android.util.Log.e("RegViewModel", "Google Sign-In Error: ${result.errorCode}")
                     onError(errorCodeToString(context, result.errorCode))
                 }
             }

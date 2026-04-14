@@ -62,7 +62,6 @@ class GoogleDriveRepository(private val context: Context) {
                 Scope(DriveScopes.DRIVE_FILE)
             )
         } catch (e: Exception) {
-            android.util.Log.e("GoogleDriveRepository", "Failed to check authorization", e)
             false
         }
     }
@@ -80,7 +79,6 @@ class GoogleDriveRepository(private val context: Context) {
             val client = GoogleSignIn.getClient(context, signInOptions)
             client.signInIntent
         } catch (e: Exception) {
-            android.util.Log.e("GoogleDriveRepository", "Failed to create auth intent", e)
             Intent()
         }
     }
@@ -103,10 +101,7 @@ class GoogleDriveRepository(private val context: Context) {
             )
                 .setApplicationName("NexusForge")
                 .build()
-                
-            android.util.Log.d("GoogleDriveRepository", "Drive service initialized successfully")
         } catch (e: Exception) {
-            android.util.Log.e("GoogleDriveRepository", "Failed to initialize Drive service", e)
             driveService = null
         }
     }

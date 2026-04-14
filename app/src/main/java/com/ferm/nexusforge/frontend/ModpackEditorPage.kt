@@ -149,7 +149,6 @@ fun ModpackEditorPage(
                                             sha512 = modRef.sha512 ?: file?.hashes?.get("sha512")
                                         )
                                     } ?: run {
-                                        android.util.Log.e("ModpackEditor", "Timeout loading version for ${modRef.title}")
                                         ModpackMod(
                                             projectId = modRef.projectId,
                                             name = modRef.title,
@@ -163,7 +162,6 @@ fun ModpackEditorPage(
                                         )
                                     }
                                 } catch (e: Exception) {
-                                    android.util.Log.e("ModpackEditor", "Error loading version for ${modRef.title}: ${e.message}")
                                     ModpackMod(
                                         projectId = modRef.projectId,
                                         name = modRef.title,
@@ -487,20 +485,16 @@ fun ModpackEditorPage(
                             mod = mod,
                             onRemove = { vm.removeMod(mod.projectId) },
                             onClick = {
-                                android.util.Log.d("ModpackEditor", "Clicked on mod: ${mod.name}, ID: ${mod.projectId}")
                                 selectedModId = mod.projectId
                                 isLoadingModDetails = true
                                 scope.launch {
                                     try {
-                                        android.util.Log.d("ModpackEditor", "Loading details for: ${mod.projectId}")
                                         val project = withContext(Dispatchers.IO) {
                                             com.ferm.nexusforge.network.ModrinthApi.retrofitService.getProject(mod.projectId)
                                         }
-                                        android.util.Log.d("ModpackEditor", "Loaded project: ${project.title}")
                                         selectedModDetails = project
                                         isLoadingModDetails = false
                                     } catch (e: Exception) {
-                                        android.util.Log.e("ModpackEditor", "Error loading mod details: ${e.message}", e)
                                         isLoadingModDetails = false
                                     }
                                 }
@@ -599,20 +593,20 @@ fun ModpackEditorPage(
     if (showUnsavedWarning) {
         AlertDialog(
             onDismissRequest = { showUnsavedWarning = false },
-            title = { Text(stringResource(R.string.unsaved_changes)) },
-            text = { Text(stringResource(R.string.unsaved_changes_message)) },
+            title = { Text("Выйти без сохранения?") },
+            text = { Text("У вас есть несохраненные изменения. Если вы выйдете, все данные будут потеряны.") },
             confirmButton = {
-                TextButton(onClick = {
+                Button(onClick = {
                     hasUnsavedChanges = false
                     showUnsavedWarning = false
                     onBackClick()
                 }) {
-                    Text(stringResource(R.string.exit))
+                    Text("Выйти")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showUnsavedWarning = false }) {
-                    Text(stringResource(R.string.stay))
+                OutlinedButton(onClick = { showUnsavedWarning = false }) {
+                    Text("Остаться")
                 }
             }
         )

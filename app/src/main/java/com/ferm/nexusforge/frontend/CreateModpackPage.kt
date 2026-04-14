@@ -407,7 +407,7 @@ fun CreateModpackPage(
                                                 }
                                                 selectedModDetails = project
                                             } catch (e: Exception) {
-                                                android.util.Log.e("CreateModpack", "Error loading mod details: ${e.message}")
+                                                // Ошибка загрузки деталей мода
                                             } finally {
                                                 isLoadingModDetails = false
                                             }
@@ -649,14 +649,15 @@ fun CreateModpackPage(
                                 currentMinecraftVersion = state.selectedMinecraftVersion,
                                 currentModLoader = state.selectedModLoader,
                                 onSelect = {
-                                    // Применить шаблон - загрузить моды
+                                    // Применить шаблон - загрузить моды последовательно
                                     scope.launch {
-                                        template.mods.forEach { templateMod ->
+                                        for (templateMod in template.mods) {
                                             try {
                                                 val project = withContext(Dispatchers.IO) {
                                                     com.ferm.nexusforge.network.ModrinthApi.retrofitService.getProject(templateMod.projectId)
                                                 }
-                                                vm.addMod(project)
+                                                // Ждем завершения добавления мода перед переходом к следующему
+                                                vm.addModSuspend(project)
                                             } catch (e: Exception) {
                                                 android.util.Log.e("CreateModpack", "Error loading mod from template: ${e.message}")
                                             }

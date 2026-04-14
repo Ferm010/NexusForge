@@ -60,6 +60,7 @@ import com.ferm.nexusforge.frontend.ModpackEditorPage
 import com.ferm.nexusforge.frontend.favoritePage
 import com.ferm.nexusforge.viewmodels.RegViewModel
 import com.ferm.nexusforge.viewmodels.ThemeViewModel
+import com.ferm.nexusforge.viewmodels.LanguageViewModel
 import com.google.firebase.auth.FirebaseAuth
 import java.util.Map.entry
 
@@ -67,7 +68,7 @@ import java.util.Map.entry
 @Composable
 fun MyAppNav3(themeViewModel: ThemeViewModel) {
     val vm: RegViewModel = viewModel()
-    val languageViewModel: com.ferm.nexusforge.viewmodels.LanguageViewModel = viewModel()
+    val languageViewModel: LanguageViewModel = viewModel()
     val context = LocalContext.current
     languageViewModel.initLanguage(context)
     
@@ -469,10 +470,16 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                                 tabBackStack.removeLastOrNull()
                                             },
                                             onOpenWebPage = {
-                                                // TODO: Открыть веб-страницу проекта
+                                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                                                    data = android.net.Uri.parse("https://modrinth.com/mod/${projectDetailsViewModel.project!!.projectId}")
+                                                }
+                                                context.startActivity(intent)
                                             },
                                             onDownload = {
-                                                // TODO: Скачать проект
+                                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                                                    data = android.net.Uri.parse("https://modrinth.com/mod/${projectDetailsViewModel.project!!.projectId}/versions")
+                                                }
+                                                context.startActivity(intent)
                                             }
                                         )
                                     }

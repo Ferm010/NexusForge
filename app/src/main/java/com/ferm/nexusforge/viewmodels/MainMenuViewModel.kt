@@ -252,6 +252,13 @@ class MainMenuViewModel : ViewModel() {
             return
         }
         
+        // БЕЗОПАСНОСТЬ: Санитизируем поисковый запрос для предотвращения injection атак
+        val sanitizedQuery = com.ferm.nexusforge.utils.InputSanitizer.sanitizeSearchQuery(searchQuery)
+        if (!com.ferm.nexusforge.utils.InputSanitizer.isValidSearchQuery(sanitizedQuery)) {
+            searchUiState = SearchUiState.Error("Некорректный поисковый запрос")
+            return
+        }
+        
         viewModelScope.launch {
             searchUiState = SearchUiState.Loading
             searchOffset = 0
@@ -262,7 +269,7 @@ class MainMenuViewModel : ViewModel() {
                 val apiSort = if (sortOption == SortOption.DOWNLOADS_ASC) "downloads" else sortOption.apiValue
                 
                 val response = ModrinthApi.retrofitService.searchProjects(
-                    query = searchQuery,
+                    query = sanitizedQuery,
                     facets = facets,
                     limit = 20,
                     offset = 0,

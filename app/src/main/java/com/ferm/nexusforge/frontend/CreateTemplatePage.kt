@@ -38,6 +38,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.AlertDialog
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -75,6 +77,12 @@ fun CreateTemplatePage(
     
     var showVersionDropdown by remember { mutableStateOf(false) }
     var showLoaderDropdown by remember { mutableStateOf(false) }
+    var hasUnsavedChanges by remember { mutableStateOf(false) }
+    var showExitWarning by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(templateState.templateName, templateState.templateDescription, templateState.selectedMods) {
+        hasUnsavedChanges = true
+    }
     
     LaunchedEffect(Unit) {
         searchViewModel.resetState()
@@ -85,6 +93,42 @@ fun CreateTemplatePage(
         } else {
             templateViewModel.resetState()
         }
+        hasUnsavedChanges = false
+    }
+    
+    val handleBackClick: () -> Unit = {
+        if (hasUnsavedChanges) {
+            showExitWarning = true
+        } else {
+            onBackClick()
+        }
+    }
+    
+    BackHandler(enabled = hasUnsavedChanges) {
+        showExitWarning = true
+    }
+    
+    // Алерт для выхода с несохраненными изменениями
+    if (showExitWarning) {
+        AlertDialog(
+            onDismissRequest = { showExitWarning = false },
+            title = { Text("Выйти без сохранения?") },
+            text = { Text("У вас есть несохраненные изменения. Если вы выйдете, все данные будут потеряны.") },
+            confirmButton = {
+                Button(onClick = {
+                    hasUnsavedChanges = false
+                    showExitWarning = false
+                    onBackClick()
+                }) {
+                    Text("Выйти")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showExitWarning = false }) {
+                    Text("Остаться")
+                }
+            }
+        )
     }
     
     Scaffold(
@@ -92,7 +136,7 @@ fun CreateTemplatePage(
             TopAppBar(
                 title = { Text(if (templateId.isEmpty()) "Создать шаблон" else "Редактировать шаблон") },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = handleBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }

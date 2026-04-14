@@ -108,12 +108,10 @@ fun RegPageScreen(
             )
             OutlinedButton(
                 onClick = {
-                    android.util.Log.d("RegPage", "Google Sign-In button clicked")
                     coroutineScope.launch {
                         try {
-                            android.util.Log.d("RegPage", "Creating CredentialManager")
                             val credentialManager = CredentialManager.create(context)
-                            android.util.Log.d("RegPage", "Building GoogleIdOption with WEB_CLIENT_ID: $WEB_CLIENT_ID")
+                            // БЕЗОПАСНОСТЬ: Не логируем WEB_CLIENT_ID и чувствительные учетные данные
                             val googleIdOption = GetGoogleIdOption.Builder()
                                 .setFilterByAuthorizedAccounts(false)
                                 .setServerClientId(WEB_CLIENT_ID)
@@ -121,31 +119,30 @@ fun RegPageScreen(
                             val request = GetCredentialRequest.Builder()
                                 .addCredentialOption(googleIdOption)
                                 .build()
-                            android.util.Log.d("RegPage", "Getting credential from CredentialManager")
                             val result = credentialManager.getCredential(context, request)
-                            android.util.Log.d("RegPage", "Credential received, creating GoogleIdTokenCredential")
                             val googleIdTokenCredential =
                                 GoogleIdTokenCredential.createFrom(result.credential.data)
-                            android.util.Log.d("RegPage", "Calling vm.signInWithGoogle with idToken")
                             vm.signInWithGoogle(
                                 context = context,
                                 idToken = googleIdTokenCredential.idToken,
                                 onSuccess = { isNewUser ->
-                                    android.util.Log.d("RegPage", "Sign-In Success: isNewUser=$isNewUser")
                                     googleSignInError = null
                                     if (isNewUser) onNavigateToEula() else onNavigateToMainMenu()
                                 },
                                 onError = { 
-                                    android.util.Log.e("RegPage", "Sign-In Error: $it")
                                     googleSignInError = it 
                                 }
                             )
                         } catch (e: GetCredentialException) {
                             android.util.Log.e("RegPage", "GetCredentialException: ${e.message}", e)
-                            googleSignInError = "Credential error: ${e.message}"
+                            googleSignInError = when {
+                                e.message?.contains("No credentials available") == true -> 
+                                    "Нет доступных учетных записей Google. Добавьте аккаунт в настройки устройства."
+                                else -> "Ошибка входа: ${e.message}"
+                            }
                         } catch (e: Exception) {
-                            android.util.Log.e("RegPage", "Unexpected exception: ${e.message}", e)
-                            googleSignInError = "Error: ${e.message}"
+                            android.util.Log.e("RegPage", "Exception: ${e.message}", e)
+                            googleSignInError = "Ошибка входа: ${e.message}"
                         }
                     }
                 },

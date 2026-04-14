@@ -4,18 +4,34 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 android {
     namespace = "com.ferm.nexusforge"
     compileSdk = 36
 
+    signingConfigs {
+        create("release") {
+            val properties = org.jetbrains.kotlin.konan.properties.Properties()
+            val localPropertiesFile = rootProject.file("local.properties")
+            if (localPropertiesFile.exists()) {
+                properties.load(localPropertiesFile.inputStream())
+            }
+            
+            storeFile = file("../nexusforge.keystore")
+            storePassword = properties.getProperty("KEYSTORE_PASSWORD", "")
+            keyAlias = "nexusforge"
+            keyPassword = properties.getProperty("KEY_PASSWORD", "")
+        }
+    }
+
     defaultConfig {
         applicationId = "com.ferm.nexusforge"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
@@ -31,6 +47,7 @@ android {
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -92,6 +109,8 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.analytics)
     implementation(libs.kotlinx.coroutines.play.services)
     // Google Sign-In via Credential Manager
     implementation(libs.credentials)

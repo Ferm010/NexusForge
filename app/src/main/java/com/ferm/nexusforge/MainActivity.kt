@@ -1,7 +1,6 @@
 package com.ferm.nexusforge
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -26,6 +25,7 @@ import com.ferm.nexusforge.backend.SecurityCheck
 import com.ferm.nexusforge.ui.theme.NexusForgeTheme
 import com.ferm.nexusforge.utils.AnalyticsHelper
 import com.ferm.nexusforge.viewmodels.ThemeViewModel
+import com.google.firebase.crashlytics.BuildConfig
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlin.system.exitProcess
 
@@ -44,7 +44,6 @@ class MainActivity : ComponentActivity() {
         
         // Инициализация Firebase Crashlytics
         FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
-        Log.d("Crashlytics", "Crashlytics initialized")
         
         // Применяем сохранённый язык
         LocaleHelper.applyLocale(this)
@@ -90,21 +89,13 @@ class MainActivity : ComponentActivity() {
     private fun performSecurityChecks(): Boolean {
         // Проверка целостности приложения
         if (!SecurityCheck.verifyAppIntegrity(this)) {
-            Log.e("Security", "App integrity check failed!")
             return false
         }
         
         // Проверка на root/эмулятор (опционально, можно отключить для тестирования)
         if (!SecurityCheck.isDeviceSecure()) {
-            Log.w("Security", "Device security warning: rooted or emulator detected")
             // Можно вернуть false для блокировки на root устройствах
             // return false
-        }
-        
-        // В debug режиме выводим текущий хеш подписи
-        if (BuildConfig.DEBUG) {
-            val currentHash = SecurityCheck.getCurrentSignatureHash(this)
-            Log.d("Security", "Current signature hash: $currentHash")
         }
         
         return true
