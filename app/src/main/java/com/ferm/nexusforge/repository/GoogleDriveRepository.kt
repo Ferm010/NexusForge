@@ -69,6 +69,7 @@ class GoogleDriveRepository(private val context: Context) {
 
     /**
      * Создает Intent для запроса авторизации Google Drive
+     * Принудительно показывает диалог выбора аккаунта
      */
     fun getAuthorizationIntent(): Intent {
         return try {
@@ -78,9 +79,30 @@ class GoogleDriveRepository(private val context: Context) {
                 .build()
 
             val client = GoogleSignIn.getClient(context, signInOptions)
+            // Выходим из текущего аккаунта перед запросом авторизации
+            // чтобы всегда показывать диалог выбора аккаунта
+            client.signOut()
             client.signInIntent
         } catch (e: Exception) {
             Intent()
+        }
+    }
+
+    /**
+     * Выходит из текущего Google аккаунта
+     */
+    fun signOut() {
+        try {
+            val signInOptions = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestScopes(Scope(DriveScopes.DRIVE_FILE))
+                .requestEmail()
+                .build()
+
+            val client = GoogleSignIn.getClient(context, signInOptions)
+            client.signOut()
+            driveService = null
+        } catch (e: Exception) {
+            // Игнорируем ошибки при выходе
         }
     }
 

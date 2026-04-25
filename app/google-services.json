@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "380570057451",
+    "project_id": "nexusforge-492212",
+    "storage_bucket": "nexusforge-492212.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:380570057451:android:32f00e43f50c25cf16dcae",
+        "android_client_info": {
+          "package_name": "com.ferm.nexusforge"
+        }
+      },
+       "oauth_client": [
+         {
+           "client_id": "380570057451-jkprcov1s0nbhh7hrejbrjng6ifv2o1m.apps.googleusercontent.com",
+           "client_type": 1,
+           "android_info": {
+             "package_name": "com.ferm.nexusforge",
+             "certificate_hash": "7bc8e5576938131c20c9ae5f86d619b8644c6af8"
+           }
+         },
+        {
+          "client_id": "380570057451-s8tckfhsh2frakmosma1di2ein26kq0u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABmX2hTSTvfz0wb8lKzal4ubAHB3rP1Qo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "380570057451-s8tckfhsh2frakmosma1di2ein26kq0u.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
