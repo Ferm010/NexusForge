@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ferm.nexusforge.backend.NetworkUtils
 import com.ferm.nexusforge.backend.errorCodeToString
+import com.ferm.nexusforge.repository.FirestoreRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -21,11 +22,13 @@ class RegViewModel : ViewModel() {
     private val authRepository: AuthRepository by lazy {
         AuthRepository()
     }
+    private val firestoreRepository: FirestoreRepository by lazy {
+        FirestoreRepository()
+    }
     private var context: Context? = null
     
     // UI State
     var email by mutableStateOf("")
-        private set
     var password by mutableStateOf("")
     var confirmPassword by mutableStateOf("")
     var userName by mutableStateOf("")
@@ -33,12 +36,21 @@ class RegViewModel : ViewModel() {
         private set
     var isGoogleFlow by mutableStateOf(false)
     
+    // Внутреннее хранение email для Google (не отображается в TextField)
+    private var internalEmail by mutableStateOf("")
+    
     // Auth password state
     var authPassword by mutableStateOf("")
     
     var isValidatingEmail by mutableStateOf(false)
         private set
     var emailError by mutableStateOf<String?>(null)
+        private set
+    
+    // State for displaying email during sign in
+    var displayEmail by mutableStateOf("")
+        private set
+    var isSigningIn by mutableStateOf(false)
         private set
     
     private var validationJob: Job? = null
@@ -86,11 +98,10 @@ class RegViewModel : ViewModel() {
         }
     }
 
-    // Навигация
+    // Навигация с проверкой методов авторизации
     fun checkEmailAndNavigate(
         context: Context,
         onExists: () -> Unit,
-        onGoogleOnly: () -> Unit,
         onNotExists: () -> Unit,
         onError: (String) -> Unit
     ) {
@@ -100,12 +111,41 @@ class RegViewModel : ViewModel() {
         }
         
         viewModelScope.launch {
+            android.util.Log.d("RegViewModel", "=== Starting email check for: $email ===")
+            
             when (val result = authRepository.checkEmailExists(email)) {
-                is EmailExistsResult.Exists -> onExists()
-                is EmailExistsResult.GoogleOnly -> onGoogleOnly()
-                is EmailExistsResult.NotExists -> onNotExists()
-                is EmailExistsResult.Error -> onError(errorCodeToString(context, result.errorCode))
+                is EmailCheckResult.NewUser -> {
+                    // Новый пользователь - идем на EULA
+                    android.util.Log.d("RegViewModel", "Result: NEW USER - navigate to EULA")
+                    onNotExists()
+                }
+                is EmailCheckResult.ExistingUser -> {
+                    android.util.Log.d("RegViewModel", "Result: EXISTING USER with method: ${result.authMethod}")
+                    when (result.authMethod) {
+                        AuthMethod.EMAIL_PASSWORD -> {
+                            // Аккаунт создан через email/пароль - идем на ввод пароля
+                            android.util.Log.d("RegViewModel", "Action: Navigate to password page")
+                            displayEmail = email
+                            isSigningIn = true
+                            onExists()
+                        }
+                        AuthMethod.GOOGLE -> {
+                            // Аккаунт создан через Google - показываем ошибку
+                            android.util.Log.d("RegViewModel", "Action: Show error - account exists with Google")
+                            onError(errorCodeToString(context, "ERROR_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL"))
+                        }
+                        AuthMethod.OTHER -> {
+                            // Другой метод авторизации
+                            android.util.Log.d("RegViewModel", "Action: Show error - account exists with other method")
+                            onError(errorCodeToString(context, "ERROR_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL"))
+                        }
+                    }
+                }
+                is EmailCheckResult.Error -> {
+                    onError(errorCodeToString(context, result.errorCode))
+                }
             }
+            android.util.Log.d("RegViewModel", "=== Email check completed ===")
         }
     }
 
@@ -120,11 +160,6 @@ class RegViewModel : ViewModel() {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        if (!NetworkUtils.isNetworkAvailable(context)) {
-            onError(errorCodeToString(context, "ERROR_NETWORK_REQUEST_FAILED"))
-            return
-        }
-        
         // Rate limiting
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastAttemptTime < 3000 && attemptCount >= 3) {
@@ -132,16 +167,19 @@ class RegViewModel : ViewModel() {
             return
         }
         
+        isSigningIn = true
         viewModelScope.launch {
             when (val result = authRepository.signInWithEmail(email, enteredPassword)) {
                 is AuthResult.Success -> {
                     attemptCount = 0
+                    isSigningIn = false
                     refreshUserData()
                     onSuccess()
                 }
                 is AuthResult.Error -> {
                     attemptCount++
                     lastAttemptTime = currentTime
+                    isSigningIn = false
                     onError(errorCodeToString(context, result.errorCode))
                 }
             }
@@ -161,8 +199,14 @@ class RegViewModel : ViewModel() {
         viewModelScope.launch {
             when (val result = authRepository.registerUser(email, password, userName)) {
                 is AuthResult.Success -> {
-                    refreshUserData()
-                    onSuccess()
+                    // Создаём профиль в Firestore после успешной регистрации
+                    val profileResult = firestoreRepository.createUserProfile(email, userName)
+                    if (profileResult.isSuccess) {
+                        refreshUserData()
+                        onSuccess()
+                    } else {
+                        onError(errorCodeToString(context, "ERROR_FIRESTORE_WRITE"))
+                    }
                 }
                 is AuthResult.Error -> onError(errorCodeToString(context, result.errorCode))
             }
@@ -172,6 +216,7 @@ class RegViewModel : ViewModel() {
     fun signInWithGoogle(
         context: Context,
         idToken: String,
+        email: String,
         onSuccess: (Boolean) -> Unit,
         onError: (String) -> Unit
     ) {
@@ -182,23 +227,50 @@ class RegViewModel : ViewModel() {
         }
         
         viewModelScope.launch {
+            android.util.Log.d("RegViewModel", "=== Starting Google Sign-In ===")
+            android.util.Log.d("RegViewModel", "Email from credential: '$email'")
+            
             when (val result = authRepository.signInWithGoogle(idToken)) {
                 is GoogleSignInResult.Success -> {
+                    android.util.Log.d("RegViewModel", "Google Sign-In successful, isNewUser: ${result.isNewUser}")
+                    android.util.Log.d("RegViewModel", "Email from Google: '${result.email}'")
+                    android.util.Log.d("RegViewModel", "DisplayName from Google: '${result.displayName}'")
+                    
                     isGoogleFlow = true
-                    if (!result.isNewUser) {
-                        userName = result.displayName
+                    // Сохраняем email из credential (не из Firebase, так как Firebase возвращает null)
+                    internalEmail = email
+                    userName = result.displayName
+                    
+                    // Если новый пользователь - создаём профиль в Firestore
+                    if (result.isNewUser) {
+                        android.util.Log.d("RegViewModel", "Creating Firestore profile for new Google user")
+                        android.util.Log.d("RegViewModel", "Passing email to Firestore: '$email'")
+                        val profileResult = firestoreRepository.createUserProfile(email, result.displayName)
+                        if (profileResult.isFailure) {
+                            onError(errorCodeToString(context, "ERROR_NETWORK_REQUEST_FAILED"))
+                            return@launch
+                        }
                     }
+                    
                     refreshUserData()
                     onSuccess(result.isNewUser)
                 }
                 is GoogleSignInResult.Error -> {
+                    
+                    // Firebase автоматически вернет ошибку если email уже используется с другим методом
+                    if (result.errorCode == "ERROR_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL") {
+                        android.util.Log.d("RegViewModel", "Account exists with email/password method")
+                    }
+                    
                     onError(errorCodeToString(context, result.errorCode))
                 }
             }
+            android.util.Log.d("RegViewModel", "=== Google Sign-In completed ===")
         }
     }
     
     fun signOut() {
+        firestoreRepository.clearAllListeners()
         authRepository.signOut()
         email = ""
         password = ""
@@ -207,6 +279,8 @@ class RegViewModel : ViewModel() {
         userPhotoUrl = null
         isGoogleFlow = false
         authPassword = ""
+        displayEmail = ""
+        isSigningIn = false
     }
     
     fun isGoogleSignIn(): Boolean = authRepository.isGoogleSignIn()
@@ -222,7 +296,7 @@ class RegViewModel : ViewModel() {
     ) {
         context?.let { ctx ->
             if (!NetworkUtils.isNetworkAvailable(ctx)) {
-                onError("No internet connection")
+                onError(errorCodeToString(ctx, "ERROR_NETWORK_REQUEST_FAILED"))
                 return
             }
         }
@@ -233,35 +307,16 @@ class RegViewModel : ViewModel() {
                     userName = newName
                     onSuccess()
                 }
-                is UpdateResult.Error -> onError(result.errorCode)
-            }
-        }
-    }
-    
-    fun updateEmail(
-        newEmail: String,
-        password: String,
-        onSuccess: () -> Unit,
-        onError: (String) -> Unit
-    ) {
-        context?.let { ctx ->
-            if (!NetworkUtils.isNetworkAvailable(ctx)) {
-                onError("No internet connection")
-                return
-            }
-        }
-        
-        viewModelScope.launch {
-            when (val result = authRepository.updateEmail(newEmail, password)) {
-                is UpdateResult.Success -> {
-                    email = newEmail
-                    onSuccess()
+                is UpdateResult.Error -> {
+                    context?.let { ctx ->
+                        onError(errorCodeToString(ctx, result.errorCode))
+                    } ?: onError(result.errorCode)
                 }
-                is UpdateResult.Error -> onError(result.errorCode)
             }
         }
     }
     
+
     fun deleteAccount(
         password: String,
         onSuccess: () -> Unit,
@@ -269,7 +324,7 @@ class RegViewModel : ViewModel() {
     ) {
         context?.let { ctx ->
             if (!NetworkUtils.isNetworkAvailable(ctx)) {
-                onError("No internet connection")
+                onError(errorCodeToString(ctx, "ERROR_NETWORK_REQUEST_FAILED"))
                 return
             }
         }
@@ -280,7 +335,51 @@ class RegViewModel : ViewModel() {
                     signOut()
                     onSuccess()
                 }
-                is UpdateResult.Error -> onError(result.errorCode)
+                is UpdateResult.Error -> {
+                    context?.let { ctx ->
+                        onError(errorCodeToString(ctx, result.errorCode))
+                    } ?: onError(result.errorCode)
+                }
+            }
+        }
+    }
+    
+    fun sendPasswordResetEmail(
+        context: Context,
+        email: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        if (!NetworkUtils.isNetworkAvailable(context)) {
+            onError(errorCodeToString(context, "ERROR_NETWORK_REQUEST_FAILED"))
+            return
+        }
+        
+        viewModelScope.launch {
+            when (val result = authRepository.sendPasswordResetEmail(email)) {
+                is SendEmailResult.Success -> onSuccess()
+                is SendEmailResult.Error -> onError(errorCodeToString(context, result.errorCode))
+            }
+        }
+    }
+    
+    fun validateSession(
+        context: Context,
+        onValid: () -> Unit,
+        onInvalid: () -> Unit
+    ) {
+        if (!NetworkUtils.isNetworkAvailable(context)) {
+            onInvalid()
+            return
+        }
+        
+        viewModelScope.launch {
+            val isValid = authRepository.validateSession()
+            if (isValid) {
+                onValid()
+            } else {
+                signOut()
+                onInvalid()
             }
         }
     }

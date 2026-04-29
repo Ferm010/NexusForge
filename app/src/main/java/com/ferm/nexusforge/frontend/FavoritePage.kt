@@ -1,5 +1,6 @@
 package com.ferm.nexusforge.frontend
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
@@ -19,7 +20,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,7 +27,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -60,18 +59,15 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.ferm.nexusforge.R
-import com.ferm.nexusforge.data.CustomModpack
 import com.ferm.nexusforge.data.ModpackTemplate
 import com.ferm.nexusforge.data.ModrinthProject
 import com.ferm.nexusforge.frontend.components.NameAppBar
 import com.ferm.nexusforge.frontend.mainmenu.FabMenuItem
 import com.ferm.nexusforge.frontend.mainmenu.ProjectCard
-import com.ferm.nexusforge.frontend.ModpackCard
 import com.ferm.nexusforge.viewmodels.CustomModpacksViewModel
 import com.ferm.nexusforge.viewmodels.FavoritesViewModel
 import com.ferm.nexusforge.viewmodels.RegViewModel
 import com.ferm.nexusforge.viewmodels.TemplateViewModel
-import android.widget.Toast
 
 enum class FavoritePageMode {
     FAVORITES,
@@ -80,16 +76,14 @@ enum class FavoritePageMode {
 }
 
 @Composable
-fun favoritePage(
+fun FavoritePage(
     vm: RegViewModel = viewModel(),
     favoritesVm: FavoritesViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onProjectClick: (String) -> Unit = {},
     onModpackClick: (String) -> Unit = {},
-    onTemplatesClick: () -> Unit = {},
     onEditTemplate: (String) -> Unit = {},
-    onCreateTemplate: () -> Unit = {}
 ) {
     val favoriteProjects by favoritesVm.favoriteProjects.collectAsState()
     var currentMode by remember { mutableStateOf(FavoritePageMode.FAVORITES) }
@@ -116,7 +110,6 @@ fun favoritePage(
                 FavoritePageMode.TEMPLATES -> {
                     TemplatesContent(
                         onEditTemplate = onEditTemplate,
-                        onCreateTemplate = onCreateTemplate
                     )
                 }
                 FavoritePageMode.FAVORITES -> {
@@ -306,7 +299,6 @@ fun FavoritesFabMenu(
 @Composable
 fun CustomModpacksList(
     onModpackClick: (String) -> Unit,
-    modifier: Modifier = Modifier
 ) {
     val modpacksViewModel: CustomModpacksViewModel = viewModel()
     val customModpacks by modpacksViewModel.customModpacks.collectAsState()
@@ -370,43 +362,8 @@ fun CustomModpacksList(
 }
 
 @Composable
-fun FavoriteModpackItem(
-    modpack: CustomModpack,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = modpack.name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = "${modpack.minecraftVersion} • ${modpack.modLoader}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-@Composable
 fun TemplatesContent(
     onEditTemplate: (String) -> Unit,
-    onCreateTemplate: () -> Unit,
     templateViewModel: TemplateViewModel = viewModel()
 ) {
     val templates by templateViewModel.templates.collectAsState()
@@ -455,7 +412,7 @@ fun TemplatesContent(
         AlertDialog(
             onDismissRequest = { templateToDelete = null },
             title = { Text(stringResource(R.string.delete_template)) },
-            text = { Text("Удалить шаблон \"${templateToDelete?.name}\"?") },
+            text = { Text(stringResource(R.string.delete_template_confirm, templateToDelete?.name ?: "")) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -582,7 +539,7 @@ fun TemplateCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "Модов: ${template.mods.size}",
+                    text = stringResource(R.string.template_mods_count, template.mods.size),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -592,7 +549,7 @@ fun TemplateCard(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         template.mods.take(3).forEach { mod ->
-                            if (mod.iconUrl != null && mod.iconUrl.isNotEmpty()) {
+                            if (!mod.iconUrl.isNullOrEmpty()) {
                                 Image(
                                     painter = rememberAsyncImagePainter(mod.iconUrl),
                                     contentDescription = mod.name,
@@ -615,7 +572,7 @@ fun TemplateCard(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "+${template.mods.size - 3}",
+                                    text = stringResource(R.string.template_mods_extra, template.mods.size - 3),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontSize = 10.sp
                                 )

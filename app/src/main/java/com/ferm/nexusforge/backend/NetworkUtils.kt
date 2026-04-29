@@ -3,7 +3,6 @@ package com.ferm.nexusforge.backend
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.os.Build
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
@@ -22,18 +21,11 @@ object NetworkUtils {
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
             ?: return false
         
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val network = connectivityManager.activeNetwork ?: return false
-            val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
-            
-            // Проверяем только наличие транспорта (WiFi/Mobile/Ethernet)
-            return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-        } else {
-            @Suppress("DEPRECATION")
-            val networkInfo = connectivityManager.activeNetworkInfo
-            @Suppress("DEPRECATION")
-            return networkInfo != null && networkInfo.isConnected
-        }
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        
+        //(WiFi/Mobile/Ethernet)
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
     
     /**
@@ -55,8 +47,8 @@ object NetworkUtils {
                     responseCode == 200 || responseCode == 204
                 }
             }
-        } catch (e: Exception) {
-            false  // Тихо возвращаем false, без логов
+        } catch (_: Exception) {
+            false
         }
     }
 
@@ -77,47 +69,13 @@ object NetworkUtils {
                     val addresses = InetAddress.getAllByName(domain)
                     addresses.isNotEmpty()
                 }
-            } catch (e: UnknownHostException) {
+            } catch (_: UnknownHostException) {
                 false
-            } catch (e: TimeoutCancellationException) {
+            } catch (_: TimeoutCancellationException) {
                 true
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 true
             }
         }
-    }
-
-    /**
-     * Получить тип соединения (WiFi, Mobile, etc.)
-     */
-    fun getConnectionType(context: Context): ConnectionType {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
-            ?: return ConnectionType.NONE
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val network = connectivityManager.activeNetwork ?: return ConnectionType.NONE
-            val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return ConnectionType.NONE
-
-            return when {
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> ConnectionType.WIFI
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> ConnectionType.MOBILE
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> ConnectionType.ETHERNET
-                else -> ConnectionType.OTHER
-            }
-        } else {
-            @Suppress("DEPRECATION")
-            val networkInfo = connectivityManager.activeNetworkInfo ?: return ConnectionType.NONE
-            @Suppress("DEPRECATION")
-            return when (networkInfo.type) {
-                ConnectivityManager.TYPE_WIFI -> ConnectionType.WIFI
-                ConnectivityManager.TYPE_MOBILE -> ConnectionType.MOBILE
-                ConnectivityManager.TYPE_ETHERNET -> ConnectionType.ETHERNET
-                else -> ConnectionType.OTHER
-            }
-        }
-    }
-
-    enum class ConnectionType {
-        WIFI, MOBILE, ETHERNET, OTHER, NONE
     }
 }

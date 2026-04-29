@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ferm.nexusforge.data.ModpackTemplate
-import com.ferm.nexusforge.data.TemplateMod
 import com.ferm.nexusforge.data.ModrinthProject
+import com.ferm.nexusforge.data.TemplateMod
 import com.ferm.nexusforge.repository.FirestoreRepository
 import com.ferm.nexusforge.utils.NetworkChecker
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,12 +23,20 @@ class TemplateViewModel : ViewModel() {
     private val _templates = MutableStateFlow<List<ModpackTemplate>>(emptyList())
     val templates: StateFlow<List<ModpackTemplate>> = _templates.asStateFlow()
     
+    private var pendingMinecraftVersion: String = ""
+    private var pendingModLoader: String = ""
+    
     fun initializeNetworkChecker(context: Context) {
         networkChecker = NetworkChecker(context)
     }
     
     fun clearError() {
         _state.value = _state.value.copy(error = null)
+    }
+    
+    override fun onCleared() {
+        super.onCleared()
+        repository.clearAllListeners()
     }
     
     init {
@@ -69,6 +77,52 @@ class TemplateViewModel : ViewModel() {
         val currentMods = _state.value.selectedMods.toMutableList()
         currentMods.removeAll { it.projectId == projectId }
         _state.value = _state.value.copy(selectedMods = currentMods)
+    }
+    
+    fun requestMinecraftVersionChange(version: String) {
+        if (_state.value.selectedMods.isNotEmpty() && _state.value.minecraftVersion.isNotEmpty() && version != _state.value.minecraftVersion) {
+            pendingMinecraftVersion = version
+            _state.value = _state.value.copy(showVersionWarning = true)
+        } else {
+            _state.value = _state.value.copy(minecraftVersion = version)
+        }
+    }
+    
+    fun confirmVersionChange() {
+        _state.value = _state.value.copy(
+            minecraftVersion = pendingMinecraftVersion,
+            selectedMods = emptyList(),
+            showVersionWarning = false
+        )
+        pendingMinecraftVersion = ""
+    }
+    
+    fun cancelVersionChange() {
+        _state.value = _state.value.copy(showVersionWarning = false)
+        pendingMinecraftVersion = ""
+    }
+    
+    fun requestModLoaderChange(loader: String) {
+        if (_state.value.selectedMods.isNotEmpty() && _state.value.modLoader.isNotEmpty() && loader != _state.value.modLoader) {
+            pendingModLoader = loader
+            _state.value = _state.value.copy(showModLoaderWarning = true)
+        } else {
+            _state.value = _state.value.copy(modLoader = loader)
+        }
+    }
+    
+    fun confirmModLoaderChange() {
+        _state.value = _state.value.copy(
+            modLoader = pendingModLoader,
+            selectedMods = emptyList(),
+            showModLoaderWarning = false
+        )
+        pendingModLoader = ""
+    }
+    
+    fun cancelModLoaderChange() {
+        _state.value = _state.value.copy(showModLoaderWarning = false)
+        pendingModLoader = ""
     }
     
     fun saveTemplate(minecraftVersion: String, modLoader: String, onComplete: (Boolean) -> Unit) {
@@ -133,5 +187,7 @@ data class TemplateState(
     val selectedMods: List<TemplateMod> = emptyList(),
     val minecraftVersion: String = "",
     val modLoader: String = "",
-    val error: String? = null
+    val error: String? = null,
+    val showVersionWarning: Boolean = false,
+    val showModLoaderWarning: Boolean = false
 )

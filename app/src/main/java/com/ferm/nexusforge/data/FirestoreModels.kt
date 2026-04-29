@@ -1,13 +1,11 @@
 package com.ferm.nexusforge.data
 
 import com.google.firebase.Timestamp
-import com.google.firebase.firestore.DocumentId
 
 /**
  * Модель избранного проекта для Firestore
  */
 data class FavoriteProject(
-    @DocumentId
     val projectId: String = "",
     val title: String = "",
     val description: String = "",
@@ -62,8 +60,8 @@ data class CustomModpack(
     val id: String = "", // ID документа
     val name: String = "",
     val description: String = "",
-    val createdAt: Any = Timestamp.now(),
-    val updatedAt: Any = Timestamp.now(),
+    val createdAt: Any? = Timestamp.now(),
+    val updatedAt: Any? = Timestamp.now(),
     val minecraftVersion: String = "",
     val modLoader: String = "",
     val mods: List<ModReference> = emptyList(),

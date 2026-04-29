@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
+    id("com.google.android.gms.oss-licenses-plugin")
 }
 
 android {
@@ -30,8 +31,8 @@ android {
         applicationId = "com.ferm.nexusforge"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 5
+        versionName = "1.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
@@ -43,6 +44,7 @@ android {
         }
         
         buildConfigField("String", "WEB_CLIENT_ID", "\"${properties.getProperty("WEB_CLIENT_ID", "")}\"")
+        buildConfigField("String", "VERSION_NAME", "\"1.2\"")
     }
 
     buildTypes {
@@ -134,6 +136,8 @@ dependencies {
         exclude(group = "org.apache.httpcomponents")
         exclude(group = "com.google.guava", module = "guava-jdk5")
     }
+    // OSS Licenses
+    implementation(libs.play.services.oss.licenses)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

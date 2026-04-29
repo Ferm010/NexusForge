@@ -4,8 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Modrinth Pack Format
- * Спецификация: https://docs.modrinth.com/docs/modpacks/format/
+ * https://docs.modrinth.com/docs/modpacks/format/ для себя
  */
 
 @Serializable

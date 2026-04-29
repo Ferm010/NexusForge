@@ -1,5 +1,6 @@
 package com.ferm.nexusforge.repository
 
+import android.util.Log
 import com.ferm.nexusforge.data.CustomModpack
 import com.ferm.nexusforge.data.FavoriteProject
 import com.ferm.nexusforge.data.ModpackTemplate
@@ -12,16 +13,78 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
+private const val TAG = "FirestoreRepository"
+
 /**
  * Repository для работы с Firestore
- * Управляет избранными проектами и пользовательскими сборками
+ * управляет профилем пользователя, избранными проектами и пользовательскими сборками
  */
 class FirestoreRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 ) {
     
+    private val activeListeners = mutableListOf<com.google.firebase.firestore.ListenerRegistration>()
+    
     private fun getUserId(): String? = auth.currentUser?.uid
+    
+    /**
+     * Отменить все активные слушатели Firestore
+     */
+    fun clearAllListeners() {
+        Log.d(TAG, "Clearing ${activeListeners.size} active Firestore listeners")
+        activeListeners.forEach { it.remove() }
+        activeListeners.clear()
+    }
+    
+    // ==================== ПОЛЬЗОВАТЕЛЬСКИЙ ПРОФИЛЬ ====================
+    
+    /**
+     * Создать документ пользователя при первой регистрации
+     */
+    suspend fun createUserProfile(email: String, displayName: String): Result<Unit> {
+        return try {
+            val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
+            
+            val userData = mapOf(
+                "email" to email,
+                "displayName" to displayName,
+                "createdAt" to com.google.firebase.firestore.FieldValue.serverTimestamp(),
+                "updatedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+            )
+            
+            firestore.collection("users")
+                .document(userId)
+                .set(userData)
+                .await()
+            
+            Log.d(TAG, "User profile created successfully")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    
+    /**
+     * Проверить существование профиля пользователя
+     */
+    suspend fun checkUserProfileExists(): Result<Boolean> {
+        return try {
+            val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
+            
+            val doc = firestore.collection("users")
+                .document(userId)
+                .get()
+                .await()
+            
+            val exists = doc.exists()
+            Log.d(TAG, "User profile exists: $exists")
+            Result.success(exists)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
     
     // ==================== ИЗБРАННОЕ ====================
     
@@ -53,7 +116,11 @@ class FirestoreRepository(
                 trySend(favorites)
             }
         
-        awaitClose { listener.remove() }
+        activeListeners.add(listener)
+        awaitClose { 
+            listener.remove()
+            activeListeners.remove(listener)
+        }
     }
     
     /**
@@ -63,13 +130,44 @@ class FirestoreRepository(
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
             
+            Log.d(TAG, "Adding project to favorites")
+            
+            // Убедимся, что документ пользователя существует
+            val userDocRef = firestore.collection("users").document(userId)
+            val userDoc = userDocRef.get().await()
+            
+            if (!userDoc.exists()) {
+                Log.d(TAG, "User document doesn't exist, creating it")
+                val userData = mapOf(
+                    "email" to (auth.currentUser?.email ?: ""),
+                    "displayName" to (auth.currentUser?.displayName ?: ""),
+                    "createdAt" to com.google.firebase.firestore.FieldValue.serverTimestamp(),
+                    "updatedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+                )
+                userDocRef.set(userData).await()
+            }
+            
+            val projectData = mapOf(
+                "projectId" to project.projectId,
+                "title" to project.title,
+                "description" to project.description,
+                "iconUrl" to project.iconUrl,
+                "author" to project.author,
+                "downloads" to project.downloads,
+                "categories" to project.categories,
+                "versions" to project.versions,
+                "projectType" to project.projectType,
+                "addedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+            )
+            
             firestore.collection("users")
                 .document(userId)
                 .collection("favorites")
                 .document(project.projectId)
-                .set(project)
+                .set(projectData)
                 .await()
             
+            Log.d(TAG, "Project added to favorites successfully")
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -83,6 +181,8 @@ class FirestoreRepository(
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
             
+            Log.d(TAG, "Removing project from favorites")
+            
             firestore.collection("users")
                 .document(userId)
                 .collection("favorites")
@@ -90,29 +190,10 @@ class FirestoreRepository(
                 .delete()
                 .await()
             
+            Log.d(TAG, "Project removed from favorites successfully")
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
-        }
-    }
-    
-    /**
-     * Проверить, находится ли проект в избранном
-     */
-    suspend fun isFavorite(projectId: String): Boolean {
-        return try {
-            val userId = getUserId() ?: return false
-            
-            val doc = firestore.collection("users")
-                .document(userId)
-                .collection("favorites")
-                .document(projectId)
-                .get()
-                .await()
-            
-            doc.exists()
-        } catch (e: Exception) {
-            false
         }
     }
     
@@ -147,40 +228,11 @@ class FirestoreRepository(
                 trySend(modpacks)
             }
         
-        awaitClose { listener.remove() }
-    }
-    
-    /**
-     * Получить избранные пользовательские сборки
-     */
-    fun getFavoriteModpacks(): Flow<List<CustomModpack>> = callbackFlow {
-        val userId = getUserId()
-        if (userId == null) {
-            trySend(emptyList())
-            close()
-            return@callbackFlow
+        activeListeners.add(listener)
+        awaitClose { 
+            listener.remove()
+            activeListeners.remove(listener)
         }
-        
-        val listener = firestore.collection("users")
-            .document(userId)
-            .collection("custom_modpacks")
-            .whereEqualTo("isFavorite", true)
-            .orderBy("updatedAt", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    close(error)
-                    return@addSnapshotListener
-                }
-                
-                val modpacks = snapshot?.documents?.mapNotNull { doc ->
-                    val modpack = doc.toObject(CustomModpack::class.java)
-                    modpack?.copy(id = doc.id)
-                } ?: emptyList()
-                
-                trySend(modpacks)
-            }
-        
-        awaitClose { listener.remove() }
     }
     
     /**
@@ -190,6 +242,8 @@ class FirestoreRepository(
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
             
+            Log.d(TAG, "Creating custom modpack")
+            
             val docRef = firestore.collection("users")
                 .document(userId)
                 .collection("custom_modpacks")
@@ -198,6 +252,7 @@ class FirestoreRepository(
             val modpackWithId = modpack.copy(id = docRef.id)
             docRef.set(modpackWithId).await()
             
+            Log.d(TAG, "Custom modpack created successfully")
             Result.success(docRef.id)
         } catch (e: Exception) {
             Result.failure(e)
@@ -211,6 +266,8 @@ class FirestoreRepository(
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
             
+            Log.d(TAG, "Updating custom modpack")
+            
             firestore.collection("users")
                 .document(userId)
                 .collection("custom_modpacks")
@@ -218,6 +275,7 @@ class FirestoreRepository(
                 .set(modpack)
                 .await()
             
+            Log.d(TAG, "Custom modpack updated successfully")
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -231,6 +289,8 @@ class FirestoreRepository(
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
             
+            Log.d(TAG, "Deleting custom modpack")
+            
             firestore.collection("users")
                 .document(userId)
                 .collection("custom_modpacks")
@@ -238,6 +298,7 @@ class FirestoreRepository(
                 .delete()
                 .await()
             
+            Log.d(TAG, "Custom modpack deleted successfully")
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -251,6 +312,8 @@ class FirestoreRepository(
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
             
+            Log.d(TAG, "Fetching custom modpack")
+            
             val doc = firestore.collection("users")
                 .document(userId)
                 .collection("custom_modpacks")
@@ -260,6 +323,8 @@ class FirestoreRepository(
             
             val modpack = doc.toObject(CustomModpack::class.java)
                 ?.copy(id = doc.id)
+            
+            Log.d(TAG, "Custom modpack fetched successfully")
             Result.success(modpack)
         } catch (e: Exception) {
             Result.failure(e)
@@ -273,13 +338,20 @@ class FirestoreRepository(
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
             
+            Log.d(TAG, "Saving custom modpack")
+            
+            val dataWithTimestamp = modpackData.toMutableMap().apply {
+                put("updatedAt", com.google.firebase.firestore.FieldValue.serverTimestamp())
+            }
+            
             firestore.collection("users")
                 .document(userId)
                 .collection("custom_modpacks")
                 .document(modpackId)
-                .set(modpackData, com.google.firebase.firestore.SetOptions.merge())
+                .set(dataWithTimestamp, SetOptions.merge())
                 .await()
             
+            Log.d(TAG, "Custom modpack saved successfully")
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -316,7 +388,11 @@ class FirestoreRepository(
                 trySend(templates)
             }
         
-        awaitClose { listener.remove() }
+        activeListeners.add(listener)
+        awaitClose { 
+            listener.remove()
+            activeListeners.remove(listener)
+        }
     }
     
     /**
@@ -326,13 +402,17 @@ class FirestoreRepository(
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
             
+            Log.d(TAG, "Saving template")
+            
             val templateData = template.copy(userId = userId)
             val docRef = if (template.id.isEmpty()) {
+                Log.d(TAG, "Creating new template")
                 firestore.collection("users")
                     .document(userId)
                     .collection("templates")
                     .document()
             } else {
+                Log.d(TAG, "Updating existing template")
                 firestore.collection("users")
                     .document(userId)
                     .collection("templates")
@@ -340,6 +420,8 @@ class FirestoreRepository(
             }
             
             docRef.set(templateData).await()
+            
+            Log.d(TAG, "Template saved successfully")
             Result.success(docRef.id)
         } catch (e: Exception) {
             Result.failure(e)
@@ -353,6 +435,8 @@ class FirestoreRepository(
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
             
+            Log.d(TAG, "Fetching template")
+            
             val doc = firestore.collection("users")
                 .document(userId)
                 .collection("templates")
@@ -361,6 +445,8 @@ class FirestoreRepository(
                 .await()
             
             val template = doc.toObject(ModpackTemplate::class.java)?.copy(id = doc.id)
+            
+            Log.d(TAG, "Template fetched successfully")
             Result.success(template)
         } catch (e: Exception) {
             Result.failure(e)
@@ -374,6 +460,8 @@ class FirestoreRepository(
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
             
+            Log.d(TAG, "Deleting template")
+            
             firestore.collection("users")
                 .document(userId)
                 .collection("templates")
@@ -381,10 +469,10 @@ class FirestoreRepository(
                 .delete()
                 .await()
             
+            Log.d(TAG, "Template deleted successfully")
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 }
-

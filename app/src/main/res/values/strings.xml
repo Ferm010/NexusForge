@@ -49,8 +49,22 @@
     <string name="password_hint">Пароль должен быть не менее 6 символов</string>
     <string name="passwords_dont_match">Пароли не совпадают</string>
     <string name="name_hint">Введите имя от 3 символов</string>
-    <string name="checking_email">Проверка email…</string>
-    <string name="google_only_error">Этот email зарегистрирован через Google. Войдите через кнопку «Продолжить через Google».</string>
+     <string name="checking_email">Проверка email…</string>
+     <string name="google_only_error">Этот email зарегистрирован через Google. Войдите через кнопку «Продолжить через Google».</string>
+     <string name="forgot_password">Забыл пароль</string>
+     <string name="forgot_password_question">Забыли пароль?</string>
+     <string name="forgot_password_hint">Введите ваш email, и мы отправим ссылку для восстановления пароля, если письма нет проверьте спам</string>
+     <string name="reset_email_sent">Письмо отправлено на вашу почту. Перейдите по ссылке в письме для восстановления пароля. Если письма нет проверьте спам</string>
+     <string name="send_reset_link">Отправить ссылку</string>
+     <string name="done">Готово</string>
+     <string name="no_google_accounts">Нет доступных учетных записей Google. Добавьте аккаунт в настройки устройства.</string>
+     <string name="sign_in_error">Ошибка входа: %s</string>
+     <string name="signed_in">Вы вошли в аккаунт</string>
+     <string name="welcome_user">Добро пожаловать, %s!</string>
+     <string name="signed_in_google">Вы вошли через Google</string>
+     <string name="authorized">Вы авторизованы</string>
+     <string name="registration_success">Регистрация в аккаунт успешна</string>
+     <string name="password_reset_sent">Письмо отправлено</string>
 
     <!-- Settings -->
     <string name="settings_title">Настройки</string>
@@ -61,6 +75,18 @@
     <string name="app_version">Версия приложения</string>
     <string name="dark_theme">Тёмная тема</string>
     <string name="light_theme">Светлая тема</string>
+    <string name="oss_licenses">Лицензии ПО</string>
+    <string name="faq_answers">Ответы на вопросы</string>
+    <string name="white_theme_desc">Белая тема</string>
+    <string name="faq_content_desc">FAQ</string>
+    <string name="loading_licenses">Загрузка лицензий...</string>
+    <string name="oss_licenses_title">Лицензии ПО</string>
+    <string name="license_info">Информация</string>
+    <string name="license_files_not_found">Файлы лицензий не найдены. Соберите release версию приложения для генерации полного списка лицензий.</string>
+    <string name="license_unavailable">Лицензия недоступна</string>
+    <string name="licenses_not_found">Лицензии не найдены или не удалось их загрузить</string>
+    <string name="error_title">Ошибка</string>
+    <string name="error_loading_licenses">Ошибка загрузки лицензий: %s</string>
 
     <!-- Language -->
     <string name="language_title">Смена языка</string>
@@ -88,6 +114,20 @@
     <string name="faq_change_theme">Как изменить тему приложения?</string>
     <string name="faq_change_theme_answer">Перейдите в раздел «Настройки» и нажмите на иконку темы для переключения между светлой и тёмной темой.</string>
     <string name="social_networks">Социальные сети для обратной связи</string>
+    <string name="faq_install_zip">Как установить сборку в Minecraft? .zip</string>
+    <string name="faq_install_zip_answer">1. Скачайте файл сборки .zip \n2. Откройте Minecraft Launcher\n3. Перейдите в папку .minecraft/mods\n4. Поместите файл сборки в эту папку\n5. Запустите Minecraft с нужной версией\n6. Дождитесь загрузки всех модов</string>
+    <string name="faq_install_mrpack">Как установить сборку в Minecraft? .mrpack</string>
+    <string name="faq_install_mrpack_answer">1. Установите Modrinth лаунчер \n2. Скачайте файл .mrpack\n3. затем откройте файл, дождитесь установки модов \n4. Нажмите кнопку играть</string>
+    <string name="faq_minecraft_folder">Где находится папка .minecraft?</string>
+    <string name="faq_minecraft_folder_answer">Windows: %APPDATA%\\.minecraft\nMac: ~/Library/Application Support/minecraft\nLinux: ~/.minecraft</string>
+    <string name="faq_minecraft_version">Какую версию Minecraft нужно использовать?</string>
+    <string name="faq_minecraft_version_answer">Версия зависит от сборки модов. Проверьте описание сборки - там указана совместимая версия Minecraft. Убедитесь, что у вас установлена именно эта версия.</string>
+    <string name="faq_mods_not_loading">Что делать если моды не загружаются?</string>
+    <string name="faq_mods_not_loading_answer">1. Проверьте версию Minecraft\n2. Убедитесь что Forge/Fabric установлен\n3. Удалите папку mods и переустановите сборку\n4. Проверьте наличие свободного места на диске\n5. Перезагрузите компьютер</string>
+    <string name="faq_update_modpack">Как обновить сборку?</string>
+    <string name="faq_update_modpack_answer">1. Удалите старые файлы mods\n2. Скачайте новую версию сборки\n3. Поместите новый файлы в папку mods\n4. Запустите Minecraft</string>
+    <string name="faq_ram_requirements">Сколько оперативной памяти нужно?</string>
+    <string name="faq_ram_requirements_answer">Минимум 4GB для стабильной работы. Рекомендуется 6-8GB для комфортной игры с большим количеством модов.</string>
 
     <!-- Main Menu -->
     <string name="featured_projects">Рекомендуемые проекты</string>
@@ -104,6 +144,7 @@
     <string name="modpacks">Модпаки</string>
     <string name="mods">Моды</string>
     <string name="plugins">Плагины</string>
+    <string name="error_message">Ошибка: %s</string>
 
     <!-- Project Details -->
     <string name="download">Скачать</string>
@@ -117,6 +158,10 @@
     <string name="downloads">Загрузок</string>
     <string name="followers">Подписчиков</string>
     <string name="changelog">Список изменений</string>
+    <string name="removed_from_favorites">Сборка убрана из избранного</string>
+    <string name="added_to_favorites">Сборка сохранена в избранное</string>
+    <string name="collapse">Свернуть</string>
+    <string name="expand">Развернуть</string>
 
     <!-- Profile -->
     <string name="my_projects">Мои проекты</string>
@@ -128,7 +173,6 @@
     <string name="no_username">Без имени</string>
     <string name="change_data_title">Изменение данных</string>
     <string name="new_name">Новое имя</string>
-    <string name="new_email">Новый email</string>
     <string name="current_password">Текущий пароль</string>
     <string name="save">Сохранить</string>
     <string name="cancel">Отмена</string>
@@ -138,6 +182,7 @@
     <string name="data_updated">Данные обновлены</string>
     <string name="confirm_sign_out">Подтвердите выход</string>
     <string name="sign_out_message">Вы точно хотите выйти из аккаунта?</string>
+    <string name="placeholder_asterisk">*</string>
 
     <!-- Create -->
     <string name="create_modpack">Создать модпак</string>
@@ -181,6 +226,12 @@
     <string name="popular">Сначала популярные</string>
     <string name="newest">Новые</string>
     <string name="type_project">Тип проекта</string>
+    <string name="bullet_separator">•</string>
+    <string name="question_mark">?</string>
+    <string name="modpack_version_loader">%1$s • %2$s</string>
+    <string name="delete_template_confirm">Удалить шаблон \"%s\"?</string>
+    <string name="template_mods_count">Модов: %d</string>
+    <string name="template_mods_extra">+%d</string>
     
     <!-- Modpack Creator -->
     <string name="modpack_name">Название сборки</string>
@@ -214,6 +265,35 @@
     <string name="add_to_pack">Добавить в сборку</string>
     <string name="already_in_pack">Уже в сборке</string>
     <string name="follows">Подписчиков</string>
+    <string name="no_mods_found">Моды не найдены</string>
+    <string name="change_version_title">Изменить версию?</string>
+    <string name="change_version_message">Вы изменили версию Minecraft. Все добавленные моды будут удалены, так как они могут быть несовместимы с новой версией.</string>
+    <string name="confirm">Подтвердить</string>
+    <string name="change_loader_title">Изменить модлоадер?</string>
+    <string name="change_loader_message">Вы изменили модлоадер. Все добавленные моды будут удалены, так как они могут быть несовместимы с новым модлоадером.</string>
+    <string name="exit_without_saving_title">Выйти без сохранения?</string>
+    <string name="exit_without_saving_message">У вас есть несохраненные изменения. Если вы выйдете, все данные будут потеряны.</string>
+    <string name="exit_button">Выйти</string>
+    <string name="stay_button">Остаться</string>
+    <string name="mod_by_author">by %s</string>
+    <string name="mods_count">Модов: %d</string>
+    <string name="version_and_loader">%1$s • %2$s</string>
+    <string name="incompatible_template">⚠ Несовместимо с текущей версией (%1$s • %2$s)</string>
+    <string name="template_applied">Шаблон применен</string>
+    <string name="my_modpacks_title">Мои сборки</string>
+    <string name="no_modpacks_yet">У вас пока нет сборок</string>
+    <string name="create_first_modpack">Создайте свою первую сборку модов</string>
+    <string name="create_modpack_button">Создать сборку</string>
+    <string name="mods_count_extra">+%d</string>
+    <string name="delete_modpack_title">Удалить сборку?</string>
+    <string name="delete_modpack_message">Вы уверены, что хотите удалить сборку \"%s\"?</string>
+    <string name="delete_button">Удалить</string>
+    <string name="create_modpack_dialog_title">Создать сборку</string>
+    <string name="modpack_name_label">Название</string>
+    <string name="modpack_description_label">Описание</string>
+    <string name="minecraft_version_label">Версия Minecraft</string>
+    <string name="mod_loader_label">Загрузчик модов</string>
+    <string name="create_button">Создать</string>
     
     <!-- Templates -->
     <string name="templates">Шаблоны</string>
@@ -227,6 +307,18 @@
     <string name="template_saved">Шаблон сохранен</string>
     <string name="template_deleted">Шаблон удален</string>
     <string name="delete">Удалить</string>
+    <string name="create_template_title">Создать шаблон</string>
+    <string name="edit_template_title">Редактировать шаблон</string>
+    <string name="template_name_label">Название шаблона</string>
+    <string name="template_name_placeholder">Введите название</string>
+    <string name="template_description_label">Описание</string>
+    <string name="template_description_placeholder">Опционально</string>
+    <string name="select_mc_version">Выберите версию MC</string>
+    <string name="select_loader">Выберите загрузчик</string>
+    <string name="save_template_button">Сохранить шаблон</string>
+    <string name="template_save_success">Шаблон сохранен</string>
+    <string name="template_save_error">Ошибка сохранения</string>
+    <string name="delete_template_message">Удалить шаблон \"%s\"?</string>
     
     <!-- Generation Methods -->
     <string name="select_generation_method">Выберите метод генерации</string>
@@ -237,6 +329,20 @@
     <string name="mrpack_generation_desc">Создать .mrpack файл для лаунчеров</string>
     <string name="google_drive_generation">Google Drive</string>
      <string name="google_drive_generation_desc">Загрузить сборку в облако</string>
+     <string name="file_id">ID файла: %s</string>
+     <string name="open_in_drive">Открыть в Drive</string>
+     <string name="share">Поделиться</string>
+     <string name="error">Ошибка</string>
+     <string name="go_back">Назад</string>
+     <string name="generation_progress">%1$d/%2$d</string>
+     <string name="uploading_to_drive">Загрузка в Google Drive...</string>
+
+    <!-- Template Warnings -->
+    <string name="version_change_warning_title">Изменить версию Minecraft?</string>
+    <string name="version_change_warning_message">Изменение версии Minecraft может привести к несовместимости с уже добавленными модами. Продолжить?</string>
+    <string name="loader_change_warning_title">Изменить загрузчик модов?</string>
+    <string name="loader_change_warning_message">Изменение загрузчика модов может привести к несовместимости с уже добавленными модами. Продолжить?</string>
+    <string name="change_button">Изменить</string>
 
     <!-- Release Description -->
     <string name="release_short_description">NexusForge - конструктор сборок для создания рабочих модпаков по Minecraft</string>

@@ -30,17 +30,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ferm.nexusforge.R
 import com.ferm.nexusforge.ui.theme.logo
-import com.ferm.nexusforge.viewmodels.LanguageViewModel
 import com.ferm.nexusforge.viewmodels.RegViewModel
 
 @Composable
 fun RegNamePage(
+    modifier: Modifier = Modifier,
     vm: RegViewModel = viewModel(),
-    languageViewModel: LanguageViewModel = viewModel(),
-    modifier: Modifier = Modifier, 
     onNavigateToMainMenu: () -> Unit = {}
 ){
     val context = LocalContext.current
+    val registrationSuccessMessage = stringResource(R.string.registration_success)
     var registerError by remember { mutableStateOf<String?>(null) }
     val isNameValid = vm.userName.trim().length >= 3
 
@@ -98,7 +97,7 @@ fun RegNamePage(
                     vm.registerUser(
                         context = context,
                         onSuccess = {
-                            Toast.makeText(context, "Регистрация в аккаунт успешна", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, registrationSuccessMessage, Toast.LENGTH_SHORT).show()
                             onNavigateToMainMenu()
                         },
                         onError = { registerError = it }

@@ -1,11 +1,10 @@
 package com.ferm.nexusforge.frontend
 
-import android.Manifest
 import android.app.Activity
-import android.content.pm.PackageManager
-import android.os.Build
+import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,15 +15,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -46,20 +43,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ferm.nexusforge.R
 import com.ferm.nexusforge.repository.UploadProgress
 import com.ferm.nexusforge.viewmodels.ModpackCreatorViewModel
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import kotlinx.coroutines.delay
 
 data class GenerateProgress(
     val currentStep: Int = 0,
@@ -80,21 +73,19 @@ fun GenerateModpackPage(
     val state by vm.state.collectAsState()
     val context = LocalContext.current
     
-    var hasStoragePermission by remember { mutableStateOf(false) }
     var progress by remember { mutableStateOf(GenerateProgress()) }
     var driveUploadProgress by remember { mutableStateOf<UploadProgress>(UploadProgress.Idle) }
-    var isAuthorizationComplete by remember { mutableStateOf(false) }
     
     // Launcher для авторизации Google Drive
+    @Suppress("DEPRECATION")
     val googleSignInLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            val task = com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(result.data)
             try {
                 val account = task.result
                 vm.getGoogleDriveRepository()?.initializeDriveService(account)
-                isAuthorizationComplete = true
                 
                 // Начинаем загрузку после успешной авторизации
                 vm.exportToGoogleDrive(context) { currentStep, modName, isComplete, error ->
@@ -114,30 +105,15 @@ fun GenerateModpackPage(
         }
     }
     
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        hasStoragePermission = isGranted
-    }
-    
     LaunchedEffect(Unit) {
         try {
             vm.initializeGoogleDrive(context)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Ошибка инициализации Google Drive
         }
         
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            hasStoragePermission = true
-        } else {
-            val permission = ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            )
-            hasStoragePermission = permission == PackageManager.PERMISSION_GRANTED
-        }
-        
-        progress = progress.copy(currentStep = 0, totalSteps = state.selectedMods.size + 2)
+        val totalMods = state.selectedMods.size
+        progress = progress.copy(currentStep = 0, totalSteps = totalMods)
         
         // Генерация в зависимости от метода
         when (method) {
@@ -145,7 +121,7 @@ fun GenerateModpackPage(
                 vm.generateModpackWithProgress(context) { currentStep, modName, isComplete, error ->
                     progress = GenerateProgress(
                         currentStep = currentStep,
-                        totalSteps = state.selectedMods.size + 2,
+                        totalSteps = totalMods,
                         currentModName = modName,
                         isComplete = isComplete,
                         error = error
@@ -156,7 +132,7 @@ fun GenerateModpackPage(
                 vm.generateMrpackWithProgress(context) { currentStep, modName, isComplete, error ->
                     progress = GenerateProgress(
                         currentStep = currentStep,
-                        totalSteps = state.selectedMods.size + 4,
+                        totalSteps = totalMods,
                         currentModName = modName,
                         isComplete = isComplete,
                         error = error
@@ -173,7 +149,6 @@ fun GenerateModpackPage(
                           progress = progress.copy(error = "Google Drive not initialized")
                       }
                   } catch (e: Exception) {
-                      android.util.Log.e("GenerateModpackPage", "Google Drive error", e)
                       progress = progress.copy(error = "Google Drive error: ${e.message}")
                   }
               }
@@ -260,11 +235,48 @@ fun GenerateModpackPage(
                         val successProgress = driveUploadProgress as UploadProgress.Success
                         if (successProgress.webViewLink != null) {
                             item {
-                                Text(
-                                    text = "File ID: ${successProgress.fileId}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                     Text(
+                                         text = stringResource(R.string.file_id, successProgress.fileId),
+                                         style = MaterialTheme.typography.bodySmall,
+                                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                                     )
+                                    
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                         Button(
+                                             onClick = {
+                                                 val intent = Intent(Intent.ACTION_VIEW).apply {
+                                                     data = android.net.Uri.parse(successProgress.webViewLink)
+                                                 }
+                                                 context.startActivity(intent)
+                                             },
+                                             modifier = Modifier.weight(1f)
+                                         ) {
+                                             Text(stringResource(R.string.open_in_drive))
+                                         }
+                                         
+                                         Button(
+                                             onClick = {
+                                                 val shareIntent = Intent().apply {
+                                                     action = Intent.ACTION_SEND
+                                                     putExtra(Intent.EXTRA_TEXT, successProgress.webViewLink)
+                                                     type = "text/plain"
+                                                 }
+                                                 context.startActivity(Intent.createChooser(shareIntent, "Share link"))
+                                             },
+                                             modifier = Modifier.weight(1f)
+                                         ) {
+                                             Text(stringResource(R.string.share))
+                                         }
+                                    }
+                                }
                             }
                         }
                     }
@@ -273,13 +285,13 @@ fun GenerateModpackPage(
                     item {
                         Spacer(modifier = Modifier.height(16.dp))
                         val faqQuestion = when (method) {
-                            "mrpack" -> "Как установить сборку в Minecraft? .mrpack"
-                            else -> "Как установить сборку в Minecraft? .zip"
+                            "mrpack" -> stringResource(R.string.faq_install_mrpack)
+                            else -> stringResource(R.string.faq_install_zip)
                         }
 
                         val faqAnswer = when (method) {
-                            "mrpack" -> "1. Установите Modrinth лаунчер \n2. Скачайте файл .mrpack\n3. затем откройте файл, дождитесь установки модов \n4. Нажмите кнопку играть"
-                            else -> "1. Скачайте файл сборки .zip \n2. Откройте Minecraft Launcher\n3. Перейдите в папку .minecraft/mods\n4. Поместите файл сборки в эту папку\n5. Запустите Minecraft с нужной версией\n6. Дождитесь загрузки всех модов"
+                            "mrpack" -> stringResource(R.string.faq_install_mrpack_answer)
+                            else -> stringResource(R.string.faq_install_zip_answer)
                         }
                         
                         val icon = when (method) {
@@ -347,6 +359,7 @@ fun GenerateModpackPage(
                     }
                 }
             } else if (progress.error != null) {
+                
                 Icon(
                     imageVector = Icons.Default.Error,
                     contentDescription = null,
@@ -355,7 +368,7 @@ fun GenerateModpackPage(
                 )
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = "Error",
+                    text = stringResource(R.string.error),
                     style = MaterialTheme.typography.headlineMedium,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.error
@@ -368,7 +381,7 @@ fun GenerateModpackPage(
                 )
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(onClick = onBackClick) {
-                    Text("Go Back")
+                    Text(stringResource(R.string.go_back))
                 }
             } else {
                 CircularProgressIndicator(
@@ -395,8 +408,9 @@ fun GenerateModpackPage(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    text = "${progress.currentStep} / ${progress.totalSteps}",
-                    style = MaterialTheme.typography.bodyMedium
+                    text = stringResource(R.string.generation_progress, progress.currentStep, progress.totalSteps),
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
                 )
                 
                 if (progress.currentModName.isNotEmpty()) {
@@ -413,81 +427,13 @@ fun GenerateModpackPage(
                 if (method == "google_drive" && driveUploadProgress is UploadProgress.Uploading) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Uploading to Google Drive...",
+                        text = stringResource(R.string.uploading_to_drive),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
-                }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    ProgressStep(
-                        step = 1,
-                        currentStep = progress.currentStep,
-                        text = "Preparing files..."
-                    )
-                    ProgressStep(
-                        step = progress.currentStep,
-                        currentStep = progress.currentStep,
-                        text = "Downloading mods (${progress.currentStep}/${progress.totalSteps})"
-                    )
-                    if (method == "google_drive") {
-                        ProgressStep(
-                            step = progress.totalSteps,
-                            currentStep = progress.currentStep,
-                            text = "Uploading to Google Drive..."
-                        )
-                    } else {
-                        ProgressStep(
-                            step = progress.totalSteps,
-                            currentStep = progress.currentStep,
-                            text = "Creating ZIP archive..."
-                        )
-                    }
                 }
             }
         }
     }
 }
 
-@Composable
-private fun ProgressStep(
-    step: Int,
-    currentStep: Int,
-    text: String
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (step < currentStep) {
-            Icon(
-                imageVector = Icons.Default.CheckCircle,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-        } else if (step == currentStep) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(20.dp),
-                strokeWidth = 2.dp
-            )
-        } else {
-            CircularProgressIndicator(
-                modifier = Modifier.size(20.dp),
-                strokeWidth = 2.dp,
-                color = MaterialTheme.colorScheme.surfaceVariant
-            )
-        }
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium
-        )
-    }
-}

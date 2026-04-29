@@ -32,7 +32,29 @@ object LocaleHelper {
     }
     
     fun getLocale(context: Context): String {
-        return getPrefs(context).getString(KEY_LANGUAGE, "ru") ?: "ru"
+        val prefs = getPrefs(context)
+        val savedLanguage = prefs.getString(KEY_LANGUAGE, null)
+        
+        // Если язык уже был выбран, возвращаем сохраненный
+        if (savedLanguage != null) {
+            return savedLanguage
+        }
+        
+        // При первом запуске определяем язык системы
+        val systemLanguage = Locale.getDefault().language
+        val supportedLanguageCodes = supportedLanguages.map { it.code }
+        
+        // Если язык системы поддерживается, используем его
+        val detectedLanguage = if (systemLanguage in supportedLanguageCodes) {
+            systemLanguage
+        } else {
+            "ru"  // По умолчанию русский
+        }
+        
+        // Сохраняем определенный язык
+        prefs.edit().putString(KEY_LANGUAGE, detectedLanguage).apply()
+        
+        return detectedLanguage
     }
     
     fun applyLocale(context: Context, language: String? = null) {
@@ -54,17 +76,11 @@ object LocaleHelper {
     }
     
     private fun updateResources(context: Context, language: String): Context {
-        val locale = Locale(language)
+        val locale = Locale.forLanguageTag(language)
         Locale.setDefault(locale)
         
         val config = context.resources.configuration
-        
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            config.setLocales(LocaleList(locale))
-        } else {
-            @Suppress("DEPRECATION")
-            config.locale = locale
-        }
+        config.setLocales(LocaleList(locale))
         
         return context.createConfigurationContext(config)
     }
@@ -72,9 +88,6 @@ object LocaleHelper {
     val supportedLanguages = listOf(
         LanguageOption("ru", "Русский", "🇷🇺"),
         LanguageOption("en", "English", "🇬🇧"),
-        LanguageOption("de", "Deutsch", "🇩🇪"),
-        LanguageOption("es", "Español", "🇪🇸"),
-        LanguageOption("fr", "Français", "🇫🇷")
     )
     
     data class LanguageOption(

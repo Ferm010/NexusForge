@@ -40,7 +40,7 @@ data class ModrinthProject(
     val dateModified: String = ""
 ) {
     val actualProjectId: String
-        get() = if (projectId.isNotEmpty()) projectId else id
+        get() = projectId.ifEmpty { id }
 }
 
 @Serializable
@@ -50,33 +50,6 @@ data class GameVersion(
     val versionType: String,
     val date: String,
     val major: Boolean
-)
-
-@Serializable
-data class ModrinthProjectDetails(
-    val id: String,
-    val title: String,
-    val description: String,
-    val categories: List<String>,
-    @SerialName("client_side")
-    val clientSide: String,
-    @SerialName("server_side")
-    val serverSide: String,
-    @SerialName("project_type")
-    val projectType: String,
-    val downloads: Int,
-    @SerialName("icon_url")
-    val iconUrl: String? = null,
-    val author: String,
-    val versions: List<String>,
-    val follows: Int,
-    @SerialName("date_created")
-    val dateCreated: String,
-    @SerialName("date_modified")
-    val dateModified: String,
-    @SerialName("download_url")
-    val downloadUrl: String? = null,
-    val modrinth_details_url: String? = null
 )
 
 @Serializable

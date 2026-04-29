@@ -1,16 +1,24 @@
 package com.ferm.nexusforge.frontend.mainmenu
 
-import android.content.Context
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -26,7 +34,6 @@ fun ProjectCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     
     Card(
         modifier = modifier
@@ -96,7 +103,7 @@ fun ProjectCard(
                     )
                     
                     Text(
-                        text = "•",
+                        text = stringResource(R.string.bullet_separator),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -109,7 +116,7 @@ fun ProjectCard(
                     
                     if (project.versions.isNotEmpty()) {
                         Text(
-                            text = "•",
+                            text = stringResource(R.string.bullet_separator),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -127,19 +134,19 @@ fun ProjectCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "${stringResource(R.string.downloads)}: ${formatDate(context, project.dateCreated)}",
+                        text = "${stringResource(R.string.downloads)}: ${formatDate(project.dateCreated)}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     
                     Text(
-                        text = "•",
+                        text = stringResource(R.string.bullet_separator),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     
                     Text(
-                        text = "${stringResource(R.string.last_updates)}: ${formatDate(context, project.dateModified)}",
+                        text = "${stringResource(R.string.last_updates)}: ${formatDate(project.dateModified)}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -158,12 +165,12 @@ private fun formatDownloads(downloads: Int): String {
 }
 
 @Composable
-private fun formatDate(context: Context, dateString: String): String {
+private fun formatDate(dateString: String): String {
     val daysBetween = try {
         val date = ZonedDateTime.parse(dateString)
         val now = ZonedDateTime.now()
         ChronoUnit.DAYS.between(date, now)
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         return dateString.take(10)
     }
     

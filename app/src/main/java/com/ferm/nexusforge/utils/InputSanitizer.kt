@@ -50,15 +50,6 @@ object InputSanitizer {
     }
     
     /**
-     * Проверяет валидность длины имени модпака
-     * @param name Имя модпака для проверки
-     * @return true если валидно, false иначе
-     */
-    fun isValidModpackName(name: String): Boolean {
-        return name.isNotBlank() && name.length in 1..50
-    }
-    
-    /**
      * Проверяет валидность длины поискового запроса
      * @param query Поисковый запрос для проверки
      * @return true если валидно, false иначе

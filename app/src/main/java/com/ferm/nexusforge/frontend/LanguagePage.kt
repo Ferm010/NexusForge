@@ -4,12 +4,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -41,78 +43,67 @@ fun LanguagePage(
     val currentLang = languageViewModel.currentLanguage
     
     key(currentLang) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars)
+        ) {
             NameAppBar(
                 onBackClick = onBackClick,
                 onProfileClick = onProfileClick,
                 namePage = stringResource(R.string.language_title),
                 userPhotoUrl = vm.userPhotoUrl
             )
-            Column(
+            LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(20.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .fillMaxWidth()
+                    .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(
-                    text = stringResource(R.string.choose_language),
-                    fontSize = 20.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    LanguageItem(
-                        language = stringResource(R.string.lang_russian),
-                        flag = "🇷🇺",
-                        isSelected = currentLang == "ru",
-                        onClick = { languageViewModel.setLanguage(context, "ru") },
-                        modifier = Modifier.weight(1f)
-                    )
-                    LanguageItem(
-                        language = stringResource(R.string.lang_english),
-                        flag = "🇬🇧",
-                        isSelected = currentLang == "en",
-                        onClick = { languageViewModel.setLanguage(context, "en") },
-                        modifier = Modifier.weight(1f)
+                item {
+                    Text(
+                        text = stringResource(R.string.choose_language),
+                        fontSize = 20.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(bottom = 8.dp)
                     )
                 }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    LanguageItem(
-                        language = stringResource(R.string.lang_german),
-                        flag = "🇩🇪",
-                        isSelected = currentLang == "de",
-                        onClick = { languageViewModel.setLanguage(context, "de") },
-                        modifier = Modifier.weight(1f)
-                    )
-                    LanguageItem(
-                        language = stringResource(R.string.lang_spanish),
-                        flag = "🇪🇸",
-                        isSelected = currentLang == "es",
-                        onClick = { languageViewModel.setLanguage(context, "es") },
-                        modifier = Modifier.weight(1f)
-                    )
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        LanguageItem(
+                            language = stringResource(R.string.lang_russian),
+                            flag = "🇷🇺",
+                            isSelected = currentLang == "ru",
+                            onClick = { languageViewModel.setLanguage(context, "ru") },
+                            modifier = Modifier.weight(1f)
+                        )
+                        LanguageItem(
+                            language = stringResource(R.string.lang_english),
+                            flag = "🇬🇧",
+                            isSelected = currentLang == "en",
+                            onClick = { languageViewModel.setLanguage(context, "en") },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    LanguageItem(
-                        language = stringResource(R.string.lang_french),
-                        flag = "🇫🇷",
-                        isSelected = currentLang == "fr",
-                        onClick = { languageViewModel.setLanguage(context, "fr") },
-                        modifier = Modifier.weight(1f)
-                    )
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        LanguageItem(
+                            language = stringResource(R.string.lang_french),
+                            flag = "🇫🇷",
+                            isSelected = currentLang == "fr",
+                            onClick = { languageViewModel.setLanguage(context, "fr") },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
             }
         }

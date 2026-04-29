@@ -1,17 +1,42 @@
 package com.ferm.nexusforge.frontend.projectdetails
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material3.*
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,7 +53,6 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.ferm.nexusforge.R
 import com.ferm.nexusforge.data.ModrinthProject
-import com.ferm.nexusforge.frontend.components.SkeletonProjectDetails
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
@@ -36,14 +60,16 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun ProjectDetailsPage(
     project: ModrinthProject,
+    modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
     onOpenWebPage: () -> Unit,
     onDownload: () -> Unit,
     isFavorite: Boolean = false,
     onToggleFavorite: () -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val removedFromFavoritesMessage = stringResource(R.string.removed_from_favorites)
+    val addedToFavoritesMessage = stringResource(R.string.added_to_favorites)
     
     Scaffold(
         topBar = {
@@ -53,14 +79,14 @@ fun ProjectDetailsPage(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             painter = painterResource(R.drawable.undo),
-                            contentDescription = "Назад"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 },
                 actions = {
                     IconButton(onClick = {
                         onToggleFavorite()
-                        val message = if (isFavorite) "Сборка убрана из избранного" else "Сборка сохранена в избранное"
+                        val message = if (isFavorite) removedFromFavoritesMessage else addedToFavoritesMessage
                         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                     }) {
                         Icon(
@@ -230,52 +256,51 @@ fun ProjectDetailsPage(
                 var categoriesExpanded by remember { mutableStateOf(false) }
                 
                 Card(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         // Заголовок с кликабельной областью
-                        Surface(
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { categoriesExpanded = !categoriesExpanded },
-                            color = MaterialTheme.colorScheme.surface
+                                .clickable { categoriesExpanded = !categoriesExpanded }
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                            Column(
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Column(
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.tags),
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
-                                    Text(
-                                        text = "${project.categories.size} " + stringResource(R.string.tags),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Icon(
-                                    imageVector = if (categoriesExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                    contentDescription = if (categoriesExpanded) "unshow" else "show",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                Text(
+                                    text = stringResource(R.string.tags),
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(
+                                    text = "${project.categories.size} " + stringResource(R.string.tags),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                            Icon(
+                                imageVector = if (categoriesExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                contentDescription = if (categoriesExpanded) stringResource(R.string.collapse) else stringResource(R.string.expand),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                         
-                        // Список категорий
-                        if (categoriesExpanded) {
+                        // Список категорий с анимацией
+                        AnimatedVisibility(
+                            visible = categoriesExpanded,
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut()
+                        ) {
                             FlowRow(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(16.dp),
+                                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
@@ -296,55 +321,54 @@ fun ProjectDetailsPage(
                 var versionsExpanded by remember { mutableStateOf(false) }
                 
                 Card(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         // Заголовок с кликабельной областью
-                        Surface(
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { versionsExpanded = !versionsExpanded },
-                            color = MaterialTheme.colorScheme.surface
+                                .clickable { versionsExpanded = !versionsExpanded }
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                            Column(
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Column(
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.ver_minecraft),
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
-                                    Text(
-                                        text = "${project.versions.size} " + stringResource(R.string.versions),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Icon(
-                                    imageVector = if (versionsExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                    contentDescription = if (versionsExpanded) "unshow" else "show",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                Text(
+                                    text = stringResource(R.string.ver_minecraft),
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(
+                                    text = "${project.versions.size} " + stringResource(R.string.versions),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                            Icon(
+                                imageVector = if (versionsExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                contentDescription = if (versionsExpanded) stringResource(R.string.collapse) else stringResource(R.string.expand),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                         
-                        // Список версий
-                        if (versionsExpanded) {
-                            LazyColumn(
+                        // Список версий с анимацией
+                        AnimatedVisibility(
+                            visible = versionsExpanded,
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut()
+                        ) {
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(16.dp),
+                                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                items(project.versions) { version ->
+                                project.versions.forEach { version ->
                                     Text(
                                         text = version,
                                         style = MaterialTheme.typography.bodyMedium,
@@ -396,7 +420,7 @@ private fun formatFullDate(dateString: String): String {
         val date = ZonedDateTime.parse(dateString)
         val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
         date.format(formatter)
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         dateString.take(10)
     }
 }

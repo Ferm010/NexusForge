@@ -25,8 +25,9 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -37,26 +38,22 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.Surface
-import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.LaunchedEffect
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -68,11 +65,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.ferm.nexusforge.R
-import com.ferm.nexusforge.data.ModrinthProject
 import com.ferm.nexusforge.data.ModpackTemplate
+import com.ferm.nexusforge.data.ModrinthProject
 import com.ferm.nexusforge.utils.debounce
 import com.ferm.nexusforge.viewmodels.ModpackCreatorViewModel
 import com.ferm.nexusforge.viewmodels.TemplateViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,12 +85,11 @@ fun CreateModpackPage(
     val state by vm.state.collectAsState()
     val templates by templateViewModel.templates.collectAsState()
     val context = LocalContext.current
+    val templateAppliedMessage = stringResource(R.string.template_applied)
     val sheetState = rememberModalBottomSheetState()
     val templateSheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
-    var selectedModId by remember { mutableStateOf<String?>(null) }
     var selectedModDetails by remember { mutableStateOf<ModrinthProject?>(null) }
-    var isLoadingModDetails by remember { mutableStateOf(false) }
     var showTemplateSelector by remember { mutableStateOf(false) }
     var showExitWarning by remember { mutableStateOf(false) }
     
@@ -215,15 +214,15 @@ fun CreateModpackPage(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = if (state.selectedMinecraftVersion.isEmpty()) 
+                            text = state.selectedMinecraftVersion.ifEmpty { 
                                 stringResource(R.string.select_minecraft_version)
-                            else 
-                                state.selectedMinecraftVersion
+                            }
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(Icons.Default.ArrowDropDown, contentDescription = null)
                     }
                     
+                    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
                     DropdownMenu(
                         expanded = versionExpanded,
                         onDismissRequest = { versionExpanded = false }
@@ -250,15 +249,15 @@ fun CreateModpackPage(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = if (state.selectedModLoader.isEmpty()) 
+                            text = state.selectedModLoader.ifEmpty { 
                                 stringResource(R.string.select_mod_loader)
-                            else 
-                                state.selectedModLoader.uppercase()
+                            }.uppercase()
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(Icons.Default.ArrowDropDown, contentDescription = null)
                     }
                     
+                    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
                     DropdownMenu(
                         expanded = loaderExpanded,
                         onDismissRequest = { loaderExpanded = false }
@@ -342,7 +341,7 @@ fun CreateModpackPage(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "No mods found",
+                                text = stringResource(R.string.no_mods_found),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -398,18 +397,14 @@ fun CreateModpackPage(
                                     iconUrl = mod.iconUrl,
                                     onRemove = { vm.removeMod(mod.projectId) },
                                     onClick = {
-                                        selectedModId = mod.projectId
-                                        isLoadingModDetails = true
                                         scope.launch {
                                             try {
                                                 val project = withContext(Dispatchers.IO) {
                                                     com.ferm.nexusforge.network.ModrinthApi.retrofitService.getProject(mod.projectId)
                                                 }
                                                 selectedModDetails = project
-                                            } catch (e: Exception) {
+                                            } catch (_: Exception) {
                                                 // Ошибка загрузки деталей мода
-                                            } finally {
-                                                isLoadingModDetails = false
                                             }
                                         }
                                     }
@@ -449,16 +444,16 @@ fun CreateModpackPage(
     if (state.showVersionWarning) {
         AlertDialog(
             onDismissRequest = { vm.cancelVersionChange() },
-            title = { Text("Изменить версию?") },
-            text = { Text("Вы изменили версию Minecraft. Все добавленные моды будут удалены, так как они могут быть несовместимы с новой версией.") },
+            title = { Text(stringResource(R.string.change_version_title)) },
+            text = { Text(stringResource(R.string.change_version_message)) },
             confirmButton = {
                 Button(onClick = { vm.confirmVersionChange() }) {
-                    Text("Подтвердить")
+                    Text(stringResource(R.string.confirm))
                 }
             },
             dismissButton = {
                 OutlinedButton(onClick = { vm.cancelVersionChange() }) {
-                    Text("Отмена")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -468,16 +463,16 @@ fun CreateModpackPage(
     if (state.showModLoaderWarning) {
         AlertDialog(
             onDismissRequest = { vm.cancelModLoaderChange() },
-            title = { Text("Изменить модлоадер?") },
-            text = { Text("Вы изменили модлоадер. Все добавленные моды будут удалены, так как они могут быть несовместимы с новым модлоадером.") },
+            title = { Text(stringResource(R.string.change_loader_title)) },
+            text = { Text(stringResource(R.string.change_loader_message)) },
             confirmButton = {
                 Button(onClick = { vm.confirmModLoaderChange() }) {
-                    Text("Подтвердить")
+                    Text(stringResource(R.string.confirm))
                 }
             },
             dismissButton = {
                 OutlinedButton(onClick = { vm.cancelModLoaderChange() }) {
-                    Text("Отмена")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -485,21 +480,22 @@ fun CreateModpackPage(
     
     // Alert для выхода с несохраненными изменениями
     if (showExitWarning) {
+        @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
         AlertDialog(
             onDismissRequest = { showExitWarning = false },
-            title = { Text("Выйти без сохранения?") },
-            text = { Text("У вас есть несохраненные изменения. Если вы выйдете, все данные будут потеряны.") },
+            title = { Text(stringResource(R.string.exit_without_saving_title)) },
+            text = { Text(stringResource(R.string.exit_without_saving_message)) },
             confirmButton = {
                 Button(onClick = {
                     showExitWarning = false
                     onBackClick()
                 }) {
-                    Text("Выйти")
+                    Text(stringResource(R.string.exit_button))
                 }
             },
             dismissButton = {
                 OutlinedButton(onClick = { showExitWarning = false }) {
-                    Text("Остаться")
+                    Text(stringResource(R.string.stay_button))
                 }
             }
         )
@@ -510,7 +506,6 @@ fun CreateModpackPage(
         ModalBottomSheet(
             onDismissRequest = { 
                 selectedModDetails = null
-                selectedModId = null
             },
             sheetState = sheetState
         ) {
@@ -556,7 +551,7 @@ fun CreateModpackPage(
                             style = MaterialTheme.typography.titleMedium
                         )
                         Text(
-                            text = "by ${selectedModDetails?.author}",
+                            text = stringResource(R.string.mod_by_author, selectedModDetails?.author ?: ""),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -606,6 +601,7 @@ fun CreateModpackPage(
     }
     
     // ModalBottomSheet для выбора шаблона
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
     if (showTemplateSelector) {
         ModalBottomSheet(
             onDismissRequest = { showTemplateSelector = false },
@@ -658,13 +654,12 @@ fun CreateModpackPage(
                                                 }
                                                 // Ждем завершения добавления мода перед переходом к следующему
                                                 vm.addModSuspend(project)
-                                            } catch (e: Exception) {
-                                                android.util.Log.e("CreateModpack", "Error loading mod from template: ${e.message}")
+                                            } catch (_: Exception) {
                                             }
                                         }
                                     }
                                     showTemplateSelector = false
-                                    Toast.makeText(context, "Шаблон применен", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, templateAppliedMessage, Toast.LENGTH_SHORT).show()
                                 }
                             )
                         }
@@ -728,7 +723,7 @@ private fun TemplateSelectItem(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Модов: ${template.mods.size}",
+                    text = stringResource(R.string.mods_count, template.mods.size),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (!isCompatible) 
                         MaterialTheme.colorScheme.onSurfaceVariant 
@@ -736,7 +731,7 @@ private fun TemplateSelectItem(
                         MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = "${template.minecraftVersion} • ${template.modLoader.uppercase()}",
+                    text = stringResource(R.string.version_and_loader, template.minecraftVersion, template.modLoader.uppercase()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -745,7 +740,7 @@ private fun TemplateSelectItem(
             if (!isCompatible) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "⚠ Несовместимо с текущей версией ($currentMinecraftVersion • ${currentModLoader.uppercase()})",
+                    text = stringResource(R.string.incompatible_template, currentMinecraftVersion, currentModLoader.uppercase()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -834,7 +829,7 @@ private fun SelectedModItem(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (iconUrl != null && iconUrl.isNotEmpty()) {
+            if (!iconUrl.isNullOrEmpty()) {
                 Image(
                     painter = rememberAsyncImagePainter(iconUrl),
                     contentDescription = name,

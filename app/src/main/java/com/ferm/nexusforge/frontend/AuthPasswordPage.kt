@@ -1,6 +1,7 @@
 package com.ferm.nexusforge.frontend
 
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,22 +27,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ferm.nexusforge.R
 import com.ferm.nexusforge.ui.theme.logo
-import com.ferm.nexusforge.viewmodels.LanguageViewModel
 import com.ferm.nexusforge.viewmodels.RegViewModel
 
 @Composable
 fun AuthPasswordPage(
-    vm: RegViewModel = viewModel(),
-    languageViewModel: LanguageViewModel = viewModel(),
     modifier: Modifier = Modifier,
-    onNavigateToMainMenu: () -> Unit = {}
+    vm: RegViewModel = viewModel(),
+    onNavigateToMainMenu: () -> Unit = {},
+    onNavigateToForgotPassword: () -> Unit = {},
 ) {
     val context = LocalContext.current
+    val signedInMessage = stringResource(R.string.signed_in)
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -72,6 +74,14 @@ fun AuthPasswordPage(
                     }
                 }
             )
+            Spacer(modifier = Modifier.size(8.dp))
+            Text(
+                text = stringResource(R.string.forgot_password_question),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+                textDecoration = TextDecoration.Underline,
+                modifier = Modifier.clickable { onNavigateToForgotPassword() }
+            )
         }
 
         Row(
@@ -89,7 +99,7 @@ fun AuthPasswordPage(
                         context = context,
                         enteredPassword = vm.authPassword,
                         onSuccess = {
-                            Toast.makeText(context, "Вы вошли в аккаунт", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, signedInMessage, Toast.LENGTH_SHORT).show()
                             onNavigateToMainMenu()
                         },
                         onError = { errorMessage = it }

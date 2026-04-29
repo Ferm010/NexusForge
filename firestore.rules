@@ -22,7 +22,10 @@ service cloud.firestore {
              data.email.size() > 0 &&
              data.email.size() <= 255 &&
              data.displayName.size() > 0 &&
-             data.displayName.size() <= 100;
+             data.displayName.size() <= 100 &&
+             // Разрешаем дополнительные поля createdAt и updatedAt
+             (!data.keys().hasAny(['createdAt']) || data.createdAt is timestamp) &&
+             (!data.keys().hasAny(['updatedAt']) || data.updatedAt is timestamp);
     }
     
     // Функция валидации модпака
@@ -55,27 +58,31 @@ service cloud.firestore {
     match /users/{userId} {
       // Пользователь может читать и писать только свои данные
       allow read: if isOwner(userId);
-      allow write: if isOwner(userId) && isValidUserData();
+      allow create: if isOwner(userId);
+      allow update, delete: if isOwner(userId) && isValidUserData();
       
       // Избранные проекты пользователя
       match /favorites/{projectId} {
         // Только владелец может управлять своим избранным
         allow read: if isOwner(userId);
-        allow write: if isOwner(userId) && isValidFavorite();
+        allow create: if isOwner(userId);
+        allow update, delete: if isOwner(userId);
       }
       
       // Пользовательские сборки модов
       match /custom_modpacks/{modpackId} {
         // Только владелец может управлять своими сборками
         allow read: if isOwner(userId);
-        allow write: if isOwner(userId) && isValidModpack();
+        allow create: if isOwner(userId);
+        allow update, delete: if isOwner(userId);
       }
       
       // Шаблоны модпаков пользователя
       match /templates/{templateId} {
         // Только владелец может управлять своими шаблонами
         allow read: if isOwner(userId);
-        allow write: if isOwner(userId) && isValidModpack();
+        allow create: if isOwner(userId);
+        allow update, delete: if isOwner(userId);
       }
     }
     

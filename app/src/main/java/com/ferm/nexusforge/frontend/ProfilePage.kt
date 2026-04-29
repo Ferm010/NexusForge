@@ -31,7 +31,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,7 +49,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.ferm.nexusforge.R
 import com.ferm.nexusforge.frontend.components.NameAppBar
-import com.ferm.nexusforge.viewmodels.LanguageViewModel
 import com.ferm.nexusforge.viewmodels.RegViewModel
 import kotlinx.coroutines.launch
 
@@ -58,7 +56,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun ProfilePage(
     vm: RegViewModel = viewModel(),
-    languageViewModel: LanguageViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onSignOut: () -> Unit = {}
@@ -69,7 +66,6 @@ fun ProfilePage(
         vm.setContext(context)
     }
     
-    val currentLang = languageViewModel.currentLanguage
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState()
     
@@ -79,8 +75,8 @@ fun ProfilePage(
     var googleError by remember { mutableStateOf<String?>(null) }
     
     var newName by remember { mutableStateOf("") }
-    var newEmail by remember { mutableStateOf("") }
     var currentPassword by remember { mutableStateOf("") }
+    var changeDataError by remember { mutableStateOf<String?>(null) }
     
     val changeDataText = stringResource(R.string.change_data)
     val deleteAccountText = stringResource(R.string.delete_account)
@@ -91,7 +87,6 @@ fun ProfilePage(
     val settingsProfileText = stringResource(R.string.settings_profile)
     val changeDataTitleText = stringResource(R.string.change_data_title)
     val newNameText = stringResource(R.string.new_name)
-    val newEmailText = stringResource(R.string.new_email)
     val currentPasswordText = stringResource(R.string.current_password)
     val saveText = stringResource(R.string.save)
     val cancelText = stringResource(R.string.cancel)
@@ -191,7 +186,6 @@ fun ProfilePage(
                                 showGoogleError()
                             } else {
                                 newName = vm.userName
-                                newEmail = ""
                                 currentPassword = ""
                                 showChangeDataSheet = true
                             }
@@ -293,31 +287,36 @@ fun ProfilePage(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 OutlinedTextField(
-                    value = newEmail,
-                    onValueChange = { newEmail = it },
-                    label = { Text(newEmailText) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                OutlinedTextField(
                     value = currentPassword,
                     onValueChange = { currentPassword = it },
                     label = { Text(currentPasswordText) },
-                    placeholder = { Text("*") },
+                    placeholder = { Text(stringResource(R.string.placeholder_asterisk)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
+                if (changeDataError != null) {
+                    Text(
+                        text = changeDataError!!,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+                
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceEvenly
                 ) {
-                    TextButton(onClick = { showChangeDataSheet = false }) {
+                    TextButton(onClick = { 
+                        showChangeDataSheet = false
+                        changeDataError = null
+                    }) {
                         Text(cancelText)
                     }
                     Button(
@@ -327,19 +326,15 @@ fun ProfilePage(
                                 if (newName.isNotEmpty() && newName != vm.userName) {
                                     vm.updateDisplayName(
                                         newName = newName,
-                                        onSuccess = { },
-                                        onError = { }
+                                        onSuccess = { 
+                                            showChangeDataSheet = false
+                                            changeDataError = null
+                                        },
+                                        onError = { error ->
+                                            changeDataError = error
+                                        }
                                     )
-                                }
-                                if (newEmail.isNotEmpty() && currentPassword.isNotEmpty()) {
-                                    vm.updateEmail(
-                                        newEmail = newEmail,
-                                        password = currentPassword,
-                                        onSuccess = { showChangeDataSheet = false },
-                                        onError = { }
-                                    )
-                                }
-                                if (newName.isEmpty() && newEmail.isEmpty()) {
+                                } else {
                                     showChangeDataSheet = false
                                 }
                             }

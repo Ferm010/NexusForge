@@ -45,8 +45,7 @@ fun parseEulaText(rawEulaText: String): List<EulaSection> {
         // Пример: "1. Общие положения"
         val isMainHeading = trimmedLine.matches("^\\d+\\.\\s+.*".toRegex())
 
-        // 2. ПРОВЕРКА НА ПОДПУНКТ (Начинается с "Цифра.Цифра..." или "Цифра.Буква")
-        // Пример: "1.1. Область применения" или "2.1.3."
+        // 2. ПРОВЕРКА НА ПОДПУНКТ (Начинается с "Цифра. Цифра..." или "Цифра. Буква")
         val isSubParagraph = trimmedLine.matches("^\\d+\\.\\d+.*".toRegex())
 
         // 3. ПРОВЕРКА НА КОНТАКТЫ

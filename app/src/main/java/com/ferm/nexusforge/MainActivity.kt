@@ -10,12 +10,8 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ferm.nexusforge.backend.LocaleHelper
@@ -23,16 +19,11 @@ import com.ferm.nexusforge.backend.LocaleHelper.onAttach
 import com.ferm.nexusforge.backend.MyAppNav3
 import com.ferm.nexusforge.backend.SecurityCheck
 import com.ferm.nexusforge.ui.theme.NexusForgeTheme
-import com.ferm.nexusforge.utils.AnalyticsHelper
 import com.ferm.nexusforge.viewmodels.ThemeViewModel
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlin.system.exitProcess
 
 class MainActivity : ComponentActivity() {
-    // Ленивая инициализация Analytics
-    private val analyticsHelper: AnalyticsHelper by lazy {
-        AnalyticsHelper(this)
-    }
     
     override fun attachBaseContext(newBase: android.content.Context) {
         super.attachBaseContext(onAttach(newBase))
@@ -64,8 +55,6 @@ class MainActivity : ComponentActivity() {
             
             LaunchedEffect(Unit) {
                 themeViewModel.initTheme(systemDarkTheme)
-                // Логируем открытие приложения
-                analyticsHelper.logScreenView("MainActivity")
             }
             
             Crossfade(

@@ -1,6 +1,5 @@
 package com.ferm.nexusforge.frontend.mainmenu
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,28 +29,23 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ferm.nexusforge.R
 import com.ferm.nexusforge.frontend.components.SkeletonListLoading
+import com.ferm.nexusforge.utils.NetworkChecker
 import com.ferm.nexusforge.viewmodels.MainMenuViewModel
 import com.ferm.nexusforge.viewmodels.RegViewModel
 import com.ferm.nexusforge.viewmodels.SearchUiState
-import com.ferm.nexusforge.utils.NetworkChecker
 
 @Composable
 fun MainMenuPage(
+    modifier: Modifier = Modifier,
     vm: RegViewModel = viewModel(),
     menuVm: MainMenuViewModel = viewModel(),
-    modifier: Modifier = Modifier,
-    onSignOut: () -> Unit = {},
     onProfileClick: () -> Unit = {},
-    onCreateModpack: () -> Unit = {},
-    onCreateTemplate: () -> Unit = {},
     onProjectClick: (String) -> Unit = {}
 ) {
-    BackHandler(enabled = true) { }
     
     var showFilterSheet by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -82,9 +76,6 @@ fun MainMenuPage(
                     } else {
                         menuVm.clearSearch()
                     }
-                },
-                onSearch = { query ->
-                    menuVm.searchProjects()
                 },
                 onBackClick = {
                     menuVm.clearSearch()
@@ -263,7 +254,7 @@ fun MainMenuPage(
                             .padding(16.dp)
                     ) {
                         Text(
-                            text = "Ошибка: ${state.message}",
+                            text = stringResource(R.string.error_message, state.message),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -298,6 +289,7 @@ fun MainMenuPage(
     }
     
     // Filter Bottom Sheet
+
     if (showFilterSheet) {
         FilterBottomSheet(
             currentSort = menuVm.sortOption,

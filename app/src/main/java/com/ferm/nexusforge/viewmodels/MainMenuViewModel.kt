@@ -1,7 +1,7 @@
 package com.ferm.nexusforge.viewmodels
 
-import android.content.Context
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -9,7 +9,6 @@ import androidx.lifecycle.viewModelScope
 import com.ferm.nexusforge.data.GameVersion
 import com.ferm.nexusforge.data.ModrinthProject
 import com.ferm.nexusforge.network.ModrinthApi
-import com.ferm.nexusforge.utils.AnalyticsHelper
 import kotlinx.coroutines.launch
 
 enum class SearchMode {
@@ -44,12 +43,12 @@ class MainMenuViewModel : ViewModel() {
     var featuredProjects by mutableStateOf<List<ModrinthProject>>(emptyList())
     var isLoadingFeatured by mutableStateOf(false)
     var isLoadingMoreFeatured by mutableStateOf(false)
-    var featuredOffset by mutableStateOf(0)
+    var featuredOffset by mutableIntStateOf(0)
     var hasMoreFeatured by mutableStateOf(true)
     
     // Search pagination state
     var isLoadingMore by mutableStateOf(false)
-    var searchOffset by mutableStateOf(0)
+    var searchOffset by mutableIntStateOf(0)
     var hasMoreResults by mutableStateOf(true)
     
     // Game versions
@@ -69,7 +68,7 @@ class MainMenuViewModel : ViewModel() {
                 gameVersions = versions.filter { version ->
                     version.versionType == "release" && isVersionValid(version.version)
                 }.take(50)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 gameVersions = emptyList()
             } finally {
                 isLoadingVersions = false
@@ -93,7 +92,7 @@ class MainMenuViewModel : ViewModel() {
                 major == 1 && minor == 7 && patch >= 10 -> true
                 else -> false
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
@@ -103,13 +102,6 @@ class MainMenuViewModel : ViewModel() {
         searchUiState = SearchUiState.Idle
         searchOffset = 0
         hasMoreResults = true
-    }
-    
-    fun toggleSearchMode() {
-        searchMode = if (searchMode == SearchMode.MODPACK) SearchMode.MOD else SearchMode.MODPACK
-        if (searchQuery.isNotEmpty()) {
-            searchProjects()
-        }
     }
     
     fun changeSearchMode(mode: SearchMode) {
@@ -154,7 +146,7 @@ class MainMenuViewModel : ViewModel() {
                 featuredProjects = projects
                 featuredOffset = 20
                 hasMoreFeatured = response.hits.size >= 20
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Игнорируем ошибки для featured проектов
                 featuredProjects = emptyList()
                 hasMoreFeatured = false
@@ -193,7 +185,7 @@ class MainMenuViewModel : ViewModel() {
                 featuredProjects = currentProjects
                 featuredOffset += response.hits.size
                 hasMoreFeatured = response.hits.size >= 20
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 hasMoreFeatured = false
             } finally {
                 isLoadingMoreFeatured = false
@@ -321,7 +313,7 @@ class MainMenuViewModel : ViewModel() {
                 searchUiState = SearchUiState.Success(updatedProjects)
                 searchOffset += response.hits.size
                 hasMoreResults = response.hits.size >= 20
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 hasMoreResults = false
             } finally {
                 isLoadingMore = false

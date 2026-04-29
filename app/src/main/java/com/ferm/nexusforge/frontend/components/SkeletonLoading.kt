@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -24,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -121,54 +118,9 @@ fun SkeletonProjectCard(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun SkeletonProjectDetails(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-        // Header image skeleton
-        SkeletonLoading(
-            modifier = Modifier
-                .size(120.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .align(Alignment.CenterHorizontally)
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Title skeleton
-        SkeletonLoading(width = 0.8f, height = 24f)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Description skeleton
-        repeat(3) {
-            SkeletonLoading(width = 1f, height = 14f)
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Info section skeleton
-        repeat(2) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            ) {
-                SkeletonLoading(width = 0.3f, height = 14f)
-                Spacer(modifier = Modifier.width(16.dp))
-                SkeletonLoading(width = 0.5f, height = 14f)
-            }
-        }
-    }
-}
-
-@Composable
 fun SkeletonListLoading(
+    modifier: Modifier = Modifier,
     count: Int = 5,
-    modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
         repeat(count) {

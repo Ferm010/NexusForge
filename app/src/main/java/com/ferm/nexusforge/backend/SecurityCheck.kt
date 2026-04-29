@@ -30,7 +30,7 @@ object SecurityCheck {
             } ?: return false
             
             currentSignature == EXPECTED_SIGNATURE
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
@@ -98,17 +98,5 @@ object SecurityCheck {
                 || Build.MANUFACTURER.contains("Genymotion")
                 || Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic")
                 || "google_sdk" == Build.PRODUCT)
-    }
-    
-    /**
-     * Получить текущий хеш подписи (для первой настройки)
-     */
-    fun getCurrentSignatureHash(context: Context): String {
-        return try {
-            val signatures = getSignatures(context)
-            signatures.firstOrNull()?.let { hashSignature(it) } ?: "NO_SIGNATURE"
-        } catch (e: Exception) {
-            "ERROR: ${e.message}"
-        }
     }
 }

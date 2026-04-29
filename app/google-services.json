@@ -12,15 +12,23 @@
           "package_name": "com.ferm.nexusforge"
         }
       },
-       "oauth_client": [
-         {
-           "client_id": "380570057451-jkprcov1s0nbhh7hrejbrjng6ifv2o1m.apps.googleusercontent.com",
-           "client_type": 1,
-           "android_info": {
-             "package_name": "com.ferm.nexusforge",
-             "certificate_hash": "7bc8e5576938131c20c9ae5f86d619b8644c6af8"
-           }
-         },
+      "oauth_client": [
+        {
+          "client_id": "380570057451-h1pglfen4vgqdl06a51ivf1ur43tq9ah.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ferm.nexusforge",
+            "certificate_hash": "9ed779b307d7d78991504623d54c4c819f4356c2"
+          }
+        },
+        {
+          "client_id": "380570057451-jkprcov1s0nbhh7hrejbrjng6ifv2o1m.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ferm.nexusforge",
+            "certificate_hash": "7bc8e5576938131c20c9ae5f86d619b8644c6af8"
+          }
+        },
         {
           "client_id": "380570057451-s8tckfhsh2frakmosma1di2ein26kq0u.apps.googleusercontent.com",
           "client_type": 3

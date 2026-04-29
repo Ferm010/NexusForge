@@ -1,8 +1,12 @@
 package com.ferm.nexusforge.utils
 
 import android.content.Context
-import com.ferm.nexusforge.data.*
-import kotlinx.serialization.encodeToString
+import com.ferm.nexusforge.data.ModReference
+import com.ferm.nexusforge.data.ModrinthDependencies
+import com.ferm.nexusforge.data.ModrinthEnv
+import com.ferm.nexusforge.data.ModrinthFile
+import com.ferm.nexusforge.data.ModrinthHashes
+import com.ferm.nexusforge.data.ModrinthIndex
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.FileOutputStream
@@ -22,7 +26,7 @@ class MrpackGenerator(private val context: Context) {
     /**
      * Генерирует .mrpack файл
      */
-    suspend fun generateMrpack(
+    fun generateMrpack(
         modpackName: String,
         modpackDescription: String,
         minecraftVersion: String,
@@ -50,7 +54,7 @@ class MrpackGenerator(private val context: Context) {
                 
                 // Получаем информацию о файле мода
                 val downloadUrl = mod.downloadUrl
-                if (downloadUrl == null || downloadUrl.isEmpty()) {
+                if (downloadUrl.isNullOrEmpty()) {
                     return@forEachIndexed
                 }
                 
@@ -85,7 +89,6 @@ class MrpackGenerator(private val context: Context) {
                     val sha512Valid = calculatedSha512.equals(sha512, ignoreCase = true)
                     
                     if (!sha1Valid || !sha512Valid) {
-                        android.util.Log.e("MrpackGenerator", "БЕЗОПАСНОСТЬ: Несовпадение хеша для ${mod.title}")
                         // БЕЗОПАСНОСТЬ: Не логируем реальные значения хешей
                         tempFile.delete()
                         return@forEachIndexed
@@ -94,7 +97,6 @@ class MrpackGenerator(private val context: Context) {
                     tempFile.delete()
                     
                 } catch (e: Exception) {
-                    android.util.Log.e("MrpackGenerator", "БЕЗОПАСНОСТЬ: Ошибка проверки ${mod.title}: ${e.message}")
                     e.printStackTrace()
                     return@forEachIndexed
                 }

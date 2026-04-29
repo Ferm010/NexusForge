@@ -15,7 +15,6 @@
 
     <!-- Auth -->
     <string name="email">Email</string>
-    <string name="password">Password</string>
     
     <!-- Error Messages -->
     <string name="error_invalid_email">Invalid email address format.</string>
@@ -36,6 +35,7 @@
     <string name="error_too_many_requests">Too many attempts. Please wait and try again.</string>
     <string name="error_generic">An error occurred. Please try again later.</string>
     <string name="error_authorization">Authorization error. Please try again later.</string>
+    <string name="password">Password</string>
     <string name="confirm_password">Confirm password</string>
     <string name="continue_btn">Continue</string>
     <string name="sign_in">Sign In</string>
@@ -49,8 +49,22 @@
     <string name="password_hint">Password must be at least 6 characters</string>
     <string name="passwords_dont_match">Passwords do not match</string>
     <string name="name_hint">Enter name with 3+ characters</string>
-    <string name="checking_email">Checking email…</string>
-    <string name="google_only_error">This email is registered via Google. Sign in using the \"Continue with Google\" button.</string>
+     <string name="checking_email">Checking email…</string>
+     <string name="google_only_error">This email is registered via Google. Sign in using the \"Continue with Google\" button.</string>
+     <string name="forgot_password">Forgot password</string>
+     <string name="forgot_password_question">Forgot password?</string>
+     <string name="forgot_password_hint">Enter your email and we\'ll send you a password recovery link. Check spam if you don\'t see it</string>
+     <string name="reset_email_sent">Email sent to your inbox. Follow the link in the email to reset your password. Check spam if you don\'t see it</string>
+     <string name="send_reset_link">Send link</string>
+     <string name="done">Done</string>
+     <string name="no_google_accounts">No Google accounts available. Add an account in device settings.</string>
+     <string name="sign_in_error">Sign in error: %s</string>
+     <string name="signed_in">You are signed in</string>
+     <string name="welcome_user">Welcome, %s!</string>
+     <string name="signed_in_google">You signed in via Google</string>
+     <string name="authorized">You are authorized</string>
+     <string name="registration_success">Registration successful</string>
+     <string name="password_reset_sent">Email sent</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
@@ -61,6 +75,18 @@
     <string name="app_version">App Version</string>
     <string name="dark_theme">Dark theme</string>
     <string name="light_theme">Light theme</string>
+    <string name="oss_licenses">OSS Licenses</string>
+    <string name="faq_answers">Answers to questions</string>
+    <string name="white_theme_desc">White Theme</string>
+    <string name="faq_content_desc">FAQ</string>
+    <string name="loading_licenses">Loading licenses...</string>
+    <string name="oss_licenses_title">OSS Licenses</string>
+    <string name="license_info">Information</string>
+    <string name="license_files_not_found">License files not found. Build a release version of the app to generate a complete list of licenses.</string>
+    <string name="license_unavailable">License unavailable</string>
+    <string name="licenses_not_found">Licenses not found or failed to load</string>
+    <string name="error_title">Error</string>
+    <string name="error_loading_licenses">Error loading licenses: %s</string>
 
     <!-- Language -->
     <string name="language_title">Change Language</string>
@@ -88,6 +114,20 @@
     <string name="faq_change_theme">How to change the app theme?</string>
     <string name="faq_change_theme_answer">Go to "Settings" and tap the theme icon to switch between light and dark theme.</string>
     <string name="social_networks">Social networks for feedback</string>
+    <string name="faq_install_zip">How to install a modpack in Minecraft? .zip</string>
+    <string name="faq_install_zip_answer">1. Download the .zip modpack file \n2. Open Minecraft Launcher\n3. Navigate to .minecraft/mods folder\n4. Place the modpack file in this folder\n5. Launch Minecraft with the required version\n6. Wait for all mods to load</string>
+    <string name="faq_install_mrpack">How to install a modpack in Minecraft? .mrpack</string>
+    <string name="faq_install_mrpack_answer">1. Install Modrinth launcher \n2. Download the .mrpack file\n3. Open the file and wait for mods to install \n4. Click the play button</string>
+    <string name="faq_minecraft_folder">Where is the .minecraft folder?</string>
+    <string name="faq_minecraft_folder_answer">Windows: %APPDATA%\\.minecraft\nMac: ~/Library/Application Support/minecraft\nLinux: ~/.minecraft</string>
+    <string name="faq_minecraft_version">Which Minecraft version should I use?</string>
+    <string name="faq_minecraft_version_answer">The version depends on the modpack. Check the modpack description - it specifies the compatible Minecraft version. Make sure you have that exact version installed.</string>
+    <string name="faq_mods_not_loading">What to do if mods don\'t load?</string>
+    <string name="faq_mods_not_loading_answer">1. Check Minecraft version\n2. Make sure Forge/Fabric is installed\n3. Delete the mods folder and reinstall the modpack\n4. Check available disk space\n5. Restart your computer</string>
+    <string name="faq_update_modpack">How to update a modpack?</string>
+    <string name="faq_update_modpack_answer">1. Delete old mods files\n2. Download the new modpack version\n3. Place new files in the mods folder\n4. Launch Minecraft</string>
+    <string name="faq_ram_requirements">How much RAM is needed?</string>
+    <string name="faq_ram_requirements_answer">Minimum 4GB for stable performance. Recommended 6-8GB for comfortable gameplay with many mods.</string>
 
     <!-- Main Menu -->
     <string name="featured_projects">Featured Projects</string>
@@ -104,6 +144,7 @@
     <string name="modpacks">Modpacks</string>
     <string name="mods">Mods</string>
     <string name="plugins">Plugins</string>
+    <string name="error_message">Error: %s</string>
 
     <!-- Project Details -->
     <string name="download">Download</string>
@@ -117,6 +158,10 @@
     <string name="downloads">Downloads</string>
     <string name="followers">Followers</string>
     <string name="changelog">Changelog</string>
+    <string name="removed_from_favorites">Removed from favorites</string>
+    <string name="added_to_favorites">Added to favorites</string>
+    <string name="collapse">Collapse</string>
+    <string name="expand">Expand</string>
 
     <!-- Profile -->
     <string name="my_projects">My Projects</string>
@@ -128,7 +173,6 @@
     <string name="no_username">No name</string>
     <string name="change_data_title">Change Data</string>
     <string name="new_name">New name</string>
-    <string name="new_email">New email</string>
     <string name="current_password">Current password</string>
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
@@ -138,6 +182,7 @@
     <string name="data_updated">Data updated</string>
     <string name="confirm_sign_out">Confirm sign out</string>
     <string name="sign_out_message">Are you sure you want to sign out?</string>
+    <string name="placeholder_asterisk">*</string>
 
     <!-- Create -->
     <string name="create_modpack">Create Modpack</string>
@@ -147,39 +192,46 @@
     <!-- Favorites -->
     <string name="your_favorites">Your Favorites</string>
     <string name="no_favorites">No favorite projects</string>
-    <string name="zero_modpacks">Add the first modpacks</string>
-    <string name="zero_custom_modpacks">Create your first build by clicking on the \'Create\' button.</string>
+    <string name="zero_modpacks">Add the first modpack</string>
+    <string name="zero_custom_modpacks">Create your first build by clicking on the \'Create\' button</string>
     <string name="custom_modpack">Custom modpacks</string>
+    <string name="favorite_projects">Favorite projects</string>
     <string name="default_modpack">Default modpacks</string>
-    <string name="not_favorite_modpacks">Not favorite modpacks</string>
+    <string name="not_favorite_modpacks">No favorite modpacks</string>
     <string name="eula_accept">Accept</string>
     <string name="eula">EULA</string>
-    <string name="select_dialog">Select</string>
-    <string name="sample">Sample</string>
+    <string name="select_dialog">What do you want to create?</string>
+    <string name="sample">Template</string>
     <string name="author">Author</string>
     <string name="subscribers">Subscribers</string>
-    <string name="create_at">Create date</string>
-    <string name="last_updates">Last updates</string>
-    <string name="info">Info</string>
+    <string name="create_at">Created</string>
+    <string name="last_updates">Last update</string>
+    <string name="info">Description</string>
     <string name="tags">Tags</string>
     <string name="ver_minecraft">Supported Minecraft versions</string>
     <string name="verisons">Versions</string>
-    <string name="open_modpack">Open in Modrinth</string>
+    <string name="open_modpack">Open on Modrinth</string>
     <string name="button_download">Download</string>
-    <string name="searchbar">Search modpacks or mods</string>
+    <string name="searchbar">Find modpack or mod</string>
     <string name="today">Today</string>
     <string name="yesterday">Yesterday</string>
     <string name="days_ago">d. ago</string>
     <string name="weeks_ago">w. ago</string>
     <string name="month_ago">mo. ago</string>
     <string name="years_ago">y. ago</string>
-    <string name="modpacks_today">Modpacks today</string>
-    <string name="mods_today">Mods today</string>
+    <string name="modpacks_today">Modpacks of the day</string>
+    <string name="mods_today">Mods of the day</string>
     <string name="found">Found</string>
     <string name="filter">Filter</string>
-    <string name="popular">Popular</string>
+    <string name="popular">Popular first</string>
     <string name="newest">Newest</string>
     <string name="type_project">Project Type</string>
+    <string name="bullet_separator">•</string>
+    <string name="question_mark">?</string>
+    <string name="modpack_version_loader">%1$s • %2$s</string>
+    <string name="delete_template_confirm">Delete template \"%s\"?</string>
+    <string name="template_mods_count">Mods: %d</string>
+    <string name="template_mods_extra">+%d</string>
     
     <!-- Modpack Creator -->
     <string name="modpack_name">Modpack Name</string>
@@ -196,6 +248,77 @@
     <string name="custom_modpacks">My Modpacks</string>
     <string name="enter_modpack_name">Enter modpack name</string>
     <string name="select_minecraft_version">Select Minecraft version</string>
+    <string name="mod_loader">ModLoader</string>
+    <string name="select_mod_loader">Select</string>
+    <string name="edit_modpack">Edit Modpack</string>
+    <string name="save_only">Save</string>
+    <string name="generate">Generate</string>
+    <string name="modpack_saved">Modpack saved!</string>
+    <string name="warning">Warning</string>
+    <string name="version_changed_warning">You changed the Minecraft version. Added mods may be incompatible with the new version. Clear all mods?</string>
+    <string name="loader_changed_warning">You changed the mod loader. Added mods may be incompatible with the new loader. Clear all mods?</string>
+    <string name="clear_mods">Clear</string>
+    <string name="unsaved_changes">Unsaved changes</string>
+    <string name="unsaved_changes_message">You have unsaved changes. If you exit, changes will be lost.</string>
+    <string name="exit">Exit</string>
+    <string name="stay">Stay</string>
+    <string name="add_to_pack">Add to pack</string>
+    <string name="already_in_pack">Already in pack</string>
+    <string name="follows">Followers</string>
+    <string name="no_mods_found">No mods found</string>
+    <string name="change_version_title">Change version?</string>
+    <string name="change_version_message">You changed the Minecraft version. All added mods will be removed as they may be incompatible with the new version.</string>
+    <string name="confirm">Confirm</string>
+    <string name="change_loader_title">Change mod loader?</string>
+    <string name="change_loader_message">You changed the mod loader. All added mods will be removed as they may be incompatible with the new loader.</string>
+    <string name="exit_without_saving_title">Exit without saving?</string>
+    <string name="exit_without_saving_message">You have unsaved changes. If you exit, all data will be lost.</string>
+    <string name="exit_button">Exit</string>
+    <string name="stay_button">Stay</string>
+    <string name="mod_by_author">by %s</string>
+    <string name="mods_count">Mods: %d</string>
+    <string name="version_and_loader">%1$s • %2$s</string>
+    <string name="incompatible_template">⚠ Incompatible with current version (%1$s • %2$s)</string>
+    <string name="template_applied">Template applied</string>
+    <string name="my_modpacks_title">My Modpacks</string>
+    <string name="no_modpacks_yet">You don\'t have any modpacks yet</string>
+    <string name="create_first_modpack">Create your first modpack</string>
+    <string name="create_modpack_button">Create Modpack</string>
+    <string name="mods_count_extra">+%d</string>
+    <string name="delete_modpack_title">Delete modpack?</string>
+    <string name="delete_modpack_message">Are you sure you want to delete modpack \"%s\"?</string>
+    <string name="delete_button">Delete</string>
+    <string name="create_modpack_dialog_title">Create Modpack</string>
+    <string name="modpack_name_label">Name</string>
+    <string name="modpack_description_label">Description</string>
+    <string name="minecraft_version_label">Minecraft Version</string>
+    <string name="mod_loader_label">Mod Loader</string>
+    <string name="create_button">Create</string>
+    
+    <!-- Templates -->
+    <string name="templates">Templates</string>
+    <string name="edit_template">Edit Template</string>
+    <string name="template_name">Template Name</string>
+    <string name="template_description">Template Description</string>
+    <string name="save_template">Save Template</string>
+    <string name="delete_template">Delete Template</string>
+    <string name="use_template">Use Template</string>
+    <string name="no_templates">No templates</string>
+    <string name="template_saved">Template saved</string>
+    <string name="template_deleted">Template deleted</string>
+    <string name="delete">Delete</string>
+    <string name="create_template_title">Create Template</string>
+    <string name="edit_template_title">Edit Template</string>
+    <string name="template_name_label">Template Name</string>
+    <string name="template_name_placeholder">Enter name</string>
+    <string name="template_description_label">Description</string>
+    <string name="template_description_placeholder">Optional</string>
+    <string name="select_mc_version">Select MC version</string>
+    <string name="select_loader">Select loader</string>
+    <string name="save_template_button">Save Template</string>
+    <string name="template_save_success">Template saved</string>
+    <string name="template_save_error">Save error</string>
+    <string name="delete_template_message">Delete template \"%s\"?</string>
     
     <!-- Generation Methods -->
     <string name="select_generation_method">Select Generation Method</string>
@@ -205,5 +328,36 @@
     <string name="mrpack_generation">Modrinth Pack (.mrpack)</string>
     <string name="mrpack_generation_desc">Create .mrpack file for launchers</string>
     <string name="google_drive_generation">Google Drive</string>
-    <string name="google_drive_generation_desc">Upload modpack to cloud</string>
+     <string name="google_drive_generation_desc">Upload modpack to cloud</string>
+     <string name="file_id">File ID: %s</string>
+     <string name="open_in_drive">Open in Drive</string>
+     <string name="share">Share</string>
+     <string name="error">Error</string>
+     <string name="go_back">Go Back</string>
+     <string name="generation_progress">%1$d/%2$d</string>
+     <string name="uploading_to_drive">Uploading to Google Drive...</string>
+
+    <!-- Template Warnings -->
+    <string name="version_change_warning_title">Change Minecraft Version?</string>
+    <string name="version_change_warning_message">Changing the Minecraft version may cause incompatibility with already added mods. Continue?</string>
+    <string name="loader_change_warning_title">Change Mod Loader?</string>
+    <string name="loader_change_warning_message">Changing the mod loader may cause incompatibility with already added mods. Continue?</string>
+    <string name="change_button">Change</string>
+
+    <!-- Release Description -->
+    <string name="release_short_description" translatable="false">NexusForge - modpack builder for creating working Minecraft modpacks</string>
+    <string name="release_full_description" translatable="false">NexusForge is a powerful modpack builder that allows you to easily create and manage Minecraft modpacks right from your phone or tablet.
+
+Key features:
+• Create your own modpacks with an intuitive interface
+• Choose from thousands of mods and plugins for any Minecraft version
+• Manage your builds and save them to the cloud
+• Export modpacks in various formats (.mrpack, ZIP)
+• Use ready-made templates for quick start
+• Sync your projects between devices
+• Support for all popular mod loaders (Forge, Fabric, Quilt)
+• Dark and light theme
+• Support for Russian, English and other languages
+
+NexusForge makes creating modpacks accessible to everyone - from beginners to experienced players. Start creating your perfect modpack right now!</string>
 </resources>

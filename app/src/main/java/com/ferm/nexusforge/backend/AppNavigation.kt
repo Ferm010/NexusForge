@@ -1,14 +1,7 @@
 package com.ferm.nexusforge.backend
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.platform.LocalContext
@@ -26,7 +19,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -56,13 +48,15 @@ import com.ferm.nexusforge.frontend.RegPageScreen
 import com.ferm.nexusforge.frontend.SettingPage
 import com.ferm.nexusforge.frontend.TechnicalPage
 import com.ferm.nexusforge.frontend.LanguagePage
+import com.ferm.nexusforge.frontend.FAQPage
 import com.ferm.nexusforge.frontend.ModpackEditorPage
-import com.ferm.nexusforge.frontend.favoritePage
+import com.ferm.nexusforge.frontend.FavoritePage
+import com.ferm.nexusforge.frontend.ForgotPasswordPage
 import com.ferm.nexusforge.viewmodels.RegViewModel
 import com.ferm.nexusforge.viewmodels.ThemeViewModel
 import com.ferm.nexusforge.viewmodels.LanguageViewModel
 import com.google.firebase.auth.FirebaseAuth
-import java.util.Map.entry
+
 
 @OptIn(ExperimentalAnimationApi::class) // Анимации
 @Composable
@@ -72,9 +66,48 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
     val context = LocalContext.current
     languageViewModel.initLanguage(context)
     
-    val startDestination: Destination =
-        if (FirebaseAuth.getInstance().currentUser != null) Destination.MainMenu
-        else Destination.RegPage
+    // Состояние для проверки профиля
+    var isCheckingProfile by remember { mutableStateOf(true) }
+    var startDestination by remember { mutableStateOf<Destination>(Destination.RegPage) }
+    
+    // Проверка профиля при запуске
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            // Пользователь авторизован существование профиля
+            android.util.Log.d("AppNavigation", "User authenticated, checking profile existence")
+            val firestoreRepository = com.ferm.nexusforge.repository.FirestoreRepository()
+            val result = firestoreRepository.checkUserProfileExists()
+            
+            if (result.isSuccess && result.getOrNull() == true) {
+                // Профиль существует
+                android.util.Log.d("AppNavigation", "Profile exists - navigate to MainMenu")
+                startDestination = Destination.MainMenu
+            } else {
+                // Профиль не существует
+                android.util.Log.d("AppNavigation", "Profile does not exist - signing out")
+                FirebaseAuth.getInstance().signOut()
+                startDestination = Destination.RegPage
+            }
+        } else {
+            // Пользователь не авторизован
+            android.util.Log.d("AppNavigation", "User not authenticated - navigate to RegPage")
+            startDestination = Destination.RegPage
+        }
+        isCheckingProfile = false
+    }
+    
+    // Показываем загрузку пока проверяем профиль
+    if (isCheckingProfile) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+    
     val backStack = rememberNavBackStack(startDestination)
 
     BackHandler(enabled = backStack.size > 1) {
@@ -88,10 +121,25 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
             entry<Destination.RegPage> {
                 RegPageScreen(
                     vm = vm,
-                    languageViewModel = languageViewModel,
                     onNavigateToEula = { backStack += Destination.EulaPage },
                     onNavigateToAuthPassword = { backStack += Destination.AuthPassPage },
-                    onNavigateToMainMenu = { backStack += Destination.MainMenu }
+                    onNavigateToMainMenu = { 
+                        backStack.clear()
+                        backStack += Destination.MainMenu
+                    },
+                    onNavigateToLanguage = { backStack += Destination.LanguagePage }
+                )
+            }
+
+            entry<Destination.LanguagePage> {
+                // LanguagePage для RegPage (без профиля)
+                LanguagePage(
+                    vm = vm,
+                    languageViewModel = languageViewModel,
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    },
+                    onProfileClick = {}  // На RegPage нет профиля
                 )
             }
 
@@ -112,7 +160,6 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
             entry<Destination.RegPassPage> {
                 PasswordPage(
                     vm = vm,
-                    languageViewModel = languageViewModel,
                     onNavigateToRegName = { backStack += Destination.NameRegPage }
                 )
             }
@@ -120,7 +167,6 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
             entry<Destination.NameRegPage> {
                 RegNamePage(
                     vm = vm,
-                    languageViewModel = languageViewModel,
                     onNavigateToMainMenu = {
                         backStack.clear()
                         backStack += Destination.MainMenu
@@ -131,13 +177,25 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
             entry<Destination.AuthPassPage> {
                 AuthPasswordPage(
                     vm = vm,
-                    languageViewModel = languageViewModel,
                     onNavigateToMainMenu = {
                         backStack.clear()
                         backStack += Destination.MainMenu
-                    }
+                    },
+                    onNavigateToForgotPassword = {
+                        backStack += Destination.ForgotPasswordPage(vm.email)
+                    },
                 )
             }
+
+            entry<Destination.ForgotPasswordPage> {
+                val email = it.email
+                ForgotPasswordPage(
+                    vm = vm,
+                    prefilledEmail = email,
+                    onSuccess = { backStack.removeLastOrNull() }
+                )
+            }
+
             entry<Destination.MainMenu> {
                 // 1. Создаем локальный backStack специально для вкладок
                 val tabBackStack = rememberNavBackStack(Destination.MainMenu)
@@ -172,7 +230,7 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                         tabBackStack += Destination.MainMenu
                                     }
                                 },
-                                icon = { Icon(painter = painterResource(R.drawable.search_white,), "Search") },
+                                icon = { Icon(painter = painterResource(R.drawable.search_white), "Search") },
                                 label = { Text(text = stringResource(R.string.search)) }
                             )
 
@@ -185,7 +243,7 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                         tabBackStack += Destination.FavoritePage
                                     }
                                 },
-                                icon = { Icon(painter = painterResource(R.drawable.bookmark,), "Search") },
+                                icon = { Icon(painter = painterResource(R.drawable.bookmark), "Search") },
                                 label = { Text(text = stringResource(R.string.favorites))}
                             )
 
@@ -195,7 +253,7 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                 onClick = {
                                     showCreateAlert = true
                                 },
-                                icon = { Icon(painter = painterResource(R.drawable.add,), "Search") },
+                                icon = { Icon(painter = painterResource(R.drawable.add), "Search") },
                                 label = { Text(text = stringResource(R.string.create)) }
                             )
 
@@ -208,7 +266,7 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                         tabBackStack += Destination.ProfilePage
                                     }
                                 },
-                                icon = { Icon(painter = painterResource(R.drawable.person,), "Search") },
+                                icon = { Icon(painter = painterResource(R.drawable.person), "Search") },
                                 label = { Text(text = stringResource(R.string.profile)) }
                             )
                             // Кнопка: Настройки
@@ -220,7 +278,7 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                         tabBackStack += Destination.SettingsPage
                                     }
                                 },
-                                icon = { Icon(painter = painterResource(R.drawable.settings,), "Search") },
+                                icon = { Icon(painter = painterResource(R.drawable.settings), "Search") },
                                 label = { Text(text = stringResource(R.string.settings)) }
                             )
                         }
@@ -235,19 +293,8 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                 // Вызываем ваш существующий MainMenuPage
                                 MainMenuPage(
                                     vm = vm,
-                                    onSignOut = {
-                                        vm.signOut()
-                                        backStack.clear() // Обращаемся к внешнему backStack
-                                        backStack += Destination.RegPage
-                                    },
                                     onProfileClick = {
                                         tabBackStack += Destination.ProfilePage
-                                    },
-                                    onCreateModpack = {
-                                        tabBackStack += Destination.CreateModpackPage
-                                    },
-                                    onCreateTemplate = {
-                                        tabBackStack += Destination.CreateTemplatePage
                                     },
                                     onProjectClick = { projectId ->
                                         tabBackStack += Destination.ProjectDetailsPage(projectId)
@@ -255,7 +302,7 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                 )
                             }
                             entry<Destination.FavoritePage> {
-                                favoritePage(
+                                FavoritePage(
                                     vm = vm,
                                     onBackClick = {
                                         tabBackStack.clear()
@@ -270,15 +317,9 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                     onModpackClick = { modpackId ->
                                         tabBackStack += Destination.ModpackEditorPage(modpackId)
                                     },
-                                    onTemplatesClick = {
-                                        tabBackStack += Destination.TemplatesListPage
-                                    },
                                     onEditTemplate = { templateId ->
                                         tabBackStack += Destination.EditTemplatePage(templateId)
                                     },
-                                    onCreateTemplate = {
-                                        tabBackStack += Destination.CreateTemplatePage
-                                    }
                                 )
                             }
                             entry<Destination.ProfilePage> {
@@ -311,6 +352,23 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                     },
                                     onLanguageClick = {
                                         tabBackStack += Destination.LanguagePage
+                                    },
+                                    onFAQClick = {
+                                        tabBackStack += Destination.FAQPage
+                                    },
+                                    onLicensesClick = {
+                                        tabBackStack += Destination.OssLicensesPage
+                                    }
+                                )
+                            }
+                            entry<Destination.OssLicensesPage> {
+                                com.ferm.nexusforge.frontend.OssLicensesPage(
+                                    vm = vm,
+                                    onBackClick = {
+                                        tabBackStack.removeLastOrNull()
+                                    },
+                                    onProfileClick = {
+                                        tabBackStack += Destination.ProfilePage
                                     }
                                 )
                             }
@@ -338,12 +396,20 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                     }
                                 )
                             }
+                            entry<Destination.FAQPage> {
+                                FAQPage(
+                                    vm = vm,
+                                    onBackClick = {
+                                        tabBackStack.removeLastOrNull()
+                                    }
+                                )
+                            }
                             entry<Destination.CreateModpackPage> {
                                 CreateModpackPage(
                                     onBackClick = {
                                         tabBackStack.removeLastOrNull()
                                     },
-                                    onModpackCreated = { modpackId ->
+                                    onModpackCreated = { _ ->
                                         tabBackStack += Destination.SelectGenerationMethodPage
                                     }
                                 )
@@ -371,8 +437,7 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                         tabBackStack.removeLastOrNull()
                                     },
                                     onComplete = {
-                                        tabBackStack.clear()
-                                        tabBackStack += Destination.MainMenu
+                                        // Экран остаётся видимым после завершения загрузки
                                     }
                                 )
                             }
@@ -380,9 +445,6 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                 TemplatesListPage(
                                     onBackClick = {
                                         tabBackStack.removeLastOrNull()
-                                    },
-                                    onCreateTemplate = {
-                                        tabBackStack += Destination.CreateTemplatePage
                                     },
                                     onEditTemplate = { templateId ->
                                         tabBackStack += Destination.EditTemplatePage(templateId)

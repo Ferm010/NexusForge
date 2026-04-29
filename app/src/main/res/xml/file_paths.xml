@@ -3,6 +3,8 @@
     <!-- Restrict to specific modpack directories only -->
     <external-path name="modpacks" path="modpacks" />
     <external-files-path name="modpacks_external" path="modpacks" />
+    <external-files-path name="external_files_root" path="." />
     <cache-path name="modpack_cache" path="modpacks" />
+    <cache-path name="cache_root" path="." />
     <files-path name="modpack_files" path="modpacks" />
 </paths>

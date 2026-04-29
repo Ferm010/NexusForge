@@ -53,14 +53,9 @@ interface ModrinthApiService {
     @GET("tag/game_version")
     suspend fun getGameVersions(): List<GameVersion>
     
-    @GET("projects")
-    suspend fun getProjects(
-        @Query("ids") ids: String
-    ): List<ModrinthProject>
-    
     @GET("project/{id}/version")
     suspend fun getProjectVersions(
-        @retrofit2.http.Path("id") projectId: String
+        @Path("id") projectId: String
     ): List<ModrinthVersion>
     
     @GET("project/{id}")

@@ -31,6 +31,11 @@ class FavoritesViewModel(
     var errorMessage by mutableStateOf<String?>(null)
         private set
     
+    override fun onCleared() {
+        super.onCleared()
+        repository.clearAllListeners()
+    }
+    
     /**
      * Добавить проект в избранное
      */
@@ -88,10 +93,5 @@ class FavoritesViewModel(
         }
     }
     
-    /**
-     * Очистить сообщение об ошибке
-     */
-    fun clearError() {
-        errorMessage = null
-    }
+
 }

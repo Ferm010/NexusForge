@@ -26,6 +26,7 @@ local.properties
 # Keystore files (содержат пароли для подписи)
 *.keystore
 *.jks
+*.pem
 
 # Play Store upload artifacts
 pepk_out.zip

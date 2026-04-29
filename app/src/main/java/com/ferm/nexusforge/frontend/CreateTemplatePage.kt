@@ -1,6 +1,7 @@
 package com.ferm.nexusforge.frontend
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -38,8 +40,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.AlertDialog
-import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -74,6 +74,8 @@ fun CreateTemplatePage(
     val searchState by searchViewModel.state.collectAsState()
     val templateState by templateViewModel.state.collectAsState()
     val context = LocalContext.current
+    val templateSaveSuccessMessage = stringResource(R.string.template_save_success)
+    val templateSaveErrorMessage = stringResource(R.string.template_save_error)
     
     var showVersionDropdown by remember { mutableStateOf(false) }
     var showLoaderDropdown by remember { mutableStateOf(false) }
@@ -82,6 +84,16 @@ fun CreateTemplatePage(
     
     LaunchedEffect(templateState.templateName, templateState.templateDescription, templateState.selectedMods) {
         hasUnsavedChanges = true
+    }
+    
+    // Синхронизация версии и загрузчика при загрузке шаблона
+    LaunchedEffect(templateState.minecraftVersion, templateState.modLoader) {
+        if (templateState.minecraftVersion.isNotEmpty() && searchState.selectedMinecraftVersion != templateState.minecraftVersion) {
+            searchViewModel.updateMinecraftVersion(templateState.minecraftVersion)
+        }
+        if (templateState.modLoader.isNotEmpty() && searchState.selectedModLoader != templateState.modLoader) {
+            searchViewModel.updateModLoader(templateState.modLoader)
+        }
     }
     
     LaunchedEffect(Unit) {
@@ -107,25 +119,71 @@ fun CreateTemplatePage(
     BackHandler(enabled = hasUnsavedChanges) {
         showExitWarning = true
     }
-    
-    // Алерт для выхода с несохраненными изменениями
+
     if (showExitWarning) {
+        @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
         AlertDialog(
             onDismissRequest = { showExitWarning = false },
-            title = { Text("Выйти без сохранения?") },
-            text = { Text("У вас есть несохраненные изменения. Если вы выйдете, все данные будут потеряны.") },
+            title = { Text(stringResource(R.string.exit_without_saving_title)) },
+            text = { Text(stringResource(R.string.exit_without_saving_message)) },
             confirmButton = {
                 Button(onClick = {
                     hasUnsavedChanges = false
                     showExitWarning = false
                     onBackClick()
                 }) {
-                    Text("Выйти")
+                    Text(stringResource(R.string.exit_button))
                 }
             },
             dismissButton = {
                 OutlinedButton(onClick = { showExitWarning = false }) {
-                    Text("Остаться")
+                    Text(stringResource(R.string.stay_button))
+                }
+            }
+        )
+    }
+    
+    // Alert для изменения версии Minecraft
+    if (templateState.showVersionWarning) {
+        @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+        AlertDialog(
+            onDismissRequest = { templateViewModel.cancelVersionChange() },
+            title = { Text(stringResource(R.string.change_version_title)) },
+            text = { Text(stringResource(R.string.change_version_message)) },
+            confirmButton = {
+                Button(onClick = { 
+                    templateViewModel.confirmVersionChange()
+                    searchViewModel.updateMinecraftVersion(templateState.minecraftVersion)
+                }) {
+                    Text(stringResource(R.string.confirm))
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { templateViewModel.cancelVersionChange() }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+    
+    // Alert для изменения модлоадера
+    if (templateState.showModLoaderWarning) {
+        @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+        AlertDialog(
+            onDismissRequest = { templateViewModel.cancelModLoaderChange() },
+            title = { Text(stringResource(R.string.change_loader_title)) },
+            text = { Text(stringResource(R.string.change_loader_message)) },
+            confirmButton = {
+                Button(onClick = { 
+                    templateViewModel.confirmModLoaderChange()
+                    searchViewModel.updateModLoader(templateState.modLoader)
+                }) {
+                    Text(stringResource(R.string.confirm))
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { templateViewModel.cancelModLoaderChange() }) {
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -134,7 +192,7 @@ fun CreateTemplatePage(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (templateId.isEmpty()) "Создать шаблон" else "Редактировать шаблон") },
+                title = { Text(if (templateId.isEmpty()) stringResource(R.string.create_template_title) else stringResource(R.string.edit_template_title)) },
                 navigationIcon = {
                     IconButton(onClick = handleBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -195,8 +253,8 @@ fun CreateTemplatePage(
             OutlinedTextField(
                 value = templateState.templateName,
                 onValueChange = { templateViewModel.updateTemplateName(it) },
-                label = { Text("Название шаблона") },
-                placeholder = { Text("Введите название") },
+                label = { Text(stringResource(R.string.template_name_label)) },
+                placeholder = { Text(stringResource(R.string.template_name_placeholder)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -206,8 +264,8 @@ fun CreateTemplatePage(
             OutlinedTextField(
                 value = templateState.templateDescription,
                 onValueChange = { templateViewModel.updateTemplateDescription(it) },
-                label = { Text("Описание") },
-                placeholder = { Text("Опционально") },
+                label = { Text(stringResource(R.string.template_description_label)) },
+                placeholder = { Text(stringResource(R.string.template_description_placeholder)) },
                 modifier = Modifier.fillMaxWidth(),
                 maxLines = 3
             )
@@ -225,15 +283,15 @@ fun CreateTemplatePage(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = if (searchState.selectedMinecraftVersion.isEmpty()) 
-                                "Выберите версию MC" 
-                            else 
-                                searchState.selectedMinecraftVersion
+                            text = templateState.minecraftVersion.ifEmpty {
+                                stringResource(R.string.select_mc_version)
+                            }
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(Icons.Default.ArrowDropDown, contentDescription = null)
                     }
                     
+                    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
                     DropdownMenu(
                         expanded = showVersionDropdown,
                         onDismissRequest = { showVersionDropdown = false }
@@ -242,7 +300,7 @@ fun CreateTemplatePage(
                             DropdownMenuItem(
                                 text = { Text(version) },
                                 onClick = {
-                                    searchViewModel.updateMinecraftVersion(version)
+                                    templateViewModel.requestMinecraftVersionChange(version)
                                     showVersionDropdown = false
                                 }
                             )
@@ -257,15 +315,15 @@ fun CreateTemplatePage(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = if (searchState.selectedModLoader.isEmpty()) 
-                                "Выберите загрузчик" 
-                            else 
-                                searchState.selectedModLoader.uppercase()
+                            text = templateState.modLoader.ifEmpty { 
+                                stringResource(R.string.select_loader)
+                            }.uppercase()
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(Icons.Default.ArrowDropDown, contentDescription = null)
                     }
                     
+                    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
                     DropdownMenu(
                         expanded = showLoaderDropdown,
                         onDismissRequest = { showLoaderDropdown = false }
@@ -274,7 +332,7 @@ fun CreateTemplatePage(
                             DropdownMenuItem(
                                 text = { Text(loader.uppercase()) },
                                 onClick = {
-                                    searchViewModel.updateModLoader(loader)
+                                    templateViewModel.requestModLoaderChange(loader)
                                     showLoaderDropdown = false
                                 }
                             )
@@ -360,7 +418,7 @@ fun CreateTemplatePage(
                         .fillMaxSize()
                 ) {
                     Text(
-                        text = "Выбранные моды",
+                        text = stringResource(R.string.selected_mods),
                         style = MaterialTheme.typography.titleMedium
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -397,25 +455,25 @@ fun CreateTemplatePage(
             Button(
                 onClick = {
                     templateViewModel.saveTemplate(
-                        minecraftVersion = searchState.selectedMinecraftVersion,
-                        modLoader = searchState.selectedModLoader
+                        minecraftVersion = templateState.minecraftVersion,
+                        modLoader = templateState.modLoader
                     ) { success ->
                         if (success) {
-                            Toast.makeText(context, "Шаблон сохранен", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, templateSaveSuccessMessage, Toast.LENGTH_SHORT).show()
                             onBackClick()
                         } else {
-                            Toast.makeText(context, "Ошибка сохранения", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, templateSaveErrorMessage, Toast.LENGTH_SHORT).show()
                         }
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = templateState.templateName.isNotEmpty() && 
+                 enabled = templateState.templateName.isNotEmpty() && 
                          templateState.selectedMods.isNotEmpty() &&
-                         searchState.selectedMinecraftVersion.isNotEmpty() &&
-                         searchState.selectedModLoader.isNotEmpty() &&
+                         templateState.minecraftVersion.isNotEmpty() &&
+                         templateState.modLoader.isNotEmpty() &&
                          templateState.error == null
             ) {
-                Text("Сохранить шаблон")
+                Text(stringResource(R.string.save_template_button))
             }
         }
     }
@@ -499,7 +557,7 @@ private fun TemplateModItem(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (mod.iconUrl != null && mod.iconUrl.isNotEmpty()) {
+            if (!mod.iconUrl.isNullOrEmpty()) {
                 Image(
                     painter = rememberAsyncImagePainter(mod.iconUrl),
                     contentDescription = mod.name,

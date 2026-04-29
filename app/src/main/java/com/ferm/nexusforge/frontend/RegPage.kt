@@ -4,13 +4,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -37,7 +40,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ferm.nexusforge.R
 import com.ferm.nexusforge.backend.WEB_CLIENT_ID
 import com.ferm.nexusforge.ui.theme.logo
-import com.ferm.nexusforge.viewmodels.LanguageViewModel
 import com.ferm.nexusforge.viewmodels.RegViewModel
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -46,25 +48,41 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun RegPageScreen(
-    vm: RegViewModel = viewModel(),
-    languageViewModel: LanguageViewModel = viewModel(),
     modifier: Modifier = Modifier,
+    vm: RegViewModel = viewModel(),
     onNavigateToEula: () -> Unit,
     onNavigateToAuthPassword: () -> Unit,
-    onNavigateToMainMenu: () -> Unit
+    onNavigateToMainMenu: () -> Unit,
+    onNavigateToLanguage: () -> Unit = {}
 ){
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val currentLang = languageViewModel.currentLanguage
     var googleSignInError by remember { mutableStateOf<String?>(null) }
     var emailError by remember { mutableStateOf<String?>(null) }
+    var authMethodConflictError by remember { mutableStateOf<String?>(null) }
     
-    val googleOnlyErrorText = stringResource(R.string.google_only_error)
     val signInGoogleText = stringResource(R.string.sign_in_google)
+    val noGoogleAccountsMessage = stringResource(R.string.no_google_accounts)
+    val signInErrorMessage = stringResource(R.string.sign_in_error, "")
 
     Box(
         modifier = modifier.fillMaxSize()
     ) {
+        // Кнопка смены языка в верхнем левом углу
+        androidx.compose.material3.IconButton(
+            onClick = onNavigateToLanguage,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(8.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.translate),
+                contentDescription = stringResource(R.string.change_language),
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -85,12 +103,17 @@ fun RegPageScreen(
                 onValueChange = {
                     vm.onEmailChanged(it, context)
                     emailError = null
+                    authMethodConflictError = null
                 },
                 label = { Text(stringResource(R.string.email)) },
                 singleLine = true,
-                isError = emailError != null || vm.emailError != null,
+                isError = emailError != null || vm.emailError != null || authMethodConflictError != null,
                 supportingText = {
                     when {
+                        authMethodConflictError != null -> Text(
+                            text = authMethodConflictError!!,
+                            color = MaterialTheme.colorScheme.error
+                        )
                         emailError != null -> Text(
                             text = emailError!!,
                             color = MaterialTheme.colorScheme.error
@@ -122,27 +145,45 @@ fun RegPageScreen(
                             val result = credentialManager.getCredential(context, request)
                             val googleIdTokenCredential =
                                 GoogleIdTokenCredential.createFrom(result.credential.data)
+                            
+                            // Email находится в credential.id
+                            val googleEmail = googleIdTokenCredential.id
+                            android.util.Log.d("RegPage", "Google email from credential: $googleEmail")
+                            
                             vm.signInWithGoogle(
                                 context = context,
                                 idToken = googleIdTokenCredential.idToken,
+                                email = googleEmail,
                                 onSuccess = { isNewUser ->
                                     googleSignInError = null
-                                    if (isNewUser) onNavigateToEula() else onNavigateToMainMenu()
+                                    authMethodConflictError = null
+                                    // Новый пользователь идет на EULA, существующий - сразу в главное меню
+                                    if (isNewUser) {
+                                        onNavigateToEula()
+                                    } else {
+                                        onNavigateToMainMenu()
+                                    }
                                 },
-                                onError = { 
-                                    googleSignInError = it 
+                                onError = { error ->
+                                    // Проверяем, это ошибка конфликта методов
+                                    if (error.contains("существует") || error.contains("другим способом") || 
+                                        error.contains("создан другим способом")) {
+                                        authMethodConflictError = error
+                                        googleSignInError = null
+                                    } else {
+                                        googleSignInError = error
+                                        authMethodConflictError = null
+                                    }
                                 }
                             )
                         } catch (e: GetCredentialException) {
-                            android.util.Log.e("RegPage", "GetCredentialException: ${e.message}", e)
                             googleSignInError = when {
                                 e.message?.contains("No credentials available") == true -> 
-                                    "Нет доступных учетных записей Google. Добавьте аккаунт в настройки устройства."
-                                else -> "Ошибка входа: ${e.message}"
+                                    noGoogleAccountsMessage
+                                else -> signInErrorMessage.replace("{0}", e.message ?: "")
                             }
                         } catch (e: Exception) {
-                            android.util.Log.e("RegPage", "Exception: ${e.message}", e)
-                            googleSignInError = "Ошибка входа: ${e.message}"
+                            googleSignInError = signInErrorMessage.replace("{0}", e.message ?: "")
                         }
                     }
                 },
@@ -183,15 +224,19 @@ fun RegPageScreen(
                     vm.checkEmailAndNavigate(
                         context = context,
                         onExists = onNavigateToAuthPassword,
-                        onGoogleOnly = {
-                            emailError = googleOnlyErrorText
-                        },
                         onNotExists = onNavigateToEula,
                         onError = { emailError = it }
                     )
                 },
-                enabled = vm.isContinueEnabled && !vm.isValidatingEmail
+                enabled = vm.isContinueEnabled && !vm.isValidatingEmail && emailError == null && authMethodConflictError == null
             ) {
+                if (vm.isValidatingEmail) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                }
                 Text(stringResource(R.string.continue_btn))
             }
         }

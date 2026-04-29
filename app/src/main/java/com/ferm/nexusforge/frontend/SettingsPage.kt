@@ -36,7 +36,9 @@ fun SettingPage(
     onBackClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onTechnicalSupportClick: () -> Unit = {},
-    onLanguageClick: () -> Unit = {}
+    onLanguageClick: () -> Unit = {},
+    onFAQClick: () -> Unit = {},
+    onLicensesClick: () -> Unit = {}
 ) {
     val currentLang = languageViewModel.currentLanguage
     
@@ -120,6 +122,44 @@ fun SettingPage(
                         fontSize = 18.sp
                     )
                 }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 14.dp, start = 20.dp, end = 20.dp)
+                        .clickable { onFAQClick() }
+                        .padding(vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.question_mark),
+                        contentDescription = stringResource(R.string.faq_content_desc),
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(
+                        text = stringResource(R.string.faq_answers),
+                        fontSize = 18.sp
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 14.dp, start = 20.dp, end = 20.dp)
+                        .clickable { onLicensesClick() }
+                        .padding(vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.license),
+                        contentDescription = stringResource(R.string.oss_licenses),
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(
+                        text = stringResource(R.string.oss_licenses),
+                        fontSize = 18.sp
+                    )
+                }
             }
         }
     }
@@ -148,7 +188,7 @@ fun SettingPagePreview() {
 
                 Icon(
                     painter = painterResource(R.drawable.white_theme),
-                    contentDescription = "White Theme",
+                    contentDescription = stringResource(R.string.white_theme_desc),
                     modifier = Modifier
                         .padding(top = 14.dp)
                         .size(100.dp)

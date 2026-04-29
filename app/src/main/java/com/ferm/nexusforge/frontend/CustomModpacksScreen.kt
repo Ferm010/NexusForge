@@ -2,25 +2,63 @@ package com.ferm.nexusforge.frontend
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
+import com.ferm.nexusforge.R
 import com.ferm.nexusforge.data.CustomModpack
 import com.ferm.nexusforge.viewmodels.CustomModpacksViewModel
 
@@ -36,7 +74,7 @@ fun CustomModpacksScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Мои сборки") },
+                title = { Text(stringResource(R.string.my_modpacks_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, "Назад")
@@ -111,12 +149,12 @@ fun EmptyModpacksState(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "У вас пока нет сборок",
+            text = stringResource(R.string.no_modpacks_yet),
             style = MaterialTheme.typography.titleLarge
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Создайте свою первую сборку модов",
+            text = stringResource(R.string.create_first_modpack),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
@@ -124,7 +162,7 @@ fun EmptyModpacksState(
         Button(onClick = onCreateClick) {
             Icon(Icons.Default.Add, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Создать сборку")
+            Text(stringResource(R.string.create_modpack_button))
         }
     }
 }
@@ -219,22 +257,22 @@ fun ModpackCard(
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = "Модов: ${modpack.mods.size}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.mods_count, modpack.mods.size),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 
                 if (modpack.mods.isNotEmpty()) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         modpack.mods.take(3).forEach { mod ->
-                            if (mod.iconUrl != null && mod.iconUrl.isNotEmpty()) {
+                            if (!mod.iconUrl.isNullOrEmpty()) {
                                 Image(
                                     painter = rememberAsyncImagePainter(mod.iconUrl),
                                     contentDescription = mod.title,
@@ -257,7 +295,7 @@ fun ModpackCard(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "+${modpack.mods.size - 3}",
+                                    text = stringResource(R.string.mods_count_extra, modpack.mods.size - 3),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontSize = 10.sp
                                 )
@@ -272,8 +310,8 @@ fun ModpackCard(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Удалить сборку?") },
-            text = { Text("Вы уверены, что хотите удалить сборку \"${modpack.name}\"?") },
+            title = { Text(stringResource(R.string.delete_modpack_title)) },
+            text = { Text(stringResource(R.string.delete_modpack_message, modpack.name)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -281,12 +319,12 @@ fun ModpackCard(
                         showDeleteDialog = false
                     }
                 ) {
-                    Text("Удалить", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.delete_button), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Отмена")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -309,7 +347,7 @@ fun CreateModpackDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Создать сборку") },
+        title = { Text(stringResource(R.string.create_modpack_dialog_title)) },
         text = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -317,7 +355,7 @@ fun CreateModpackDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Название") },
+                    label = { Text(stringResource(R.string.modpack_name_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -325,7 +363,7 @@ fun CreateModpackDialog(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Описание") },
+                    label = { Text(stringResource(R.string.modpack_description_label)) },
                     maxLines = 3,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -333,7 +371,7 @@ fun CreateModpackDialog(
                 OutlinedTextField(
                     value = minecraftVersion,
                     onValueChange = { minecraftVersion = it },
-                    label = { Text("Версия Minecraft") },
+                    label = { Text(stringResource(R.string.minecraft_version_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -346,13 +384,12 @@ fun CreateModpackDialog(
                         value = modLoader,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Загрузчик модов") },
+                        label = { Text(stringResource(R.string.mod_loader_label)) },
                         trailingIcon = {
                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedLoader)
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor()
                     )
                     
                     ExposedDropdownMenu(
@@ -377,12 +414,12 @@ fun CreateModpackDialog(
                 onClick = { onCreate(name, description, minecraftVersion, modLoader) },
                 enabled = name.isNotBlank()
             ) {
-                Text("Создать")
+                Text(stringResource(R.string.create_button))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

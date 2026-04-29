@@ -25,14 +25,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ferm.nexusforge.R
 import com.ferm.nexusforge.ui.theme.logo
-import com.ferm.nexusforge.viewmodels.LanguageViewModel
 import com.ferm.nexusforge.viewmodels.RegViewModel
 
 @Composable
 fun PasswordPage(
+    modifier: Modifier = Modifier,
     vm: RegViewModel = viewModel(),
-    languageViewModel: LanguageViewModel = viewModel(),
-    modifier: Modifier = Modifier, 
     onNavigateToRegName: () -> Unit = {}
 ) {
     val isPasswordValid = vm.password.length >= 6

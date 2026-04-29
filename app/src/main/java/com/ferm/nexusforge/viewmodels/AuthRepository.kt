@@ -14,25 +14,49 @@ class AuthRepository {
     val currentUser get() = auth.currentUser
     
     /**
-     * Проверка существования email в Firebase
+     * Проверка существования email через попытку создания временного аккаунта
+     * Определяет только существует ли email, но не может точно определить метод (Google vs Email/Password)
+     * Firebase сам вернет ошибку при конфликте методов при попытке входа
      */
-    suspend fun checkEmailExists(email: String): EmailExistsResult {
+    suspend fun checkEmailExists(email: String): EmailCheckResult {
         return try {
-            @Suppress("DEPRECATION")
-            val methods = auth.fetchSignInMethodsForEmail(email).await()
-            val list = methods.signInMethods ?: emptyList()
+            android.util.Log.d("AuthRepository", "Checking if email exists: $email")
             
-            when {
-                list.contains("google.com") && !list.contains(EmailAuthProvider.EMAIL_PASSWORD_SIGN_IN_METHOD) -> 
-                    EmailExistsResult.GoogleOnly
-                list.isNotEmpty() -> 
-                    EmailExistsResult.Exists
-                else -> 
-                    EmailExistsResult.NotExists
+            // Генерируем случайный временный пароль
+            val tempPassword = "TempCheck${System.currentTimeMillis()}!@#"
+            
+            try {
+                // Пытаемся создать аккаунт с временным паролем
+                val result = auth.createUserWithEmailAndPassword(email, tempPassword).await()
+                
+                // Если создание успешно - это новый email, удаляем временный аккаунт
+                android.util.Log.d("AuthRepository", "Email is new - deleting temp account")
+                result.user?.delete()?.await()
+                auth.signOut()
+                
+                EmailCheckResult.NewUser
+                
+            } catch (e: FirebaseAuthException) {
+                android.util.Log.d("AuthRepository", "Create account error: ${e.errorCode}")
+                
+                when (e.errorCode) {
+                    "ERROR_EMAIL_ALREADY_IN_USE" -> {
+                        // Email уже используется
+                        // Не можем точно определить метод без входа, поэтому считаем что EMAIL_PASSWORD
+                        // Если это Google аккаунт, Firebase вернет ошибку при попытке входа
+                        android.util.Log.d("AuthRepository", "Email already in use - assuming EMAIL_PASSWORD")
+                        EmailCheckResult.ExistingUser(AuthMethod.EMAIL_PASSWORD)
+                    }
+                    "ERROR_INVALID_EMAIL" -> {
+                        EmailCheckResult.Error("ERROR_INVALID_EMAIL")
+                    }
+                    else -> {
+                        EmailCheckResult.Error(e.errorCode ?: "ERROR_GENERIC")
+                    }
+                }
             }
-        } catch (e: Exception) {
-            val errorCode = (e as? FirebaseAuthException)?.errorCode
-            EmailExistsResult.Error(errorCode ?: "ERROR_GENERIC")
+        } catch (_: Exception) {
+            EmailCheckResult.Error("ERROR_GENERIC")
         }
     }
     
@@ -65,7 +89,7 @@ class AuthRepository {
     }
     
     /**
-     * Вход через Google
+     * Вход через Google с проверкой конфликта методов авторизации
      */
     suspend fun signInWithGoogle(idToken: String): GoogleSignInResult {
         return try {
@@ -73,11 +97,25 @@ class AuthRepository {
             val result = auth.signInWithCredential(credential).await()
             val isNewUser = result.additionalUserInfo?.isNewUser ?: false
             val displayName = result.user?.displayName ?: ""
+            val email = result.user?.email.orEmpty()
             
-            GoogleSignInResult.Success(isNewUser, displayName)
-        } catch (e: Exception) {
-            val errorCode = (e as? FirebaseAuthException)?.errorCode
-            GoogleSignInResult.Error(errorCode ?: "ERROR_GENERIC")
+            android.util.Log.d("AuthRepository", "Firebase user email: '${result.user?.email}'")
+            android.util.Log.d("AuthRepository", "Firebase user displayName: '${result.user?.displayName}'")
+            android.util.Log.d("AuthRepository", "Returning email: '$email'")
+            
+            GoogleSignInResult.Success(isNewUser, displayName, email)
+        } catch (e: FirebaseAuthException) {
+            // Проверяем конфликт методов авторизации
+            when (e.errorCode) {
+                "ERROR_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL" -> {
+                    GoogleSignInResult.Error("ERROR_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL")
+                }
+                else -> {
+                    GoogleSignInResult.Error(e.errorCode ?: "ERROR_GENERIC")
+                }
+            }
+        } catch (_: Exception) {
+            GoogleSignInResult.Error("ERROR_GENERIC")
         }
     }
     
@@ -104,7 +142,7 @@ class AuthRepository {
         return try {
             val user = currentUser ?: return UpdateResult.Error("ERROR_USER_NOT_FOUND")
             val profileUpdates = userProfileChangeRequest { displayName = newName }
-            user.updateProfile(profileUpdates)?.await()
+            user.updateProfile(profileUpdates).await()
             UpdateResult.Success
         } catch (e: Exception) {
             val errorCode = (e as? FirebaseAuthException)?.errorCode
@@ -112,22 +150,7 @@ class AuthRepository {
         }
     }
     
-    /**
-     * Обновление email пользователя (требует повторную авторизацию)
-     */
-    suspend fun updateEmail(newEmail: String, password: String): UpdateResult {
-        return try {
-            val user = currentUser ?: return UpdateResult.Error("ERROR_USER_NOT_FOUND")
-            val credential = EmailAuthProvider.getCredential(user.email ?: "", password)
-            user.reauthenticate(credential)?.await()
-            user.updateEmail(newEmail)?.await()
-            UpdateResult.Success
-        } catch (e: Exception) {
-            val errorCode = (e as? FirebaseAuthException)?.errorCode
-            UpdateResult.Error(errorCode ?: "ERROR_GENERIC")
-        }
-    }
-    
+
     /**
      * Удаление аккаунта
      */
@@ -135,21 +158,57 @@ class AuthRepository {
         return try {
             val user = currentUser ?: return UpdateResult.Error("ERROR_USER_NOT_FOUND")
             val credential = EmailAuthProvider.getCredential(user.email ?: "", password)
-            user.reauthenticate(credential)?.await()
-            user.delete()?.await()
+            user.reauthenticate(credential).await()
+            user.delete().await()
             UpdateResult.Success
         } catch (e: Exception) {
             val errorCode = (e as? FirebaseAuthException)?.errorCode
             UpdateResult.Error(errorCode ?: "ERROR_GENERIC")
         }
     }
+    
+    /**
+     * Отправка письма для восстановления пароля
+     */
+    suspend fun sendPasswordResetEmail(email: String): SendEmailResult {
+        return try {
+            auth.sendPasswordResetEmail(email).await()
+            SendEmailResult.Success
+        } catch (e: Exception) {
+            val errorCode = (e as? FirebaseAuthException)?.errorCode
+            SendEmailResult.Error(errorCode ?: "ERROR_GENERIC")
+        }
+    }
+    
+    /**
+     * Проверка валидности текущей сессии
+     */
+    suspend fun validateSession(): Boolean {
+        return try {
+            val user = currentUser ?: return false
+            user.reload().await()
+            val tokenResult = user.getIdToken(false).await()
+            tokenResult.token != null
+        } catch (_: Exception) {
+            false
+        }
+    }
+    
+
 }
 
-sealed class EmailExistsResult {
-    object Exists : EmailExistsResult()
-    object NotExists : EmailExistsResult()
-    object GoogleOnly : EmailExistsResult()
-    data class Error(val errorCode: String) : EmailExistsResult()
+// Enum для методов авторизации
+enum class AuthMethod {
+    EMAIL_PASSWORD,
+    GOOGLE,
+    OTHER
+}
+
+// Результат проверки email
+sealed class EmailCheckResult {
+    object NewUser : EmailCheckResult()
+    data class ExistingUser(val authMethod: AuthMethod) : EmailCheckResult()
+    data class Error(val errorCode: String) : EmailCheckResult()
 }
 
 sealed class AuthResult {
@@ -158,11 +217,16 @@ sealed class AuthResult {
 }
 
 sealed class GoogleSignInResult {
-    data class Success(val isNewUser: Boolean, val displayName: String) : GoogleSignInResult()
+    data class Success(val isNewUser: Boolean, val displayName: String, val email: String) : GoogleSignInResult()
     data class Error(val errorCode: String) : GoogleSignInResult()
 }
 
 sealed class UpdateResult {
     object Success : UpdateResult()
     data class Error(val errorCode: String) : UpdateResult()
+}
+
+sealed class SendEmailResult {
+    object Success : SendEmailResult()
+    data class Error(val errorCode: String) : SendEmailResult()
 }

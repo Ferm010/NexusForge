@@ -1,6 +1,7 @@
 package com.ferm.nexusforge.frontend
 
-import android.content.Context
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,9 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.Surface
-import androidx.compose.material3.SuggestionChip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -27,14 +25,10 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Search
-import android.widget.Toast
-import kotlinx.coroutines.withTimeoutOrNull
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.activity.compose.BackHandler
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -42,11 +36,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -58,9 +53,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -72,13 +64,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.ferm.nexusforge.R
+import com.ferm.nexusforge.data.ModpackMod
 import com.ferm.nexusforge.data.ModrinthProject
 import com.ferm.nexusforge.repository.FirestoreRepository
-import com.ferm.nexusforge.data.ModpackMod
 import com.ferm.nexusforge.viewmodels.ModpackCreatorViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,6 +88,7 @@ fun ModpackEditorPage(
     val firestoreRepository = remember { FirestoreRepository() }
     
     var isLoading by remember { mutableStateOf(true) }
+    var isLoadingMods by remember { mutableStateOf(false) }
     var isSaved by remember { mutableStateOf(false) }
     var showVersionWarning by remember { mutableStateOf(false) }
     var showLoaderWarning by remember { mutableStateOf(false) }
@@ -110,6 +106,7 @@ fun ModpackEditorPage(
     
     LaunchedEffect(modpackId) {
         try {
+            isLoadingMods = true
             vm.initializeNetworkChecker(context)
             vm.setModpackId(modpackId)
             val result = firestoreRepository.getCustomModpack(modpackId)
@@ -122,7 +119,7 @@ fun ModpackEditorPage(
                     // Load mods with versions in parallel with timeout
                     kotlinx.coroutines.coroutineScope {
                         val deferredMods = pack.mods.map { modRef ->
-                            async(kotlinx.coroutines.Dispatchers.IO) {
+                            async(Dispatchers.IO) {
                                 try {
                                     withTimeoutOrNull(10000L) { // 10 second timeout per mod
                                         val versions = com.ferm.nexusforge.network.ModrinthApi.retrofitService.getProjectVersions(modRef.projectId)
@@ -161,7 +158,7 @@ fun ModpackEditorPage(
                                             sha512 = modRef.sha512
                                         )
                                     }
-                                } catch (e: Exception) {
+                                } catch (_: Exception) {
                                     ModpackMod(
                                         projectId = modRef.projectId,
                                         name = modRef.title,
@@ -178,7 +175,8 @@ fun ModpackEditorPage(
                         }
                         
                         // Wait for all requests to complete and add mods
-                        deferredMods.awaitAll().forEach { mod: ModpackMod ->
+                        val loadedMods = deferredMods.awaitAll()
+                        loadedMods.forEach { mod: ModpackMod ->
                             vm.addModDirectly(mod)
                         }
                     }
@@ -191,6 +189,7 @@ fun ModpackEditorPage(
             e.printStackTrace()
         }
         isLoading = false
+        isLoadingMods = false
     }
     
     LaunchedEffect(state.modpackName, state.selectedMinecraftVersion, state.selectedModLoader, state.selectedMods) {
@@ -327,10 +326,9 @@ fun ModpackEditorPage(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text = if (state.selectedMinecraftVersion.isEmpty()) 
+                                text = state.selectedMinecraftVersion.ifEmpty {
                                     stringResource(R.string.select_minecraft_version)
-                                else 
-                                    state.selectedMinecraftVersion
+                                }
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Icon(Icons.Default.ArrowDropDown, contentDescription = null)
@@ -494,7 +492,7 @@ fun ModpackEditorPage(
                                         }
                                         selectedModDetails = project
                                         isLoadingModDetails = false
-                                    } catch (e: Exception) {
+                                    } catch (_: Exception) {
                                         isLoadingModDetails = false
                                     }
                                 }
@@ -520,7 +518,7 @@ fun ModpackEditorPage(
                             }
                         },
                         modifier = Modifier.weight(1f),
-                        enabled = state.modpackName.isNotEmpty() && state.selectedMinecraftVersion.isNotEmpty() && state.error == null
+                        enabled = state.modpackName.isNotEmpty() && state.selectedMinecraftVersion.isNotEmpty() && state.error == null && !isLoadingMods && state.selectedMods.isNotEmpty()
                     ) {
                         Text(stringResource(R.string.save_only))
                     }
@@ -533,7 +531,7 @@ fun ModpackEditorPage(
                             }
                         },
                         modifier = Modifier.weight(1f),
-                        enabled = state.modpackName.isNotEmpty() && state.selectedMinecraftVersion.isNotEmpty() && state.error == null
+                        enabled = state.modpackName.isNotEmpty() && state.selectedMinecraftVersion.isNotEmpty() && state.error == null && !isLoadingMods && state.selectedMods.isNotEmpty()
                     ) {
                         Text(stringResource(R.string.generate))
                     }
@@ -593,20 +591,20 @@ fun ModpackEditorPage(
     if (showUnsavedWarning) {
         AlertDialog(
             onDismissRequest = { showUnsavedWarning = false },
-            title = { Text("Выйти без сохранения?") },
-            text = { Text("У вас есть несохраненные изменения. Если вы выйдете, все данные будут потеряны.") },
+            title = { Text(stringResource(R.string.exit_without_saving_title)) },
+            text = { Text(stringResource(R.string.exit_without_saving_message)) },
             confirmButton = {
                 Button(onClick = {
                     hasUnsavedChanges = false
                     showUnsavedWarning = false
                     onBackClick()
                 }) {
-                    Text("Выйти")
+                    Text(stringResource(R.string.exit_button))
                 }
             },
             dismissButton = {
                 OutlinedButton(onClick = { showUnsavedWarning = false }) {
-                    Text("Остаться")
+                    Text(stringResource(R.string.stay_button))
                 }
             }
         )
@@ -662,7 +660,7 @@ fun ModpackEditorPage(
                             style = MaterialTheme.typography.titleMedium
                         )
                         Text(
-                            text = "by ${selectedModDetails?.author}",
+                            text = stringResource(R.string.mod_by_author, selectedModDetails?.author ?: ""),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -817,7 +815,7 @@ fun SelectedModItem(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (mod.iconUrl != null && mod.iconUrl.isNotEmpty()) {
+            if (!mod.iconUrl.isNullOrEmpty()) {
                 AsyncImage(
                     model = mod.iconUrl,
                     contentDescription = displayName,
@@ -866,13 +864,5 @@ fun SelectedModItem(
                 )
             }
         }
-    }
-}
-
-private fun formatDownloads(count: Int): String {
-    return when {
-        count >= 1_000_000 -> String.format("%.1fM", count / 1_000_000.0)
-        count >= 1_000 -> String.format("%.1fK", count / 1_000.0)
-        else -> count.toString()
     }
 }

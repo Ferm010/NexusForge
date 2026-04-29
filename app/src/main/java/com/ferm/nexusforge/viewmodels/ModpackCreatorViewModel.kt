@@ -2,14 +2,12 @@ package com.ferm.nexusforge.viewmodels
 
 import android.content.Context
 import android.content.Intent
-import android.os.Environment
-import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ferm.nexusforge.data.ModReference
-import com.ferm.nexusforge.data.ModrinthProject
-import com.ferm.nexusforge.data.ModpackMod
 import com.ferm.nexusforge.data.ModDependencyInfo
+import com.ferm.nexusforge.data.ModReference
+import com.ferm.nexusforge.data.ModpackMod
+import com.ferm.nexusforge.data.ModrinthProject
 import com.ferm.nexusforge.network.ModrinthApi
 import com.ferm.nexusforge.repository.FirestoreRepository
 import com.ferm.nexusforge.repository.GoogleDriveRepository
@@ -17,7 +15,6 @@ import com.ferm.nexusforge.utils.MrpackGenerator
 import com.ferm.nexusforge.utils.NetworkChecker
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,19 +22,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
-import java.util.Comparator
 import java.util.UUID
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-
-data class Modpack(
-    val id: String = "",
-    val name: String = "",
-    val minecraftVersion: String = "",
-    val mods: List<ModpackMod> = emptyList(),
-    val authorId: String = "",
-    val createdAt: Long = System.currentTimeMillis()
-)
 
 class ModpackCreatorViewModel : ViewModel() {
     
@@ -87,7 +74,7 @@ class ModpackCreatorViewModel : ViewModel() {
                 _state.value = _state.value.copy(
                     availableMinecraftVersions = mcVersions
                 )
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _state.value = _state.value.copy(
                     error = "Проблема сети. Проверьте подключение к интернету.",
                     availableMinecraftVersions = listOf("1.21", "1.20.4", "1.20.2", "1.20.1", "1.19.4", "1.19.3", "1.19.2", "1.19.1", "1.18.2", "1.18.1", "1.17.1", "1.16.5", "1.16.4", "1.16.3", "1.16.2", "1.16.1")
@@ -134,7 +121,7 @@ class ModpackCreatorViewModel : ViewModel() {
                     searchResults = response.hits,
                     isSearching = false
                 )
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _state.value = _state.value.copy(
                     isSearching = false,
                     error = "Проблема сети. Проверьте подключение к интернету."
@@ -234,7 +221,7 @@ class ModpackCreatorViewModel : ViewModel() {
                     sha512 = file?.hashes?.get("sha512")
                 }
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Ошибка при получении версий
         }
         
@@ -286,7 +273,7 @@ class ModpackCreatorViewModel : ViewModel() {
                         addModDependency(depProject)
                     }
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Зависимости не найдены или ошибка
             }
         }
@@ -324,7 +311,7 @@ class ModpackCreatorViewModel : ViewModel() {
                 sha1 = file?.hashes?.get("sha1")
                 sha512 = file?.hashes?.get("sha512")
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Ошибка при получении версий зависимости
         }
         
@@ -418,65 +405,6 @@ class ModpackCreatorViewModel : ViewModel() {
         _state.value = _state.value.copy(searchQuery = query)
     }
     
-    fun generateModpack(context: Context, onComplete: (String) -> Unit) {
-        val currentState = _state.value
-        if (currentState.modpackName.isEmpty() || 
-            currentState.selectedMinecraftVersion.isEmpty() || 
-            currentState.selectedMods.isEmpty()) {
-            return
-        }
-        
-        viewModelScope.launch {
-            _state.value = _state.value.copy(isGenerating = true)
-            
-            val modpackId = if (currentState.modpackId.isNotEmpty()) {
-                currentState.modpackId
-            } else {
-                UUID.randomUUID().toString()
-            }
-            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-            
-            try {
-                withContext(Dispatchers.IO) {
-                    val zipFile = createZipFile(currentState)
-                    shareZipFile(context, zipFile, currentState.modpackName)
-                }
-                
-                val modpackData = hashMapOf(
-                    "id" to modpackId,
-                    "name" to currentState.modpackName,
-                    "minecraftVersion" to currentState.selectedMinecraftVersion,
-                    "modLoader" to currentState.selectedModLoader,
-                    "mods" to currentState.selectedMods.map { hashMapOf(
-                        "projectId" to it.projectId,
-                        "title" to it.name,
-                        "version" to it.version,
-                        "downloadUrl" to it.downloadUrl,
-                        "iconUrl" to it.iconUrl,
-                        "fileName" to it.fileName,
-                        "fileSize" to it.fileSize,
-                        "sha1" to it.sha1,
-                        "sha512" to it.sha512
-                    )},
-                    "authorId" to userId,
-                    "createdAt" to System.currentTimeMillis(),
-                    "isCustom" to true,
-                    "isFavorite" to true
-                )
-                
-                firestoreRepository.saveCustomModpack(modpackId, modpackData)
-                
-                _state.value = _state.value.copy(isGenerating = false)
-                onComplete(modpackId)
-                
-            } catch (e: Exception) {
-                _state.value = _state.value.copy(
-                    isGenerating = false,
-                    error = e.message
-                )
-            }
-        }
-    }
     
     fun saveModpackOnly(onComplete: () -> Unit) {
         val currentState = _state.value
@@ -494,11 +422,8 @@ class ModpackCreatorViewModel : ViewModel() {
         
         viewModelScope.launch {
             try {
-                val modpackId = if (currentState.modpackId.isNotEmpty()) {
-                    currentState.modpackId
-                } else {
-                    UUID.randomUUID().toString()
-                }
+                val modpackId = currentState.modpackId.ifEmpty { UUID.randomUUID().toString() }
+
                 val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
                 
                 val modpackData = hashMapOf(
@@ -545,7 +470,6 @@ class ModpackCreatorViewModel : ViewModel() {
             return
         }
         
-        // Проверка сети перед генерацией
         if (networkChecker?.isNetworkAvailable() == false) {
             _state.value = _state.value.copy(
                 error = "Проблема сети. Проверьте подключение к интернету."
@@ -558,31 +482,27 @@ class ModpackCreatorViewModel : ViewModel() {
             _state.value = _state.value.copy(isGenerating = true)
             
             try {
-                onProgress(1, "Preparing...", false, null)
-                
-                val modpackId = if (currentState.modpackId.isNotEmpty()) {
-                    currentState.modpackId
-                } else {
-                    UUID.randomUUID().toString()
-                }
-                val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-                
-                var step = 2
                 val totalMods = currentState.selectedMods.size
                 
+                onProgress(0, "Preparing...", false, null)
+
+                val modpackId = currentState.modpackId.ifEmpty { UUID.randomUUID().toString() }
+
+                val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+                
                 withContext(Dispatchers.IO) {
-                    val zipFile = createZipFileWithProgress(currentState) { modName ->
-                        onProgress(step, modName, false, null)
-                        step++
+                    var lastReportedMod = -1
+                    val zipFile = createZipFileWithProgress(context, currentState) { modName, modIndex ->
+                        // Вызываем callback только один раз за мод
+                        if (modIndex != lastReportedMod) {
+                            lastReportedMod = modIndex
+                            onProgress(modIndex + 1, modName, false, null)
+                        }
                     }
                     
-                    onProgress(step, "Creating archive...", false, null)
-                    step++
-                    
+                    onProgress(totalMods, "Creating archive...", false, null)
                     saveToDownloads(context, zipFile, currentState.modpackName)
                 }
-                
-                onProgress(step, "", false, null)
                 
                 val modpackData = hashMapOf(
                     "id" to modpackId,
@@ -610,7 +530,7 @@ class ModpackCreatorViewModel : ViewModel() {
                 firestoreRepository.saveCustomModpack(modpackId, modpackData)
                 
                 _state.value = _state.value.copy(isGenerating = false)
-                onProgress(step, "", true, null)
+                onProgress(totalMods, "", true, null)
                 
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
@@ -648,21 +568,17 @@ class ModpackCreatorViewModel : ViewModel() {
             
             try {
                 onProgress(1, "Preparing mrpack...", false, null)
-                
-                val modpackId = if (currentState.modpackId.isNotEmpty()) {
-                    currentState.modpackId
-                } else {
-                    UUID.randomUUID().toString()
-                }
+
+                val modpackId = currentState.modpackId.ifEmpty { UUID.randomUUID().toString() }
+
                 val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
                 
                 // Получаем последнюю версию модлоадера
                 val modLoaderVersion = try {
                     withContext(Dispatchers.IO) {
-                        getLatestLoaderVersion(currentState.selectedModLoader, currentState.selectedMinecraftVersion)
+                        getLatestLoaderVersion(currentState.selectedModLoader)
                     }
-                } catch (e: Exception) {
-                    android.util.Log.e("ModpackCreator", "Failed to get loader version: ${e.message}")
+                } catch (_: Exception) {
                     null
                 }
                 
@@ -744,16 +660,18 @@ class ModpackCreatorViewModel : ViewModel() {
         }
     }
     
-    private suspend fun createZipFileWithProgress(
+    private fun createZipFileWithProgress(
+        context: Context,
         state: ModpackCreatorState,
-        onModProgress: (modName: String) -> Unit
+        onModProgress: (modName: String, modIndex: Int) -> Unit
     ): File {
-        val cacheDir = File(System.getProperty("java.io.tmpdir"))
+        val cacheDir = context.cacheDir
         val zipFile = File(cacheDir, "${state.modpackName}.zip")
         
         ZipOutputStream(FileOutputStream(zipFile)).use { zos ->
-            state.selectedMods.forEach { mod ->
-                onModProgress(mod.name)
+            state.selectedMods.forEachIndexed { index, mod ->
+                onModProgress(mod.name, index)
+                
                 try {
                     if (mod.downloadUrl.isNotEmpty()) {
                         val url = java.net.URL(mod.downloadUrl)
@@ -770,7 +688,7 @@ class ModpackCreatorViewModel : ViewModel() {
                         zos.closeEntry()
                         inputStream.close()
                     }
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     // Ошибка при скачивании мода
                 }
             }
@@ -796,72 +714,14 @@ class ModpackCreatorViewModel : ViewModel() {
         context.startActivity(Intent.createChooser(shareIntent, "Save Modpack"))
     }
     
-    private suspend fun createZipFile(state: ModpackCreatorState): File {
-        val cacheDir = File(System.getProperty("java.io.tmpdir"))
-        val zipFile = File(cacheDir, "${state.modpackName}.zip")
-        
-        ZipOutputStream(FileOutputStream(zipFile)).use { zos ->
-            state.selectedMods.forEach { mod ->
-                try {
-                    if (mod.downloadUrl.isNotEmpty()) {
-                        val url = java.net.URL(mod.downloadUrl)
-                        val connection = url.openConnection()
-                        connection.connect()
-                        
-                        val inputStream = connection.getInputStream()
-                        val fileName = "${mod.name}.jar"
-                        
-                        zos.putNextEntry(ZipEntry(fileName))
-                        inputStream.copyTo(zos)
-                        zos.closeEntry()
-                        inputStream.close()
-                    }
-                } catch (e: Exception) {
-                    // Skip this mod if download fails
-                }
-            }
-        }
-        
-        return zipFile
-    }
-    
-    private fun shareZipFile(context: Context, zipFile: File, modpackName: String) {
-        val uri = androidx.core.content.FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            zipFile
-        )
-        
-        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            type = "application/zip"
-            putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_SUBJECT, "$modpackName.zip")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        
-        context.startActivity(Intent.createChooser(shareIntent, "Export Modpack"))
-    }
-    
-    fun clearState() {
-        _state.value = ModpackCreatorState()
-        loadMinecraftVersions()
-    }
-    
     fun setModpackId(id: String) {
         _state.value = _state.value.copy(modpackId = id)
     }
     
-    private suspend fun getLatestLoaderVersion(modLoader: String, minecraftVersion: String): String? {
+    private fun getLatestLoaderVersion(modLoader: String): String? {
         return try {
             when (modLoader.lowercase()) {
                 "forge" -> {
-                    // Получаем версии Forge для данной версии Minecraft
-                    // Modrinth API: /tag/loader/{loader}/versions
-                    val response = ModrinthApi.retrofitService.searchProjects(
-                        query = "forge",
-                        facets = "[[\"project_type:modpack\"],[\"versions:$minecraftVersion\"]]",
-                        limit = 1
-                    )
                     // Для простоты возвращаем null, так как Modrinth API не предоставляет прямой доступ к версиям лоадеров
                     // Можно использовать Forge API или другой источник
                     null
@@ -878,7 +738,7 @@ class ModpackCreatorViewModel : ViewModel() {
                 }
                 else -> null
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -906,11 +766,8 @@ class ModpackCreatorViewModel : ViewModel() {
                 
                 // Создаем ZIP файл
                 val zipFile = withContext(Dispatchers.IO) {
-                    createZipFileWithProgress(currentState) { modName ->
-                        val progress = (currentState.selectedMods.indexOf(
-                            currentState.selectedMods.find { it.name == modName }
-                        ) + 1) * 100 / currentState.selectedMods.size
-                        onProgress(progress, modName, false, null)
+                    createZipFileWithProgress(context, currentState) { modName, modIndex ->
+                        onProgress(modIndex + 1, modName, false, null)
                     }
                 }
                 
@@ -929,6 +786,9 @@ class ModpackCreatorViewModel : ViewModel() {
                 val result = driveRepo.uploadZipToDrive(zipFile, fileName)
                 
                 if (result.isSuccess) {
+                    // Сохраняем сборку в Firestore
+                    saveModpackToFirestore(currentState)
+                    
                     _state.value = _state.value.copy(isGenerating = false)
                     onProgress(100, "", true, null)
                 } else {
@@ -948,6 +808,40 @@ class ModpackCreatorViewModel : ViewModel() {
                     error = e.message
                 )
                 onProgress(0, "", true, e.message)
+            }
+        }
+    }
+
+    private fun saveModpackToFirestore(state: ModpackCreatorState) {
+        viewModelScope.launch {
+            try {
+                val modpackId = state.modpackId.ifEmpty { UUID.randomUUID().toString() }
+                
+                val modpackData = mapOf(
+                    "name" to state.modpackName,
+                    "description" to state.modpackDescription,
+                    "minecraftVersion" to state.selectedMinecraftVersion,
+                    "modLoader" to state.selectedModLoader,
+                    "mods" to state.selectedMods.map { mod ->
+                        mapOf(
+                            "projectId" to mod.projectId,
+                            "title" to mod.name,
+                            "iconUrl" to mod.iconUrl,
+                            "required" to true,
+                            "downloadUrl" to mod.downloadUrl,
+                            "fileName" to mod.fileName,
+                            "fileSize" to mod.fileSize,
+                            "sha1" to mod.sha1,
+                            "sha512" to mod.sha512
+                        )
+                    },
+                    "iconUrl" to "",
+                    "isFavorite" to false,
+                    "isCustom" to true
+                )
+                
+                firestoreRepository.saveCustomModpack(modpackId, modpackData)
+            } catch (_: Exception) {
             }
         }
     }
