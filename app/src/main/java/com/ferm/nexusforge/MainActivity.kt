@@ -4,12 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
@@ -18,6 +17,7 @@ import com.ferm.nexusforge.backend.LocaleHelper
 import com.ferm.nexusforge.backend.LocaleHelper.onAttach
 import com.ferm.nexusforge.backend.MyAppNav3
 import com.ferm.nexusforge.backend.SecurityCheck
+import com.ferm.nexusforge.ui.theme.LocalDarkTheme
 import com.ferm.nexusforge.ui.theme.NexusForgeTheme
 import com.ferm.nexusforge.viewmodels.ThemeViewModel
 import com.google.firebase.crashlytics.FirebaseCrashlytics
@@ -32,17 +32,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Инициализация Firebase Crashlytics
         val crashlytics = FirebaseCrashlytics.getInstance()
-        // В debug режиме отключаем отправку отчётов для тестирования
         crashlytics.setCrashlyticsCollectionEnabled(true)
         
-        // Применяем сохранённый язык
         LocaleHelper.applyLocale(this)
         
-        // Проверка безопасности при запуске
         if (!performSecurityChecks()) {
-            // Приложение скомпрометировано - закрываем
             finish()
             exitProcess(0)
             return
@@ -54,16 +49,12 @@ class MainActivity : ComponentActivity() {
             val systemDarkTheme = isSystemInDarkTheme()
             
             LaunchedEffect(Unit) {
-                themeViewModel.initTheme(systemDarkTheme)
+                themeViewModel.init(this@MainActivity, systemDarkTheme)
             }
             
-            Crossfade(
-                targetState = themeViewModel.isDarkTheme ?: systemDarkTheme,
-                animationSpec = tween(durationMillis = 400),
-                label = "theme_transition"
-            ) { isDark ->
-                key(isDark) {
-                    NexusForgeTheme(darkTheme = isDark) {
+            key(themeViewModel.isDarkTheme) {
+                CompositionLocalProvider(LocalDarkTheme provides themeViewModel.isDarkTheme) {
+                    NexusForgeTheme(darkTheme = themeViewModel.isDarkTheme) {
                         Surface(
                             modifier = Modifier.fillMaxSize(),
                             color = MaterialTheme.colorScheme.background
@@ -77,12 +68,10 @@ class MainActivity : ComponentActivity() {
     }
     
     private fun performSecurityChecks(): Boolean {
-        // Проверка целостности приложения
         if (!SecurityCheck.verifyAppIntegrity(this)) {
             return false
         }
         
-        // Проверка на root/эмулятор (опционально, можно отключить для тестирования)
         if (!SecurityCheck.isDeviceSecure()) {
             // Можно вернуть false для блокировки на root устройствах
             // return false

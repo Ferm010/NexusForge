@@ -69,35 +69,31 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
     // Состояние для проверки профиля
     var isCheckingProfile by remember { mutableStateOf(true) }
     var startDestination by remember { mutableStateOf<Destination>(Destination.RegPage) }
+    var profileChecked by remember { mutableStateOf(false) }
     
     // Проверка профиля при запуске
     androidx.compose.runtime.LaunchedEffect(Unit) {
         val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser != null) {
-            // Пользователь авторизован существование профиля
-            android.util.Log.d("AppNavigation", "User authenticated, checking profile existence")
+        if (currentUser != null && !profileChecked) {
             val firestoreRepository = com.ferm.nexusforge.repository.FirestoreRepository()
             val result = firestoreRepository.checkUserProfileExists()
             
             if (result.isSuccess && result.getOrNull() == true) {
-                // Профиль существует
-                android.util.Log.d("AppNavigation", "Profile exists - navigate to MainMenu")
                 startDestination = Destination.MainMenu
             } else {
-                // Профиль не существует
-                android.util.Log.d("AppNavigation", "Profile does not exist - signing out")
-                FirebaseAuth.getInstance().signOut()
-                startDestination = Destination.RegPage
+                if (result.isFailure) {
+                } else {
+                    FirebaseAuth.getInstance().signOut()
+                    startDestination = Destination.RegPage
+                }
             }
-        } else {
-            // Пользователь не авторизован
-            android.util.Log.d("AppNavigation", "User not authenticated - navigate to RegPage")
+        } else if (currentUser == null) {
             startDestination = Destination.RegPage
         }
+        profileChecked = true
         isCheckingProfile = false
     }
-    
-    // Показываем загрузку пока проверяем профиль
+
     if (isCheckingProfile) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -215,7 +211,6 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                     )
                 }
 
-                // 2. Scaffold — это каркас, который держит нижнюю панель
                 Scaffold(
                     bottomBar = {
                         NavigationBar {

@@ -77,15 +77,6 @@ fun FilterBottomSheet(
                         label = { Text(text = stringResource(R.string.downloads) + "↓") },
                         modifier = Modifier.fillMaxWidth()
                     )
-                    FilterChip(
-                        selected = currentSort == SortOption.DOWNLOADS_ASC,
-                        onClick = {
-                            onSortChange(SortOption.DOWNLOADS_ASC)
-                            onDismiss()
-                        },
-                        label = { Text(text = stringResource(R.string.downloads) + "↑") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
                 }
             }
             

@@ -16,10 +16,9 @@ enum class SearchMode {
     MOD
 }
 
-enum class SortOption(val apiValue: String, val needsClientSort: Boolean = false) {
+enum class SortOption(val apiValue: String) {
     RELEVANCE("relevance"),
     DOWNLOADS_DESC("downloads"),
-    DOWNLOADS_ASC("downloads", needsClientSort = true),
     NEWEST("newest")
 }
 
@@ -127,7 +126,7 @@ class MainMenuViewModel : ViewModel() {
             isLoadingFeatured = true
             try {
                 val facets = buildFacets()
-                val apiSort = if (sortOption == SortOption.DOWNLOADS_ASC) "downloads" else sortOption.apiValue
+                val apiSort = sortOption.apiValue
                 
                 val response = ModrinthApi.retrofitService.searchProjects(
                     query = "",
@@ -137,13 +136,7 @@ class MainMenuViewModel : ViewModel() {
                     index = apiSort
                 )
                 
-                val projects = if (sortOption.needsClientSort) {
-                    response.hits.sortedBy { it.downloads }
-                } else {
-                    response.hits
-                }
-                
-                featuredProjects = projects
+                featuredProjects = response.hits
                 featuredOffset = 20
                 hasMoreFeatured = response.hits.size >= 20
             } catch (_: Exception) {
@@ -163,7 +156,7 @@ class MainMenuViewModel : ViewModel() {
             isLoadingMoreFeatured = true
             try {
                 val facets = buildFacets()
-                val apiSort = if (sortOption == SortOption.DOWNLOADS_ASC) "downloads" else sortOption.apiValue
+                val apiSort = sortOption.apiValue
                 
                 val response = ModrinthApi.retrofitService.searchProjects(
                     query = "",
@@ -173,15 +166,9 @@ class MainMenuViewModel : ViewModel() {
                     index = apiSort
                 )
                 
-                val projects = if (sortOption.needsClientSort) {
-                    response.hits.sortedBy { it.downloads }
-                } else {
-                    response.hits
-                }
-                
                 // Оптимизация: используем toMutableList вместо +
                 val currentProjects = featuredProjects.toMutableList()
-                currentProjects.addAll(projects)
+                currentProjects.addAll(response.hits)
                 featuredProjects = currentProjects
                 featuredOffset += response.hits.size
                 hasMoreFeatured = response.hits.size >= 20
@@ -258,7 +245,7 @@ class MainMenuViewModel : ViewModel() {
             
             try {
                 val facets = buildFacets()
-                val apiSort = if (sortOption == SortOption.DOWNLOADS_ASC) "downloads" else sortOption.apiValue
+                val apiSort = sortOption.apiValue
                 
                 val response = ModrinthApi.retrofitService.searchProjects(
                     query = sanitizedQuery,
@@ -268,15 +255,9 @@ class MainMenuViewModel : ViewModel() {
                     index = apiSort
                 )
                 
-                val projects = if (sortOption.needsClientSort) {
-                    response.hits.sortedBy { it.downloads }
-                } else {
-                    response.hits
-                }
-                
                 searchOffset = 20
                 hasMoreResults = response.hits.size >= 20
-                searchUiState = SearchUiState.Success(projects)
+                searchUiState = SearchUiState.Success(response.hits)
             } catch (e: Exception) {
                 searchUiState = SearchUiState.Error(e.message ?: "Ошибка поиска")
             }
@@ -290,7 +271,7 @@ class MainMenuViewModel : ViewModel() {
             isLoadingMore = true
             try {
                 val facets = buildFacets()
-                val apiSort = if (sortOption == SortOption.DOWNLOADS_ASC) "downloads" else sortOption.apiValue
+                val apiSort = sortOption.apiValue
                 
                 val response = ModrinthApi.retrofitService.searchProjects(
                     query = searchQuery,
@@ -300,16 +281,10 @@ class MainMenuViewModel : ViewModel() {
                     index = apiSort
                 )
                 
-                val projects = if (sortOption.needsClientSort) {
-                    response.hits.sortedBy { it.downloads }
-                } else {
-                    response.hits
-                }
-                
                 val currentProjects = (searchUiState as SearchUiState.Success).projects
                 // Оптимизация: используем toMutableList вместо +
                 val updatedProjects = currentProjects.toMutableList()
-                updatedProjects.addAll(projects)
+                updatedProjects.addAll(response.hits)
                 searchUiState = SearchUiState.Success(updatedProjects)
                 searchOffset += response.hits.size
                 hasMoreResults = response.hits.size >= 20

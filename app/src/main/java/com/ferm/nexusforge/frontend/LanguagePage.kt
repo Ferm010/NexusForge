@@ -90,21 +90,6 @@ fun LanguagePage(
                         )
                     }
                 }
-
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        LanguageItem(
-                            language = stringResource(R.string.lang_french),
-                            flag = "🇫🇷",
-                            isSelected = currentLang == "fr",
-                            onClick = { languageViewModel.setLanguage(context, "fr") },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
             }
         }
     }

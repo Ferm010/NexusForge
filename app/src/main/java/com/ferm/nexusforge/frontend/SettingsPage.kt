@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -45,6 +46,8 @@ fun SettingPage(
     val technicalSupportText = stringResource(R.string.technical_support)
     val changeLanguageText = stringResource(R.string.change_language)
     
+    val context = LocalContext.current
+    
     key(currentLang) {
         Column(modifier = Modifier.fillMaxSize()) {
             NameAppBar(
@@ -66,15 +69,15 @@ fun SettingPage(
 
                 Icon(
                     painter = painterResource(
-                        if (themeViewModel.isDarkTheme == true) R.drawable.balck_theme
+                        if (themeViewModel.isDarkTheme) R.drawable.balck_theme
                         else R.drawable.white_theme
                     ),
-                    contentDescription = if (themeViewModel.isDarkTheme == true) "Dark Theme" else "Light Theme",
+                    contentDescription = if (themeViewModel.isDarkTheme) "Dark Theme" else "Light Theme",
                     modifier = Modifier
                         .padding(top = 14.dp)
                         .size(100.dp)
                         .clickable { 
-                            themeViewModel.toggleTheme()
+                            themeViewModel.toggleTheme(context)
                         }
                 )
 

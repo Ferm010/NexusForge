@@ -134,7 +134,7 @@ fun ProjectCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "${stringResource(R.string.downloads)}: ${formatDate(project.dateCreated)}",
+                        text = "${stringResource(R.string.create_at)}: ${formatDate(project.dateCreated)}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
