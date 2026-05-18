@@ -2,8 +2,10 @@ package com.ferm.nexusforge.viewmodels
 
 import android.app.Activity
 import android.content.Context
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.ViewModel
 import com.ferm.nexusforge.backend.LocaleHelper
+import com.ferm.nexusforge.MainActivity
 
 class LanguageViewModel : ViewModel() {
     
@@ -23,7 +25,18 @@ class LanguageViewModel : ViewModel() {
         LocaleHelper.setLocale(context, languageCode)
         _currentLanguage = languageCode
         
+        AppCompatDelegate.setApplicationLocales(
+            androidx.core.os.LocaleListCompat.forLanguageTags(languageCode)
+        )
+        
         val activity = context as? Activity
-        activity?.recreate()
+        if (activity != null) {
+            activity.recreate()
+        } else {
+            val intent = android.content.Intent(context, MainActivity::class.java).apply {
+                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            }
+            context.startActivity(intent)
+        }
     }
 }

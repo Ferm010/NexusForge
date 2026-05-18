@@ -12,12 +12,6 @@ class AuthRepository {
     private val auth = FirebaseAuth.getInstance()
     
     val currentUser get() = auth.currentUser
-    
-    /**
-     * Проверка существования email через попытку создания временного аккаунта
-     * Определяет только существует ли email, но не может точно определить метод (Google vs Email/Password)
-     * Firebase сам вернет ошибку при конфликте методов при попытке входа
-     */
     suspend fun checkEmailExists(email: String): EmailCheckResult {
         return try {
             android.util.Log.d("AuthRepository", "Checking if email exists: $email")
@@ -44,7 +38,7 @@ class AuthRepository {
                         // Email уже используется
                         // Не можем точно определить метод без входа, поэтому считаем что EMAIL_PASSWORD
                         // Если это Google аккаунт, Firebase вернет ошибку при попытке входа
-                        android.util.Log.d("AuthRepository", "Email already in use - assuming EMAIL_PASSWORD")
+                        android.util.Log.d("AuthRepository", "Email already in use  EMAIL_PASSWORD")
                         EmailCheckResult.ExistingUser(AuthMethod.EMAIL_PASSWORD)
                     }
                     "ERROR_INVALID_EMAIL" -> {

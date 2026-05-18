@@ -33,7 +33,13 @@ class FirestoreRepository(
      */
     fun clearAllListeners() {
         Log.d(TAG, "Clearing ${activeListeners.size} active Firestore listeners")
-        activeListeners.forEach { it.remove() }
+        activeListeners.toList().forEach { listener ->
+            try {
+                listener.remove()
+            } catch (e: Exception) {
+                Log.w(TAG, "Error removing listener during sign out: ${e.message}")
+            }
+        }
         activeListeners.clear()
     }
     

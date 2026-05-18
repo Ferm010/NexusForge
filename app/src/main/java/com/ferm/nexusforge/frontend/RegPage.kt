@@ -60,6 +60,7 @@ fun RegPageScreen(
     var googleSignInError by remember { mutableStateOf<String?>(null) }
     var emailError by remember { mutableStateOf<String?>(null) }
     var authMethodConflictError by remember { mutableStateOf<String?>(null) }
+    var isGoogleSigningIn by remember { mutableStateOf(false) }
     
     val signInGoogleText = stringResource(R.string.sign_in_google)
     val noGoogleAccountsMessage = stringResource(R.string.no_google_accounts)
@@ -131,6 +132,10 @@ fun RegPageScreen(
             )
             OutlinedButton(
                 onClick = {
+                    if (isGoogleSigningIn) return@OutlinedButton
+                    isGoogleSigningIn = true
+                    googleSignInError = null
+                    authMethodConflictError = null
                     coroutineScope.launch {
                         try {
                             val credentialManager = CredentialManager.create(context)
@@ -155,6 +160,7 @@ fun RegPageScreen(
                                 idToken = googleIdTokenCredential.idToken,
                                 email = googleEmail,
                                 onSuccess = { isNewUser ->
+                                    isGoogleSigningIn = false
                                     googleSignInError = null
                                     authMethodConflictError = null
                                     // Новый пользователь идет на EULA, существующий - сразу в главное меню
@@ -165,6 +171,7 @@ fun RegPageScreen(
                                     }
                                 },
                                 onError = { error ->
+                                    isGoogleSigningIn = false
                                     // Проверяем, это ошибка конфликта методов
                                     if (error.contains("существует") || error.contains("другим способом") || 
                                         error.contains("создан другим способом")) {
@@ -177,17 +184,20 @@ fun RegPageScreen(
                                 }
                             )
                         } catch (e: GetCredentialException) {
+                            isGoogleSigningIn = false
                             googleSignInError = when {
                                 e.message?.contains("No credentials available") == true -> 
                                     noGoogleAccountsMessage
                                 else -> signInErrorMessage.replace("{0}", e.message ?: "")
                             }
                         } catch (e: Exception) {
+                            isGoogleSigningIn = false
                             googleSignInError = signInErrorMessage.replace("{0}", e.message ?: "")
                         }
                     }
                 },
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier.padding(top = 8.dp),
+                enabled = !isGoogleSigningIn
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.google),
