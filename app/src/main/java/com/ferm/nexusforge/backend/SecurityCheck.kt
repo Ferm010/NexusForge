@@ -8,17 +8,11 @@ import com.ferm.nexusforge.BuildConfig
 import java.security.MessageDigest
 
 object SecurityCheck {
-    
-    // SHA-256 хеш вашей подписи
+
     private const val EXPECTED_SIGNATURE = "cb18947b4d94ad821ea0b3e5ecf96b96697632dc01a7b21f715adededbad6b84"
-    
-    /**
-     * Проверка целостности приложения
-     * Возвращает true если приложение не модифицировано
-     * В debug режиме проверка пропускается
-     */
+
     fun verifyAppIntegrity(context: Context): Boolean {
-        // В debug режиме пропускаем проверку подписи
+        // debug
         if (BuildConfig.DEBUG) {
             return true
         }
@@ -40,7 +34,7 @@ object SecurityCheck {
      * В debug режиме проверка пропускается
      */
     fun isDeviceSecure(): Boolean {
-        // В debug режиме пропускаем проверку
+        // В debug
         if (BuildConfig.DEBUG) {
             return true
         }

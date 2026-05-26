@@ -54,9 +54,8 @@ class AuthRepository {
         }
     }
     
-    /**
-     * Вход по email и паролю
-     */
+
+     //Вход по email и паролю
     suspend fun signInWithEmail(email: String, password: String): AuthResult {
         return try {
             auth.signInWithEmailAndPassword(email, password).await()
@@ -67,9 +66,8 @@ class AuthRepository {
         }
     }
     
-    /**
-     * Регистрация нового пользователя
-     */
+
+     //Регистрация нового пользователя
     suspend fun registerUser(email: String, password: String, displayName: String): AuthResult {
         return try {
             val result = auth.createUserWithEmailAndPassword(email, password).await()
@@ -82,9 +80,9 @@ class AuthRepository {
         }
     }
     
-    /**
-     * Вход через Google с проверкой конфликта методов авторизации
-     */
+
+     // Вход через Google с проверкой конфликта методов авторизации (КОНФЛИКТ НЕ АКУТАЛЬНЫЙ Я ЕГО ОФФНУЛ)
+
     suspend fun signInWithGoogle(idToken: String): GoogleSignInResult {
         return try {
             val credential = GoogleAuthProvider.getCredential(idToken, null)
@@ -113,25 +111,18 @@ class AuthRepository {
         }
     }
     
-    /**
-     * Выход
-     */
+
     fun signOut() {
         auth.signOut()
     }
-    
-    /**
-     * Проверка: авторизован ли пользователь через Google
-     */
+
     fun isGoogleSignIn(): Boolean {
         val user = currentUser ?: return false
         val providers = user.providerData.map { it.providerId }
         return providers.contains("google.com")
     }
     
-    /**
-     * Обновление имени пользователя
-     */
+    // Обновление имени пользователя
     suspend fun updateDisplayName(newName: String): UpdateResult {
         return try {
             val user = currentUser ?: return UpdateResult.Error("ERROR_USER_NOT_FOUND")
@@ -145,9 +136,7 @@ class AuthRepository {
     }
     
 
-    /**
-     * Удаление аккаунта
-     */
+     //Удаление аккаунта
     suspend fun deleteAccount(password: String): UpdateResult {
         return try {
             val user = currentUser ?: return UpdateResult.Error("ERROR_USER_NOT_FOUND")
@@ -160,10 +149,9 @@ class AuthRepository {
             UpdateResult.Error(errorCode ?: "ERROR_GENERIC")
         }
     }
-    
-    /**
-     * Отправка письма для восстановления пароля
-     */
+
+     //Отправка письма для восстановления пароля
+
     suspend fun sendPasswordResetEmail(email: String): SendEmailResult {
         return try {
             auth.sendPasswordResetEmail(email).await()

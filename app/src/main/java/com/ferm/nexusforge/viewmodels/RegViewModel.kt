@@ -14,8 +14,6 @@ import kotlinx.coroutines.launch
 
 
 class RegViewModel : ViewModel() {
-    
-    // Ленивая инициализация - создаются только при первом использовании
     private val emailValidator: EmailValidator by lazy {
         EmailValidator()
     }
@@ -35,19 +33,16 @@ class RegViewModel : ViewModel() {
     var userPhotoUrl by mutableStateOf<String?>(null)
         private set
     var isGoogleFlow by mutableStateOf(false)
-    
-    // Внутреннее хранение email для Google (не отображается в TextField)
+
     private var internalEmail by mutableStateOf("")
-    
-    // Auth password state
+
     var authPassword by mutableStateOf("")
     
     var isValidatingEmail by mutableStateOf(false)
         private set
     var emailError by mutableStateOf<String?>(null)
         private set
-    
-    // State for displaying email during sign in
+
     var displayEmail by mutableStateOf("")
         private set
     var isSigningIn by mutableStateOf(false)
@@ -199,7 +194,6 @@ class RegViewModel : ViewModel() {
         viewModelScope.launch {
             when (val result = authRepository.registerUser(email, password, userName)) {
                 is AuthResult.Success -> {
-                    // Создаём профиль в Firestore после успешной регистрации
                     val profileResult = firestoreRepository.createUserProfile(email, userName)
                     if (profileResult.isSuccess) {
                         refreshUserData()
@@ -220,28 +214,21 @@ class RegViewModel : ViewModel() {
         onSuccess: (Boolean) -> Unit,
         onError: (String) -> Unit
     ) {
-        // БЕЗОПАСНОСТЬ: Не логируем токены и чувствительные данные аутентификации
         if (!NetworkUtils.isNetworkAvailable(context)) {
             onError(errorCodeToString(context, "ERROR_NETWORK_REQUEST_FAILED"))
             return
         }
         
         viewModelScope.launch {
-            android.util.Log.d("RegViewModel", "=== Starting Google Sign-In ===")
             android.util.Log.d("RegViewModel", "Email from credential: '$email'")
             
             when (val result = authRepository.signInWithGoogle(idToken)) {
                 is GoogleSignInResult.Success -> {
-                    android.util.Log.d("RegViewModel", "Google Sign-In successful, isNewUser: ${result.isNewUser}")
-                    android.util.Log.d("RegViewModel", "Email from Google: '${result.email}'")
-                    android.util.Log.d("RegViewModel", "DisplayName from Google: '${result.displayName}'")
                     
                     isGoogleFlow = true
-                    // Сохраняем email из credential (не из Firebase, так как Firebase возвращает null)
                     internalEmail = email
                     userName = result.displayName
-                    
-                    // Если новый пользователь - создаём профиль в Firestore
+
                     if (result.isNewUser) {
                         android.util.Log.d("RegViewModel", "Creating Firestore profile for new Google user")
                         android.util.Log.d("RegViewModel", "Passing email to Firestore: '$email'")

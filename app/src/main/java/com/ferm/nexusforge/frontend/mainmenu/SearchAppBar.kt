@@ -82,7 +82,7 @@ fun SearchAppBar(
                 contentAlignment = Alignment.Center
             ) {
                 if (!userPhotoUrl.isNullOrEmpty()) {
-                    // Показываем аватарку из Firebase
+                    // аваFirebase
                     AsyncImage(
                         model = userPhotoUrl,
                         contentDescription = "url avatar",
@@ -90,14 +90,12 @@ fun SearchAppBar(
                         contentScale = ContentScale.Crop
                     )
                 } else if (userName.isNotEmpty()) {
-                    // Показываем первую букву имени
                     Text(
                         text = userName.first().uppercase(),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 } else {
-                    // Показываем знак вопроса
                     Text(
                         text = stringResource(R.string.question_mark),
                         style = MaterialTheme.typography.titleMedium,

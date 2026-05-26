@@ -30,27 +30,21 @@ sealed class SearchUiState {
 }
 
 class MainMenuViewModel : ViewModel() {
-    
-    // Search state
+
     var searchQuery by mutableStateOf("")
     var searchMode by mutableStateOf(SearchMode.MODPACK)
     var searchUiState: SearchUiState by mutableStateOf(SearchUiState.Idle)
     var sortOption by mutableStateOf(SortOption.RELEVANCE)
     var selectedVersion by mutableStateOf<String?>(null)
-    
-    // Featured projects state
+
     var featuredProjects by mutableStateOf<List<ModrinthProject>>(emptyList())
     var isLoadingFeatured by mutableStateOf(false)
     var isLoadingMoreFeatured by mutableStateOf(false)
     var featuredOffset by mutableIntStateOf(0)
     var hasMoreFeatured by mutableStateOf(true)
-    
-    // Search pagination state
     var isLoadingMore by mutableStateOf(false)
     var searchOffset by mutableIntStateOf(0)
     var hasMoreResults by mutableStateOf(true)
-    
-    // Game versions
     var gameVersions by mutableStateOf<List<GameVersion>>(emptyList())
     var isLoadingVersions by mutableStateOf(false)
     
@@ -63,7 +57,7 @@ class MainMenuViewModel : ViewModel() {
             isLoadingVersions = true
             try {
                 val versions = ModrinthApi.retrofitService.getGameVersions()
-                // Фильтруем только release версии и берем версии до 1.7.10 включительно
+                // Фильтр
                 gameVersions = versions.filter { version ->
                     version.versionType == "release" && isVersionValid(version.version)
                 }.take(50)
@@ -76,7 +70,6 @@ class MainMenuViewModel : ViewModel() {
     }
     
     private fun isVersionValid(version: String): Boolean {
-        // Парсим версию и проверяем, что она >= 1.7.10
         val parts = version.split(".")
         if (parts.isEmpty()) return false
         
@@ -105,15 +98,12 @@ class MainMenuViewModel : ViewModel() {
     
     fun changeSearchMode(mode: SearchMode) {
         searchMode = mode
-        // Сбрасываем пагинацию
         featuredOffset = 0
         featuredProjects = emptyList()
         hasMoreFeatured = true
         searchOffset = 0
         hasMoreResults = true
-        // Перезагружаем featured проекты при смене режима
         loadFeaturedProjects()
-        // Если есть активный поиск, обновляем результаты
         if (searchQuery.isNotEmpty()) {
             searchProjects()
         }
@@ -140,7 +130,6 @@ class MainMenuViewModel : ViewModel() {
                 featuredOffset = 20
                 hasMoreFeatured = response.hits.size >= 20
             } catch (_: Exception) {
-                // Игнорируем ошибки для featured проектов
                 featuredProjects = emptyList()
                 hasMoreFeatured = false
             } finally {
@@ -165,8 +154,7 @@ class MainMenuViewModel : ViewModel() {
                     offset = featuredOffset,
                     index = apiSort
                 )
-                
-                // Оптимизация: используем toMutableList вместо +
+
                 val currentProjects = featuredProjects.toMutableList()
                 currentProjects.addAll(response.hits)
                 featuredProjects = currentProjects
@@ -182,7 +170,6 @@ class MainMenuViewModel : ViewModel() {
     
     fun changeSortOption(option: SortOption) {
         sortOption = option
-        // Сбрасываем пагинацию
         featuredOffset = 0
         featuredProjects = emptyList()
         hasMoreFeatured = true
@@ -198,7 +185,6 @@ class MainMenuViewModel : ViewModel() {
     
     fun changeVersion(version: String?) {
         selectedVersion = version
-        // Сбрасываем пагинацию
         featuredOffset = 0
         featuredProjects = emptyList()
         hasMoreFeatured = true
@@ -231,7 +217,7 @@ class MainMenuViewModel : ViewModel() {
             return
         }
         
-        // БЕЗОПАСНОСТЬ: Санитизируем поисковый запрос для предотвращения injection атак
+        // сантизиация
         val sanitizedQuery = com.ferm.nexusforge.utils.InputSanitizer.sanitizeSearchQuery(searchQuery)
         if (!com.ferm.nexusforge.utils.InputSanitizer.isValidSearchQuery(sanitizedQuery)) {
             searchUiState = SearchUiState.Error("Некорректный поисковый запрос")
@@ -282,7 +268,6 @@ class MainMenuViewModel : ViewModel() {
                 )
                 
                 val currentProjects = (searchUiState as SearchUiState.Success).projects
-                // Оптимизация: используем toMutableList вместо +
                 val updatedProjects = currentProjects.toMutableList()
                 updatedProjects.addAll(response.hits)
                 searchUiState = SearchUiState.Success(updatedProjects)

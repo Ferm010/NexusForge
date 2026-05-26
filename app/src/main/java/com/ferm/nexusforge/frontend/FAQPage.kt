@@ -124,7 +124,6 @@ fun FAQPage(
             
             item {
                 Column(modifier = Modifier.padding(bottom = 16.dp)) {
-                    // Spacer для отступа в конце
                 }
             }
         }

@@ -20,7 +20,7 @@ class ProjectDetailsViewModel : ViewModel() {
             isLoading = true
             errorMessage = null
             try {
-                // Используем поиск по project_id через facets
+                // по project_id
                 val facets = "[[\"project_id:$projectId\"]]"
                 val response = ModrinthApi.retrofitService.searchProjects(
                     query = "",

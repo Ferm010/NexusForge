@@ -116,7 +116,7 @@ fun ModpackEditorPage(
                     vm.updateMinecraftVersion(pack.minecraftVersion)
                     vm.updateModLoader(pack.modLoader)
                     
-                    // Load mods with versions in parallel with timeout
+                    // Корутина
                     kotlinx.coroutines.coroutineScope {
                         val deferredMods = pack.mods.map { modRef ->
                             async(Dispatchers.IO) {

@@ -17,7 +17,7 @@ class CustomModpacksViewModel(
     private val repository: FirestoreRepository = FirestoreRepository()
 ) : ViewModel() {
     
-    // Список пользовательских сборок из Firestore (реалтайм синхронизация)
+    // Список пользовательских сборок из Firestore
     val customModpacks: StateFlow<List<CustomModpack>> = repository.getCustomModpacks()
         .stateIn(
             scope = viewModelScope,
@@ -37,9 +37,8 @@ class CustomModpacksViewModel(
         repository.clearAllListeners()
     }
     
-    /**
-     * Создать новую сборку
-     */
+
+     // Создать новую сборку
     fun createModpack(
         name: String,
         description: String,
@@ -74,9 +73,8 @@ class CustomModpacksViewModel(
     }
 
     
-    /**
-     * Удалить сборку
-     */
+
+    //Удалить сборку
     fun deleteModpack(modpackId: String) {
         viewModelScope.launch {
             isLoading = true

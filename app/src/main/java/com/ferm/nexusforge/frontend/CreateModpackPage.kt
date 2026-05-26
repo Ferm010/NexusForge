@@ -93,7 +93,7 @@ fun CreateModpackPage(
     var showTemplateSelector by remember { mutableStateOf(false) }
     var showExitWarning by remember { mutableStateOf(false) }
     
-    // Debounced search function
+    // Debounced
     val debouncedSearch = remember {
         debounce<String>(delayMillis = 500, coroutineScope = scope) { query ->
             if (query.length >= 2 && state.selectedMinecraftVersion.isNotEmpty()) {
@@ -128,7 +128,7 @@ fun CreateModpackPage(
                 title = { Text(stringResource(R.string.create_modpack)) },
                 navigationIcon = {
                     IconButton(onClick = {
-                        // Проверяем есть ли несохраненные изменения
+                        // несохраненные изменения
                         if (state.modpackName.isNotEmpty() || state.selectedMods.isNotEmpty()) {
                             showExitWarning = true
                         } else {
@@ -147,7 +147,7 @@ fun CreateModpackPage(
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            // Отображение ошибки сети
+            // ошибка сети
             if (state.error != null) {
                 Card(
                     modifier = Modifier
@@ -645,14 +645,13 @@ fun CreateModpackPage(
                                 currentMinecraftVersion = state.selectedMinecraftVersion,
                                 currentModLoader = state.selectedModLoader,
                                 onSelect = {
-                                    // Применить шаблон - загрузить моды последовательно
+                                    // Применить шаблон
                                     scope.launch {
                                         for (templateMod in template.mods) {
                                             try {
                                                 val project = withContext(Dispatchers.IO) {
                                                     com.ferm.nexusforge.network.ModrinthApi.retrofitService.getProject(templateMod.projectId)
                                                 }
-                                                // Ждем завершения добавления мода перед переходом к следующему
                                                 vm.addModSuspend(project)
                                             } catch (_: Exception) {
                                             }

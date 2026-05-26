@@ -6,7 +6,6 @@ import kotlinx.serialization.Serializable
 sealed interface Destination : NavKey {
 
 
-    // I. АВТОРИЗАЦИЯ И РЕГИСТРАЦИЯ
 
     @Serializable data object RegPage : Destination
     @Serializable data object EulaPage : Destination

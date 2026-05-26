@@ -74,7 +74,7 @@ fun ExpandableFabMenu(
             horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Bottom)
         ) {
-            // Опции меню (показываются при expanded = true)
+            // Опции меню
             AnimatedVisibility(
                 visible = expanded,
                 enter = fadeIn() + expandVertically(expandFrom = Alignment.Bottom),

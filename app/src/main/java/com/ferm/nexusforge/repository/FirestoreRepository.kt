@@ -15,10 +15,6 @@ import kotlinx.coroutines.tasks.await
 
 private const val TAG = "FirestoreRepository"
 
-/**
- * Repository для работы с Firestore
- * управляет профилем пользователя, избранными проектами и пользовательскими сборками
- */
 class FirestoreRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
@@ -28,9 +24,7 @@ class FirestoreRepository(
     
     private fun getUserId(): String? = auth.currentUser?.uid
     
-    /**
-     * Отменить все активные слушатели Firestore
-     */
+
     fun clearAllListeners() {
         Log.d(TAG, "Clearing ${activeListeners.size} active Firestore listeners")
         activeListeners.toList().forEach { listener ->
@@ -42,12 +36,7 @@ class FirestoreRepository(
         }
         activeListeners.clear()
     }
-    
-    // ==================== ПОЛЬЗОВАТЕЛЬСКИЙ ПРОФИЛЬ ====================
-    
-    /**
-     * Создать документ пользователя при первой регистрации
-     */
+
     suspend fun createUserProfile(email: String, displayName: String): Result<Unit> {
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
@@ -71,10 +60,7 @@ class FirestoreRepository(
         }
     }
     
-    
-    /**
-     * Проверить существование профиля пользователя
-     */
+
     suspend fun checkUserProfileExists(): Result<Boolean> {
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
@@ -91,12 +77,7 @@ class FirestoreRepository(
             Result.failure(e)
         }
     }
-    
-    // ==================== ИЗБРАННОЕ ====================
-    
-    /**
-     * Получить все избранные проекты пользователя в реальном времени
-     */
+
     fun getFavorites(): Flow<List<FavoriteProject>> = callbackFlow {
         val userId = getUserId()
         if (userId == null) {
@@ -128,17 +109,13 @@ class FirestoreRepository(
             activeListeners.remove(listener)
         }
     }
-    
-    /**
-     * Добавить проект в избранное
-     */
+
     suspend fun addToFavorites(project: FavoriteProject): Result<Unit> {
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
             
             Log.d(TAG, "Adding project to favorites")
-            
-            // Убедимся, что документ пользователя существует
+
             val userDocRef = firestore.collection("users").document(userId)
             val userDoc = userDocRef.get().await()
             
@@ -180,9 +157,7 @@ class FirestoreRepository(
         }
     }
     
-    /**
-     * Удалить проект из избранного
-     */
+
     suspend fun removeFromFavorites(projectId: String): Result<Unit> {
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
@@ -202,12 +177,7 @@ class FirestoreRepository(
             Result.failure(e)
         }
     }
-    
-    // ==================== ПОЛЬЗОВАТЕЛЬСКИЕ СБОРКИ ====================
-    
-    /**
-     * Получить все пользовательские сборки в реальном времени
-     */
+
     fun getCustomModpacks(): Flow<List<CustomModpack>> = callbackFlow {
         val userId = getUserId()
         if (userId == null) {
@@ -241,9 +211,7 @@ class FirestoreRepository(
         }
     }
     
-    /**
-     * Создать новую пользовательскую сборку
-     */
+
     suspend fun createCustomModpack(modpack: CustomModpack): Result<String> {
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
@@ -265,9 +233,7 @@ class FirestoreRepository(
         }
     }
     
-    /**
-     * Обновить существующую сборку
-     */
+
     suspend fun updateCustomModpack(modpack: CustomModpack): Result<Unit> {
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
@@ -287,10 +253,7 @@ class FirestoreRepository(
             Result.failure(e)
         }
     }
-    
-    /**
-     * Удалить пользовательскую сборку
-     */
+
     suspend fun deleteCustomModpack(modpackId: String): Result<Unit> {
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
@@ -311,9 +274,7 @@ class FirestoreRepository(
         }
     }
     
-    /**
-     * Получить конкретную сборку по ID
-     */
+
     suspend fun getCustomModpack(modpackId: String): Result<CustomModpack?> {
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
@@ -337,9 +298,7 @@ class FirestoreRepository(
         }
     }
     
-    /**
-     * Сохранить пользовательскую сборку (для конструктора)
-     */
+
     suspend fun saveCustomModpack(modpackId: String, modpackData: Map<String, Any>): Result<Unit> {
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
@@ -364,11 +323,7 @@ class FirestoreRepository(
         }
     }
     
-    // ==================== ШАБЛОНЫ ====================
-    
-    /**
-     * Получить все шаблоны пользователя
-     */
+
     fun getTemplates(): Flow<List<ModpackTemplate>> = callbackFlow {
         val userId = getUserId()
         if (userId == null) {
@@ -400,10 +355,7 @@ class FirestoreRepository(
             activeListeners.remove(listener)
         }
     }
-    
-    /**
-     * Сохранить шаблон
-     */
+
     suspend fun saveTemplate(template: ModpackTemplate): Result<String> {
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
@@ -433,10 +385,7 @@ class FirestoreRepository(
             Result.failure(e)
         }
     }
-    
-    /**
-     * Получить шаблон по ID
-     */
+
     suspend fun getTemplate(templateId: String): Result<ModpackTemplate?> {
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))
@@ -458,10 +407,8 @@ class FirestoreRepository(
             Result.failure(e)
         }
     }
-    
-    /**
-     * Удалить шаблон
-     */
+
+
     suspend fun deleteTemplate(templateId: String): Result<Unit> {
         return try {
             val userId = getUserId() ?: return Result.failure(Exception("User not authenticated"))

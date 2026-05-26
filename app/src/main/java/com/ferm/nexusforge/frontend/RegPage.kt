@@ -31,7 +31,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
@@ -139,7 +138,6 @@ fun RegPageScreen(
                     coroutineScope.launch {
                         try {
                             val credentialManager = CredentialManager.create(context)
-                            // БЕЗОПАСНОСТЬ: Не логируем WEB_CLIENT_ID и чувствительные учетные данные
                             val googleIdOption = GetGoogleIdOption.Builder()
                                 .setFilterByAuthorizedAccounts(false)
                                 .setServerClientId(WEB_CLIENT_ID)
@@ -153,7 +151,6 @@ fun RegPageScreen(
                             
                             // Email находится в credential.id
                             val googleEmail = googleIdTokenCredential.id
-                            android.util.Log.d("RegPage", "Google email from credential: $googleEmail")
                             
                             vm.signInWithGoogle(
                                 context = context,
@@ -163,7 +160,6 @@ fun RegPageScreen(
                                     isGoogleSigningIn = false
                                     googleSignInError = null
                                     authMethodConflictError = null
-                                    // Новый пользователь идет на EULA, существующий - сразу в главное меню
                                     if (isNewUser) {
                                         onNavigateToEula()
                                     } else {
@@ -172,7 +168,6 @@ fun RegPageScreen(
                                 },
                                 onError = { error ->
                                     isGoogleSigningIn = false
-                                    // Проверяем, это ошибка конфликта методов
                                     if (error.contains("существует") || error.contains("другим способом") || 
                                         error.contains("создан другим способом")) {
                                         authMethodConflictError = error
@@ -266,11 +261,4 @@ fun RegPageScreen(
             )
         }
     }
-}
-
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun ContentPreview() {
-    RegPageScreen(onNavigateToEula = {}, onNavigateToAuthPassword = {}, onNavigateToMainMenu = {})
 }

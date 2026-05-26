@@ -22,10 +22,7 @@ class MrpackGenerator(private val context: Context) {
         encodeDefaults = true
         explicitNulls = false
     }
-    
-    /**
-     * Генерирует .mrpack файл
-     */
+
     fun generateMrpack(
         modpackName: String,
         modpackDescription: String,
@@ -36,29 +33,26 @@ class MrpackGenerator(private val context: Context) {
         onProgress: (Int, String) -> Unit
     ): File? {
         try {
-            // Создаем временную директорию
             val tempDir = File(context.cacheDir, "mrpack_temp_${System.currentTimeMillis()}")
             tempDir.mkdirs()
             
             onProgress(0, "Preparing modpack structure...")
-            
-            // Создаем структуру директорий
+
             val overridesDir = File(tempDir, "overrides")
             overridesDir.mkdirs()
             
-            // Собираем информацию о модах
+            //информацию о модах
             val files = mutableListOf<ModrinthFile>()
             
             mods.forEachIndexed { index, mod ->
                 onProgress(index + 1, "Processing ${mod.title}...")
                 
-                // Получаем информацию о файле мода
+                // информацию о файле мода
                 val downloadUrl = mod.downloadUrl
                 if (downloadUrl.isNullOrEmpty()) {
                     return@forEachIndexed
                 }
-                
-                // БЕЗОПАСНОСТЬ: Требуем хеши для всех модов - отклоняем если отсутствуют
+
                 val sha1 = mod.sha1
                 val sha512 = mod.sha512
                 
@@ -66,7 +60,7 @@ class MrpackGenerator(private val context: Context) {
                     return@forEachIndexed
                 }
                 
-                // Скачиваем и проверяем целостность файла
+                //целостность файла
                 try {
                     val url = java.net.URL(downloadUrl)
                     val connection = url.openConnection()
@@ -80,8 +74,7 @@ class MrpackGenerator(private val context: Context) {
                             input.copyTo(output)
                         }
                     }
-                    
-                    // БЕЗОПАСНОСТЬ: Проверяем оба хеша SHA-1 и SHA-512
+
                     val calculatedSha1 = calculateSHA1(tempFile)
                     val calculatedSha512 = calculateSHA512(tempFile)
                     
@@ -89,7 +82,6 @@ class MrpackGenerator(private val context: Context) {
                     val sha512Valid = calculatedSha512.equals(sha512, ignoreCase = true)
                     
                     if (!sha1Valid || !sha512Valid) {
-                        // БЕЗОПАСНОСТЬ: Не логируем реальные значения хешей
                         tempFile.delete()
                         return@forEachIndexed
                     }
@@ -101,7 +93,7 @@ class MrpackGenerator(private val context: Context) {
                     return@forEachIndexed
                 }
                 
-                android.util.Log.d("MrpackGenerator", "Добавляем ${mod.title} в mrpack")
+                android.util.Log.d("MrpackGenerator", "Добавлен ${mod.title} в mrpack")
                 
                 files.add(
                     ModrinthFile(
@@ -136,13 +128,13 @@ class MrpackGenerator(private val context: Context) {
             
             onProgress(mods.size + 1, "Creating index file...")
             
-            // Записываем index в файл
+            //index в файл
             val indexFile = File(tempDir, "modrinth.index.json")
             val jsonString = json.encodeToString(index)
             
             indexFile.writeText(jsonString)
             
-            // Создаем .mrpack (ZIP архив)
+            // .mrpack
             onProgress(mods.size + 2, "Creating .mrpack archive...")
             
             val outputFile = File(
@@ -151,16 +143,13 @@ class MrpackGenerator(private val context: Context) {
             )
             
             ZipOutputStream(FileOutputStream(outputFile)).use { zipOut ->
-                // Добавляем modrinth.index.json
                 addFileToZip(zipOut, indexFile, "modrinth.index.json")
-                
-                // Добавляем overrides директорию (если есть файлы)
+
                 if (overridesDir.exists() && overridesDir.listFiles()?.isNotEmpty() == true) {
                     addDirectoryToZip(zipOut, overridesDir, "overrides")
                 }
             }
-            
-            // Удаляем временные файлы
+
             tempDir.deleteRecursively()
             
             onProgress(mods.size + 3, "Complete!")
@@ -178,7 +167,6 @@ class MrpackGenerator(private val context: Context) {
         modLoader: String,
         modLoaderVersion: String?
     ): ModrinthDependencies {
-        // Если версия не указана, используем пустую строку вместо null
         val loaderVer = if (modLoaderVersion.isNullOrEmpty()) "" else modLoaderVersion
         
         return when (modLoader.lowercase()) {

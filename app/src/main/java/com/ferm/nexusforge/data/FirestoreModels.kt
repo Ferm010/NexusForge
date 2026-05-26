@@ -2,9 +2,7 @@ package com.ferm.nexusforge.data
 
 import com.google.firebase.Timestamp
 
-/**
- * Модель избранного проекта для Firestore
- */
+ //Модель избранного проекта для Firestore
 data class FavoriteProject(
     val projectId: String = "",
     val title: String = "",
@@ -18,9 +16,7 @@ data class FavoriteProject(
     val addedAt: Timestamp = Timestamp.now()
 ) {
     companion object {
-        /**
-         * Конвертация из ModrinthProject в FavoriteProject
-         */
+         //odrinthProject в FavoriteProject
         fun fromModrinthProject(project: ModrinthProject): FavoriteProject {
             return FavoriteProject(
                 projectId = project.projectId,
@@ -38,9 +34,9 @@ data class FavoriteProject(
     }
 }
 
-/**
- * Ссылка на мод в сборке
- */
+
+ //Ссылка на мод в сборке
+
 data class ModReference(
     val projectId: String = "",
     val title: String = "",
@@ -53,11 +49,9 @@ data class ModReference(
     val sha512: String? = null
 )
 
-/**
- * Пользовательская сборка модов
- */
+ //Пользовательская сборка модов
 data class CustomModpack(
-    val id: String = "", // ID документа
+    val id: String = "",
     val name: String = "",
     val description: String = "",
     val createdAt: Any? = Timestamp.now(),

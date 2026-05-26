@@ -17,7 +17,7 @@ class FavoritesViewModel(
     private val repository: FirestoreRepository = FirestoreRepository()
 ) : ViewModel() {
     
-    // Список избранных проектов из Firestore (реалтайм синхронизация)
+    // Список избранных проектов из Firestore
     val favoriteProjects: StateFlow<List<FavoriteProject>> = repository.getFavorites()
         .stateIn(
             scope = viewModelScope,
@@ -36,9 +36,9 @@ class FavoritesViewModel(
         repository.clearAllListeners()
     }
     
-    /**
-     * Добавить проект в избранное
-     */
+
+     //Добавить проект в избранное
+
     fun addFavorite(project: ModrinthProject) {
         viewModelScope.launch {
             isLoading = true
@@ -55,9 +55,9 @@ class FavoritesViewModel(
         }
     }
     
-    /**
-     * Удалить проект из избранного
-     */
+
+     //Удалить проект из избранного
+
     fun removeFavorite(projectId: String) {
         viewModelScope.launch {
             isLoading = true
@@ -72,17 +72,12 @@ class FavoritesViewModel(
             isLoading = false
         }
     }
-    
-    /**
-     * Проверить, находится ли проект в избранном
-     */
+
+
     fun isFavorite(projectId: String): Boolean {
         return favoriteProjects.value.any { it.projectId == projectId }
     }
-    
-    /**
-     * Переключить статус избранного
-     */
+
     fun toggleFavorite(project: ModrinthProject): Boolean {
         return if (isFavorite(project.projectId)) {
             removeFavorite(project.projectId)

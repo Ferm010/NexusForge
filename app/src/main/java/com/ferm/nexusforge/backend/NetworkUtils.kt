@@ -13,10 +13,8 @@ import java.net.URL
 import java.net.UnknownHostException
 
 object NetworkUtils {
-    
-    /**
-     * Проверка наличия интернет-соединения
-     */
+
+     // Проверка наличия интернет-соединения
     fun isNetworkAvailable(context: Context): Boolean {
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
             ?: return false
@@ -27,10 +25,8 @@ object NetworkUtils {
         //(WiFi/Mobile/Ethernet)
         return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
-    
-    /**
-     * Реальная проверка доступа к интернету через HTTP запрос
-     */
+
+     // Реальная проверка доступа к интернету через HTTP запрос
     suspend fun hasInternetAccess(): Boolean {
         return try {
             withContext(Dispatchers.IO) {
@@ -53,9 +49,7 @@ object NetworkUtils {
     }
 
 
-    /**
-     * Проверка доменна
-     */
+     // Проверка доменна
     suspend fun checkEmailDomainExists(email: String): Boolean {
         return withContext(Dispatchers.IO) {
             try {

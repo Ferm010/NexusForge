@@ -33,7 +33,6 @@ import com.ferm.nexusforge.backend.parseEulaText
 fun EulaScreenContainer(rawEulaText: String, onNavigateBack: () -> Unit, onAcceptEula: () -> Unit) {
 
     // 1. Выполнение парсинга только один раз (при первой композиции)
-    // 'remember' предотвращает повторное выполнение parseEulaText при рекомпозициях.
     val eulaSections = remember(rawEulaText) {
         parseEulaText(rawEulaText)
     }
@@ -56,7 +55,6 @@ fun EulaScreenContainer(rawEulaText: String, onNavigateBack: () -> Unit, onAccep
         }
     ) { paddingValues ->
 
-        // 2. LazyColumn: обеспечивает ленивую загрузку и переработку элементов.
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -65,13 +63,12 @@ fun EulaScreenContainer(rawEulaText: String, onNavigateBack: () -> Unit, onAccep
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // 3. items(): Отображает каждый элемент из списка eulaSections
+            // Отображает каждый элемент
             items(
                 items = eulaSections,
-                key = { section -> section.id } // Важно для оптимизации!
+                key = { section -> section.id }
             ) { section ->
 
-                // 4. Логика отображения: Выбираем нужный стиль в зависимости от типа
                 when (section.type) {
                     EulaType.HEADING -> {
                         Text(
@@ -101,7 +98,6 @@ fun EulaScreenContainer(rawEulaText: String, onNavigateBack: () -> Unit, onAccep
                 }
             }
 
-            // 5. item(): Добавление кнопки "Принять" в конце списка
             item {
                 Spacer(modifier = Modifier.height(32.dp))
                 Button(
@@ -116,7 +112,6 @@ fun EulaScreenContainer(rawEulaText: String, onNavigateBack: () -> Unit, onAccep
     }
 }
 
-// Пример использования (в Main Activity или другом Composable)
 @Composable
 fun EulaScreen(onNavigateBack: () -> Unit, onAcceptEula: () -> Unit) {
     val hugeEULAText = """

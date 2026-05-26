@@ -58,7 +58,7 @@ import com.ferm.nexusforge.viewmodels.LanguageViewModel
 import com.google.firebase.auth.FirebaseAuth
 
 
-@OptIn(ExperimentalAnimationApi::class) // Анимации
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun MyAppNav3(themeViewModel: ThemeViewModel) {
     val vm: RegViewModel = viewModel()
@@ -135,7 +135,7 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                     onBackClick = {
                         backStack.removeLastOrNull()
                     },
-                    onProfileClick = {}  // На RegPage нет профиля
+                    onProfileClick = {}
                 )
             }
 
@@ -193,7 +193,6 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
             }
 
             entry<Destination.MainMenu> {
-                // 1. Создаем локальный backStack специально для вкладок
                 val tabBackStack = rememberNavBackStack(Destination.MainMenu)
                 var showCreateAlert by remember { mutableStateOf(false) }
 
@@ -216,7 +215,6 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                         NavigationBar {
                             val currentTab = tabBackStack.lastOrNull()
 
-                            // Кнопка: Поиск
                             NavigationBarItem(
                                 selected = currentTab is Destination.MainMenu,
                                 onClick = {
@@ -229,7 +227,6 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                 label = { Text(text = stringResource(R.string.search)) }
                             )
 
-                            // Кнопка: Избранное
                             NavigationBarItem(
                                 selected = currentTab is Destination.FavoritePage,
                                 onClick = {
@@ -242,7 +239,6 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                 label = { Text(text = stringResource(R.string.favorites))}
                             )
 
-                            // Кнопка: создать
                             NavigationBarItem(
                                 selected = false,
                                 onClick = {
@@ -252,7 +248,6 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                 label = { Text(text = stringResource(R.string.create)) }
                             )
 
-                            // Кнопка: Профиль
                             NavigationBarItem(
                                 selected = currentTab is Destination.ProfilePage,
                                 onClick = {
@@ -264,7 +259,7 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                 icon = { Icon(painter = painterResource(R.drawable.person), "Search") },
                                 label = { Text(text = stringResource(R.string.profile)) }
                             )
-                            // Кнопка: Настройки
+
                             NavigationBarItem(
                                 selected = currentTab is Destination.SettingsPage,
                                 onClick = {
@@ -279,13 +274,12 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                         }
                     }
                 ) { innerPadding ->
-                    // 3. Вложенный NavDisplay для отображения контента вкладок
                     NavDisplay(
                         modifier = Modifier.padding(innerPadding),
                         backStack = tabBackStack,
                         entryProvider = entryProvider {
                             entry<Destination.MainMenu> {
-                                // Вызываем ваш существующий MainMenuPage
+                                //MainMenuPage
                                 MainMenuPage(
                                     vm = vm,
                                     onProfileClick = {
@@ -432,7 +426,6 @@ fun MyAppNav3(themeViewModel: ThemeViewModel) {
                                         tabBackStack.removeLastOrNull()
                                     },
                                     onComplete = {
-                                        // Экран остаётся видимым после завершения загрузки
                                     }
                                 )
                             }

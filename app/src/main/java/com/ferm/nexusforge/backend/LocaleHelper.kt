@@ -35,23 +35,23 @@ object LocaleHelper {
         val prefs = getPrefs(context)
         val savedLanguage = prefs.getString(KEY_LANGUAGE, null)
         
-        // Если язык уже был выбран, возвращаем сохраненный
+        // Уже выбран язык
         if (savedLanguage != null) {
             return savedLanguage
         }
         
-        // При первом запуске определяем язык системы
+        // Первый запуск
         val systemLanguage = Locale.getDefault().language
         val supportedLanguageCodes = supportedLanguages.map { it.code }
         
-        // Если язык системы поддерживается, используем его
+        // Если язык системы поддерживается
         val detectedLanguage = if (systemLanguage in supportedLanguageCodes) {
             systemLanguage
         } else {
-            "ru"  // По умолчанию русский
+            "ru"
         }
         
-        // Сохраняем определенный язык
+        // Сохраняем язык
         prefs.edit().putString(KEY_LANGUAGE, detectedLanguage).apply()
         
         return detectedLanguage

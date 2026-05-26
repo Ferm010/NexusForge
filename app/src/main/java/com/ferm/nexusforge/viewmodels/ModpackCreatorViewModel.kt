@@ -30,8 +30,6 @@ class ModpackCreatorViewModel : ViewModel() {
     
     private val _state = MutableStateFlow(ModpackCreatorState())
     val state: StateFlow<ModpackCreatorState> = _state.asStateFlow()
-    
-    // Ленивая инициализация - создаются только при первом использовании
     private val firestoreRepository: FirestoreRepository by lazy {
         FirestoreRepository()
     }
@@ -205,11 +203,10 @@ class ModpackCreatorViewModel : ViewModel() {
                 fileName = file?.filename
                 fileSize = file?.size
                 
-                // Получаем хеши из API
+                // хеши из API
                 sha1 = file?.hashes?.get("sha1")
                 sha512 = file?.hashes?.get("sha512")
             } else {
-                // Try to get first available version
                 val firstVersion = versions.firstOrNull()
                 if (firstVersion != null) {
                     val file = firstVersion.files.firstOrNull()
@@ -241,40 +238,66 @@ class ModpackCreatorViewModel : ViewModel() {
                 )
             )
             _state.value = _state.value.copy(selectedMods = currentMods)
-            
-            // Получаем и добавляем зависимости
+
             addDependencies(mod.actualProjectId)
         }
     }
-    
+
     private fun addDependencies(projectId: String) {
         viewModelScope.launch {
+            android.util.Log.d("ModpackCreator", "Fetching dependencies for project: $projectId")
             try {
                 val deps = withContext(Dispatchers.IO) {
                     ModrinthApi.retrofitService.getDependencies(projectId)
                 }
-                
-                // Получаем обязательные зависимости
-                val requiredDeps = mutableListOf<ModDependencyInfo>()
-                for (version in deps.versions) {
-                    for (dep in version.dependencies) {
-                        if (dep.dependencyType == "required" && dep.projectId != null) {
-                            if (requiredDeps.none { it.projectId == dep.projectId }) {
-                                requiredDeps.add(dep)
+
+                if (deps.versions.isEmpty()) {
+
+                    val projectVersions = withContext(Dispatchers.IO) {
+                        ModrinthApi.retrofitService.getProjectVersions(projectId)
+                    }
+
+                    android.util.Log.d("ModpackCreator", "Fetched ${projectVersions.size} versions via getProjectVersions fallback")
+
+                    val mcVersion = _state.value.selectedMinecraftVersion
+                    val modLoader = _state.value.selectedModLoader
+
+                    val matchingVersion = projectVersions.firstOrNull { version ->
+                        val versionsList = version.gameVersion.ifEmpty { version.gameVersions ?: emptyList() }
+                        val hasMatchingVersion = versionsList.any { it == mcVersion }
+                        val hasMatchingLoader = version.loaders.any { it.equals(modLoader, ignoreCase = true) }
+                        hasMatchingVersion && hasMatchingLoader
+                    }
+                    if (matchingVersion != null) {
+                        android.util.Log.d("ModpackCreator", "Found matching version: ${matchingVersion.versionNumber} with ${matchingVersion.dependencies.size} dependencies")
+
+
+                        for ((idx, dep) in matchingVersion.dependencies.withIndex()) {
+                            android.util.Log.d("ModpackCreator", "  Fallback dep $idx - projectId=${dep.projectId}, type=${dep.dependencyType}")
+
+                            if (dep.dependencyType == "required" && dep.projectId != null) {
+                                var depProject = deps.projects.find { it.actualProjectId == dep.projectId }
+
+
+                                if ((depProject == null || depProject.title.isEmpty()) && dep.projectId != null) {
+                                    try {
+                                        depProject = withContext(Dispatchers.IO) {
+                                            ModrinthApi.retrofitService.getProject(dep.projectId!!)
+                                        }
+                                    } catch (e: Exception) {
+                                        continue
+                                    }
+                                }
+
+                                if (depProject != null && depProject.title.isNotEmpty()) {
+                                    addModDependency(depProject)
+                                }
                             }
                         }
                     }
                 }
-                
-                // Добавляем каждую зависимость
-                for (dep in requiredDeps) {
-                    val depProject = deps.projects.find { it.actualProjectId == dep.projectId }
-                    if (depProject != null) {
-                        addModDependency(depProject)
-                    }
-                }
-            } catch (_: Exception) {
-                // Зависимости не найдены или ошибка
+            } catch (e: Exception) {
+                android.util.Log.e("ModpackCreator", "Error fetching dependencies for $projectId", e)
             }
         }
     }
@@ -353,7 +376,6 @@ class ModpackCreatorViewModel : ViewModel() {
     }
     
     fun updateModpackName(name: String) {
-        // БЕЗОПАСНОСТЬ: Санитизируем имя модпака для предотвращения path traversal атак
         val sanitizedName = com.ferm.nexusforge.utils.InputSanitizer.sanitizeModpackName(name)
         _state.value = _state.value.copy(modpackName = sanitizedName)
     }
@@ -411,8 +433,7 @@ class ModpackCreatorViewModel : ViewModel() {
         if (currentState.modpackName.isEmpty() || currentState.selectedMinecraftVersion.isEmpty()) {
             return
         }
-        
-        // Проверка сети перед сохранением
+
         if (networkChecker?.isNetworkAvailable() == false) {
             _state.value = _state.value.copy(
                 error = "Проблема сети. Проверьте подключение к интернету."
@@ -493,7 +514,7 @@ class ModpackCreatorViewModel : ViewModel() {
                 withContext(Dispatchers.IO) {
                     var lastReportedMod = -1
                     val zipFile = createZipFileWithProgress(context, currentState) { modName, modIndex ->
-                        // Вызываем callback только один раз за мод
+                        // один раз за мод
                         if (modIndex != lastReportedMod) {
                             lastReportedMod = modIndex
                             onProgress(modIndex + 1, modName, false, null)
@@ -573,7 +594,7 @@ class ModpackCreatorViewModel : ViewModel() {
 
                 val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
                 
-                // Получаем последнюю версию модлоадера
+
                 val modLoaderVersion = try {
                     withContext(Dispatchers.IO) {
                         getLatestLoaderVersion(currentState.selectedModLoader)
@@ -722,12 +743,9 @@ class ModpackCreatorViewModel : ViewModel() {
         return try {
             when (modLoader.lowercase()) {
                 "forge" -> {
-                    // Для простоты возвращаем null, так как Modrinth API не предоставляет прямой доступ к версиям лоадеров
-                    // Можно использовать Forge API или другой источник
                     null
                 }
                 "fabric" -> {
-                    // Аналогично для Fabric
                     null
                 }
                 "neoforge" -> {
@@ -743,9 +761,9 @@ class ModpackCreatorViewModel : ViewModel() {
         }
     }
     
-    /**
-     * Экспорт сборки в Google Drive
-     */
+
+     //Экспорт сборки в Google Drive
+
     fun exportToGoogleDrive(
         context: Context,
         onProgress: (current: Int, modName: String, isComplete: Boolean, error: String?) -> Unit
@@ -764,14 +782,14 @@ class ModpackCreatorViewModel : ViewModel() {
                     return@launch
                 }
                 
-                // Создаем ZIP файл
+                // ZIP файл
                 val zipFile = withContext(Dispatchers.IO) {
                     createZipFileWithProgress(context, currentState) { modName, modIndex ->
                         onProgress(modIndex + 1, modName, false, null)
                     }
                 }
                 
-                // Загружаем в Google Drive
+                // Google Drive
                 val driveRepo = googleDriveRepository
                 if (driveRepo == null) {
                     _state.value = _state.value.copy(
@@ -786,7 +804,7 @@ class ModpackCreatorViewModel : ViewModel() {
                 val result = driveRepo.uploadZipToDrive(zipFile, fileName)
                 
                 if (result.isSuccess) {
-                    // Сохраняем сборку в Firestore
+                    //сборка в Firestore
                     saveModpackToFirestore(currentState)
                     
                     _state.value = _state.value.copy(isGenerating = false)
@@ -798,8 +816,7 @@ class ModpackCreatorViewModel : ViewModel() {
                     )
                     onProgress(0, "", true, result.exceptionOrNull()?.message)
                 }
-                
-                // Удаляем временный файл
+
                 zipFile.delete()
                 
             } catch (e: Exception) {

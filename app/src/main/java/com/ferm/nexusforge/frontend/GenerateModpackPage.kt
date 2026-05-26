@@ -76,7 +76,7 @@ fun GenerateModpackPage(
     var progress by remember { mutableStateOf(GenerateProgress()) }
     var driveUploadProgress by remember { mutableStateOf<UploadProgress>(UploadProgress.Idle) }
     
-    // Launcher для авторизации Google Drive
+    // Google Drive
     @Suppress("DEPRECATION")
     val googleSignInLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -155,7 +155,7 @@ fun GenerateModpackPage(
         }
     }
     
-    // Отслеживаем прогресс загрузки в Drive
+    // прогресс загрузки в Drive
     LaunchedEffect(method) {
         if (method == "google_drive") {
             vm.getGoogleDriveRepository()?.uploadProgress?.collect { uploadProgress ->
@@ -422,8 +422,7 @@ fun GenerateModpackPage(
                         textAlign = TextAlign.Center
                     )
                 }
-                
-                // Показываем статус загрузки в Google Drive
+
                 if (method == "google_drive" && driveUploadProgress is UploadProgress.Uploading) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(

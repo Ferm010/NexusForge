@@ -152,7 +152,7 @@ class GoogleDriveRepository(private val context: Context) {
                 .setFields("id")
                 .execute()
         } catch (_: Exception) {
-            // Игнорируем ошибки при установке прав доступа
+            // ошибка при установке прав доступа
         }
     }
 }
